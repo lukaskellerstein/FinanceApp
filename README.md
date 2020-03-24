@@ -2,14 +2,17 @@
 # Dev-Stack
 
 Python
+
 Poetry - package management
 
 pandas
+
 matplotlib
 
 asyncio - asynchronous programming
 
 Pygobject - GTK - as GUI
+
 Gbulb - GTK + asyncio - Event loops
 
 ib_insync - library for asynchronous communication with Interactive Brokers
@@ -19,7 +22,9 @@ rx - Reactive programming
 pymongo - mongo database
 
 black
+
 flake8
+
 rope
 
 
