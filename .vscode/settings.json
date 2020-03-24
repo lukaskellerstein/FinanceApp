@@ -1,0 +1,12 @@
+{
+    "python.pythonPath": "/home/lukas/.cache/pypoetry/virtualenvs/financeapp-ReQAx6Dy-py3.7/bin/python",
+    "python.linting.flake8Enabled": true,
+    "python.linting.pylintEnabled": false,
+    "python.linting.enabled": true,
+    "files.exclude": {
+        "**/*.pyc": {
+            "when": "$(basename).py"
+        },
+        "**/__pycache__": true
+    }
+}
