@@ -1,0 +1,27 @@
+{
+    "ignore": [
+        "ibapi",
+        "finance_app/ibapi",
+        "**/ibapi",
+        "./ibapi",
+        ".vscode",
+        "**/.vscode",
+        "~/.vscode",
+        ".cache",
+        "~/.cache",
+        "tests"
+    ],
+    "reportTypeshedErrors": false,
+    "reportMissingImports": true,
+    "reportMissingTypeStubs": false,
+    "reportUnknownLambdaType": false,
+    "reportUnknownArgumentType": false,
+    "reportUntypedBaseClass": false,
+    "pythonVersion": "3.7",
+    "pythonPlatform": "Linux",
+    "executionEnvironments": [
+        {
+            "root": "finance_app"
+        }
+    ]
+}

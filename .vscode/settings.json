@@ -1,12 +1,40 @@
 {
-    "python.pythonPath": "/home/lukas/.cache/pypoetry/virtualenvs/financeapp-ReQAx6Dy-py3.7/bin/python",
+    "python.linting.enabled": true,
+    "python.linting.lintOnSave": true,
     "python.linting.flake8Enabled": true,
     "python.linting.pylintEnabled": false,
-    "python.linting.enabled": true,
+    // "python.linting.pylintArgs": [
+    //     "--extension-pkg-whitelist=PyQt5"
+    // ],
+    "python.linting.flake8Args": [
+        "--ignore=E203",
+        "--ignore=E266",
+        "--ignore=E501",
+        "--ignore=W503",
+        "--ignore=F403",
+        "--ignore=F401",
+        "--max-line-length=79",
+        "--select = B,C,E,F,W,T4,B9",
+        "--max-complexity = 18"
+    ],
+    "python.formatting.enabled": true,
+    "editor.formatOnSave": true,
+    "python.formatting.provider": "black",
+    "python.formatting.blackArgs": [
+        "--line-length",
+        "79",
+        "--include",
+        "\\.pyi?$"
+    ],
     "files.exclude": {
         "**/*.pyc": {
             "when": "$(basename).py"
         },
-        "**/__pycache__": true
-    }
+        "**/__pycache__": true,
+        "**/.mypy_cache": true,
+    },
+    "search.exclude": {
+        "**/.git": true,
+        "**/poetry.lock": true
+    },
 }
