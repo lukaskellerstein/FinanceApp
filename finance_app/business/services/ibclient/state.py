@@ -161,7 +161,11 @@ class State(object):
         ]
 
         if isExist.shape[0] > 0:
-
+            # print("IS ALREADY EXISTS - 2 ------------------------------------")
+            # print(isExist.shape[0])
+            # print(isExist)
+            # print(isExist["Symbol"].item())
+            # print(isExist["LocalSymbol"].item())
             return (
                 obs,
                 str(isExist["Symbol"].item()),
