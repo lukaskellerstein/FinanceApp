@@ -30,7 +30,6 @@ class DownloadOneDateTask(Thread):
         date,
         contract,
         timeframe: TimeFrame = TimeFrame.day1,
-        blockSize: int = 7,  # in days
     ):
         super().__init__()
         self.daemon = True
@@ -45,7 +44,6 @@ class DownloadOneDateTask(Thread):
         self.date = date
         self.contract = contract
         self.timeframe = timeframe
-        self.blockSize = blockSize
 
         self.subscriptions = []
 
@@ -54,10 +52,9 @@ class DownloadOneDateTask(Thread):
 
         (startTemp, endTemp) = self.date
 
-        blockSizeTemp = (endTemp - startTemp).days
-        log.info(blockSizeTemp)
+        blockSizeCalculated = (endTemp - startTemp).days
 
-        logText = f"requested historical data from {startTemp.strftime('%Y%m%d %H:%M:%S')} to {endTemp.strftime('%Y%m%d %H:%M:%S')} with {self.blockSize}D block size "
+        logText = f"requested historical data from {startTemp.strftime('%Y%m%d %H:%M:%S')} to {endTemp.strftime('%Y%m%d %H:%M:%S')} with {blockSizeCalculated}D block size "
         log.info(logText)
         # self.histDataLog.on_next(logText)
 
@@ -65,7 +62,7 @@ class DownloadOneDateTask(Thread):
             self.ibClient.getHistoricalData(
                 self.contract,
                 endTemp.strftime("%Y%m%d %H:%M:%S"),
-                f"{blockSizeTemp} D",
+                f"{blockSizeCalculated} D",
                 self.timeframe.value,
                 "TRADES",
             )

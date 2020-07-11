@@ -87,83 +87,12 @@ class AssetBL(object):
         return self.ibClient.startRealtimeData(contract)
 
     # HISTORICAL DATA - IB + DB ---------------------------
+
     def downloadHistoricalData(
         self,
-        contractsAndTimeBlocks: List[Dict],
-        blockSize: int = 7,  # in days
-        timeframe: TimeFrame = TimeFrame.day1,
-    ) -> Observable[Any]:
-        progressResult0000 = BehaviorSubject(0)
-
-        self.currentThread = DownloadHistDataTask(
-            self.ibClient,
-            progressResult0000,
-            contractsAndTimeBlocks,
-            timeframe,
-            blockSize,
-        )
-        self.currentThread.start()
-
-        return progressResult0000
-
-    def downloadHistoricalData2(
-        self,
-        asset: Asset,
-        blockSize: int = 7,  # in days
-        timeframe: TimeFrame = TimeFrame.day1,
-    ) -> Observable[Any]:
-        progressResult0000 = BehaviorSubject(0)
-
-        contractsAndTimeBlocks = []
-
-        if AssetType.from_str(asset.type) == AssetType.STOCK:
-            contractsAndTimeBlocks = self.__downloadStock(asset, blockSize)
-        elif AssetType.from_str(asset.type) == AssetType.FUTURE:
-            contractsAndTimeBlocks = self.__downloadFutures(asset, blockSize)
-
-        self.currentThread = DownloadHistDataTask(
-            self.ibClient,
-            progressResult0000,
-            contractsAndTimeBlocks,
-            timeframe,
-            blockSize,
-        )
-        self.currentThread.start()
-
-        return progressResult0000
-
-    def updateHistoricalData2(
-        self,
-        asset: Asset,
-        blockSize: int = 7,  # in days
-        timeframe: TimeFrame = TimeFrame.day1,
-    ) -> Observable[Any]:
-        progressResult0000 = BehaviorSubject(0)
-
-        contractsAndTimeBlocks = []
-
-        if AssetType.from_str(asset.type) == AssetType.STOCK:
-            contractsAndTimeBlocks = self.__updateStock(asset, timeframe)
-
-        elif AssetType.from_str(asset.type) == AssetType.FUTURE:
-            contractsAndTimeBlocks = self.__updateFutures(asset, timeframe)
-
-        self.currentThread = DownloadHistDataTask(
-            self.ibClient,
-            progressResult0000,
-            contractsAndTimeBlocks,
-            timeframe,
-            blockSize,
-        )
-        self.currentThread.start()
-
-        return progressResult0000
-
-    def updateHistoricalData3(
-        self,
         assets: List[Asset],
-        blockSize: int = 7,  # in days
         timeframe: TimeFrame = TimeFrame.day1,
+        maxBlockSize: int = 365,  # in days
     ) -> Observable[Any]:
         progressResult0000 = BehaviorSubject(0)
 
@@ -171,13 +100,12 @@ class AssetBL(object):
 
         for asset in assets:
             if AssetType.from_str(asset.type) == AssetType.STOCK:
-                contractsAndTimeBlocks.append(
-                    *self.__updateStock(asset, timeframe)
+                contractsAndTimeBlocks.extend(
+                    self.__downloadStock(asset, maxBlockSize)
                 )
-
             elif AssetType.from_str(asset.type) == AssetType.FUTURE:
-                contractsAndTimeBlocks.append(
-                    *self.__updateFutures(asset, timeframe)
+                contractsAndTimeBlocks.extend(
+                    self.__downloadFutures(asset, maxBlockSize)
                 )
 
         self.currentThread = DownloadHistDataTask(
@@ -185,7 +113,39 @@ class AssetBL(object):
             progressResult0000,
             contractsAndTimeBlocks,
             timeframe,
-            blockSize,
+        )
+        self.currentThread.start()
+
+        return progressResult0000
+
+    def updateHistoricalData(
+        self,
+        assets: List[Asset],
+        timeframe: TimeFrame = TimeFrame.day1,
+        maxBlockSize: int = 365,  # in days
+    ) -> Observable[Any]:
+        progressResult0000 = BehaviorSubject(0)
+
+        contractsAndTimeBlocks = []
+
+        for asset in assets:
+            if AssetType.from_str(asset.type) == AssetType.STOCK:
+                contractsAndTimeBlocks.extend(
+                    self.__updateStock(asset, timeframe, maxBlockSize)
+                )
+
+            elif AssetType.from_str(asset.type) == AssetType.FUTURE:
+                contractsAndTimeBlocks.extend(
+                    self.__updateFutures(asset, timeframe, maxBlockSize)
+                )
+
+        log.info(contractsAndTimeBlocks)
+
+        self.currentThread = DownloadHistDataTask(
+            self.ibClient,
+            progressResult0000,
+            contractsAndTimeBlocks,
+            timeframe,
         )
         self.currentThread.start()
 
@@ -201,7 +161,7 @@ class AssetBL(object):
     # ----------------------------------------------------------
 
     def __updateFutures(
-        self, asset: Asset, timeframe: TimeFrame
+        self, asset: Asset, timeframe: TimeFrame, maxBlockSize: int
     ) -> List[Dict]:
         result = []
         for cd in asset.contractDetails:
@@ -220,24 +180,40 @@ class AssetBL(object):
 
                 if symbolData is not None:
 
+                    # WE HAVE SOME DATA IN DB -> UPDATE
                     lastDateTime = symbolData.tail(1).index[0]
 
                     if now > lastDateTime:
+
+                        timeBlocks = getTimeBlocks(
+                            lastDateTime, now, maxBlockSize,
+                        )
+
+                        for timeBlock in timeBlocks:
+                            result.append(
+                                {
+                                    "contract": cd.contract,
+                                    "from": timeBlock[0],
+                                    "to": timeBlock[1],
+                                }
+                            )
+                else:
+
+                    # OTHERWISE DOWNLOAD FULL
+                    timeBlocks = getTimeBlocks(
+                        datetime.strptime("19860101", "%Y%m%d"),
+                        now,
+                        maxBlockSize,
+                    )
+
+                    for timeBlock in timeBlocks:
                         result.append(
                             {
                                 "contract": cd.contract,
-                                "from": lastDateTime,
-                                "to": now,
+                                "from": timeBlock[0],
+                                "to": timeBlock[1],
                             }
                         )
-                else:
-                    result.append(
-                        {
-                            "contract": cd.contract,
-                            "from": datetime.strptime("19860101", "%Y%m%d"),
-                            "to": now,
-                        }
-                    )
 
             else:
                 log.info(
@@ -246,7 +222,7 @@ class AssetBL(object):
 
         return result
 
-    def __downloadFutures(self, asset: Asset, blockSize: int) -> List[Dict]:
+    def __downloadFutures(self, asset: Asset, maxBlockSize: int) -> List[Dict]:
         result = []
 
         for cd in asset.contractDetails:
@@ -263,7 +239,8 @@ class AssetBL(object):
                 result.append(
                     {
                         "contract": cd.contract,
-                        "from": lastTradeDateTime - timedelta(days=blockSize),
+                        "from": lastTradeDateTime
+                        - timedelta(days=maxBlockSize),
                         "to": lastTradeDateTime,
                     }
                 )
@@ -271,38 +248,68 @@ class AssetBL(object):
                 result.append(
                     {
                         "contract": cd.contract,
-                        "from": now - timedelta(days=blockSize),
+                        "from": now - timedelta(days=maxBlockSize),
                         "to": now,
                     }
                 )
 
         return result
 
-    def __updateStock(self, asset: Asset, timeframe: TimeFrame) -> List[Dict]:
+    def __updateStock(
+        self, asset: Asset, timeframe: TimeFrame, maxBlockSize: int
+    ) -> List[Dict]:
         result = []
 
         contract = asset.contractDetails[0].contract
         symbolData = self.getHistoricalDataFromDB(asset.symbol, timeframe)
 
+        now = datetime.now()
+
         if symbolData is not None:
 
+            # WE HAVE SOME DATA IN DB -> UPDATE
             lastDateTime = symbolData.tail(1).index[0]
-            now = datetime.now()
 
             if now > lastDateTime:
+
+                timeBlocks = getTimeBlocks(lastDateTime, now, maxBlockSize,)
+
+                for timeBlock in timeBlocks:
+                    result.append(
+                        {
+                            "contract": contract,
+                            "from": timeBlock[0],
+                            "to": timeBlock[1],
+                        }
+                    )
+
+        else:
+
+            # OTHERWISE DOWNLOAD FULL
+            timeBlocks = getTimeBlocks(
+                datetime.strptime("19860101", "%Y%m%d"), now, maxBlockSize,
+            )
+
+            for timeBlock in timeBlocks:
                 result.append(
-                    {"contract": contract, "from": lastDateTime, "to": now}
+                    {
+                        "contract": contract,
+                        "from": timeBlock[0],
+                        "to": timeBlock[1],
+                    }
                 )
 
         return result
 
-    def __downloadStock(self, asset: Asset, blockSize: int) -> List[Dict]:
+    def __downloadStock(self, asset: Asset, maxBlockSize: int) -> List[Dict]:
         result = []
 
         contract = asset.contractDetails[0].contract
 
         timeBlocks = getTimeBlocks(
-            datetime.strptime("19860101", "%Y%m%d"), datetime.now(), blockSize
+            datetime.strptime("19860101", "%Y%m%d"),
+            datetime.now(),
+            maxBlockSize,
         )
 
         for timeBlock in timeBlocks:

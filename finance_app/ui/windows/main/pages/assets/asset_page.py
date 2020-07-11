@@ -3,7 +3,6 @@ import logging
 import threading
 from datetime import datetime
 from typing import Any, List, Tuple
-from ui.windows.main.pages.assets.helpers import updateFutures, updateStock
 
 import pandas as pd
 from PyQt5 import uic
@@ -95,31 +94,11 @@ class AssetPage(BasePage):
 
         self.progressBar.show()
 
-        blockSize = 30  # days
-
-        subscriptionTemp = self.bl.updateHistoricalData3(
-            self.tableData, blockSize, self.timeframe
+        subscriptionTemp = self.bl.updateHistoricalData(
+            self.tableData
         ).subscribe(self.__updateProgress)
 
         self.subscriptions.append(subscriptionTemp)
-
-        # for asset in self.tableData:
-        #     # result = []
-
-        #     # if self.assetType == AssetType.STOCK:
-        #     #     result = updateStock(asset, self.timeframe, self.bl)
-        #     # elif self.assetType == AssetType.FUTURE:
-        #     #     result = updateFutures(asset, self.timeframe, self.bl)
-
-        #     # subscriptionTemp = self.bl.downloadHistoricalData(
-        #     #     result, blockSize, self.timeframe
-        #     # ).subscribe(self.__updateProgress)
-
-        #     subscriptionTemp = self.bl.updateHistoricalData2(
-        #         asset, blockSize, self.timeframe
-        #     ).subscribe(self.__updateProgress)
-
-        #     self.subscriptions.append(subscriptionTemp)
 
     @pyqtSlot(int)
     def __updateProgress(self, value: int):

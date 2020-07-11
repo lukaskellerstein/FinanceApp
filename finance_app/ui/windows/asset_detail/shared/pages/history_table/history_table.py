@@ -112,10 +112,8 @@ class HistoryTablePage(BasePage):
     def updateData(self):
         self.progressBar.show()
 
-        blockSize = 365  # days
-
-        subscriptionTemp = self.bl.updateHistoricalData2(
-            self.asset, blockSize, self.timeframe
+        subscriptionTemp = self.bl.updateHistoricalData(
+            [self.asset]
         ).subscribe(self.__updateProgress)
 
         self.subscriptions.append(subscriptionTemp)
@@ -124,10 +122,8 @@ class HistoryTablePage(BasePage):
     def downloadData(self):
         self.progressBar.show()
 
-        blockSize = 365  # days
-
-        subscriptionTemp = self.bl.downloadHistoricalData2(
-            self.asset, blockSize, self.timeframe
+        subscriptionTemp = self.bl.downloadHistoricalData(
+            [self.asset]
         ).subscribe(self.__updateProgress)
 
         self.subscriptions.append(subscriptionTemp)

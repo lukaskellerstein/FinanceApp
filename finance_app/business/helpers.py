@@ -1,5 +1,3 @@
-
-
 from datetime import datetime, timedelta
 import importlib
 from typing import Any, List, Tuple
@@ -10,6 +8,7 @@ from db.model.base import DBObject
 from ibapi.contract import Contract, ContractDetails
 
 types = (ContractDetails, Contract, DBObject)
+
 
 def obj_to_dict(obj: Any, omitKeys: List[str] = []) -> Any:
     if isinstance(obj, types):
@@ -39,7 +38,7 @@ def dict_to_obj(data: Any) -> Any:
 
         for k, v in data.items():
             instance.__setattr__(k, dict_to_obj(v))
-        
+
         return instance
     elif type(data) is list:
         return [dict_to_obj(item) for item in data]
@@ -47,21 +46,28 @@ def dict_to_obj(data: Any) -> Any:
         return data
 
 
+def getTimeBlocks(
+    start: datetime, end: datetime, blockInDays: int = 7
+) -> List[Tuple[datetime, datetime]]:
 
-def getTimeBlocks(start: datetime, end: datetime, days: int = 7) -> List[Tuple[datetime, datetime]]:
-    result = []
+    diff = (end - start).days
 
-    # date_format = "%m/%d/%Y"
-    # d1 = datetime.strptime("2/6/2017", date_format).date()
-    # d2 = datetime.strptime("3/5/2017", date_format).date()
-    d = start
-    step = timedelta(days=days)
+    if diff < blockInDays:
+        return [(start, end)]
+    else:
 
-    while d <= end:
-        tempStart = d
-        d += step
-        # print(f"from: {tempStart.strftime('%Y%m%d')}, to: {d.strftime('%Y%m%d')}")
-        result.append((tempStart, d))
+        # date_format = "%m/%d/%Y"
+        # d1 = datetime.strptime("2/6/2017", date_format).date()
+        # d2 = datetime.strptime("3/5/2017", date_format).date()
+        result = []
+        d = start
+        step = timedelta(days=blockInDays)
 
-    return result
+        while d <= end:
+            tempStart = d
+            d += step
+            # print(f"from: {tempStart.strftime('%Y%m%d')}, to: {d.strftime('%Y%m%d')}")
+            result.append((tempStart, d))
+
+        return result
 

@@ -35,7 +35,6 @@ class DownloadHistDataTask(Thread):
         progress: BehaviorSubject,
         contractsAndDates: List[Dict],
         timeframe: TimeFrame = TimeFrame.day1,
-        blockSize: int = 7,  # in days
     ):
         Thread.__init__(self)
         self.daemon = True
@@ -46,7 +45,6 @@ class DownloadHistDataTask(Thread):
         self.itemsProgress = BehaviorSubject(0)
         self.contractsAndDates = contractsAndDates
         self.timeframe = timeframe
-        self.blockSize = blockSize
 
         # db
         self.histDataDbService = PyStoreHistService()
@@ -76,7 +74,6 @@ class DownloadHistDataTask(Thread):
                 date,
                 contract,
                 self.timeframe,
-                self.blockSize,
             )
             log.info(
                 f"run thread for {contract.localSymbol} download data - date - {date}"
@@ -98,7 +95,7 @@ class DownloadHistDataTask(Thread):
 
                     areAllDead = True
                     for t in self.currentThreads:
-                        print(f"{t} - {t.isAlive()}")
+                        # print(f"{t} - {t.isAlive()}")
                         if t.isAlive() is True:
                             areAllDead = False
 
