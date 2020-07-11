@@ -28,8 +28,12 @@ class CandlestickPlot(pg.PlotItem):
         self.showGrid(x=True)
 
         # cross hair
-        self.vLine = pg.InfiniteLine(angle=90, movable=False)
-        self.hLine = pg.InfiniteLine(angle=0, movable=False)
+        self.vLine = pg.InfiniteLine(
+            angle=90, movable=False, pen=pg.mkPen(QtGui.QColor("black"))
+        )
+        self.hLine = pg.InfiniteLine(
+            angle=0, movable=False, pen=pg.mkPen(QtGui.QColor("black"))
+        )
         self.addItem(self.vLine, ignoreBounds=True)
         self.addItem(self.hLine, ignoreBounds=True)
 
@@ -48,28 +52,38 @@ class CandlestickPlot(pg.PlotItem):
 
         if Afrom < 0:
             Afrom = 0
-        elif Afrom > self.data.shape[0] - 1:
-            Afrom = self.data.shape[0] - 1
+        elif Afrom > self.data["id"].max():
+            Afrom = self.data["id"].max()
 
         if Ato < 0:
             Ato = 0
-        elif Ato > self.data.shape[0] - 1:
-            Ato = self.data.shape[0] - 1
+        elif Ato > self.data["id"].max():
+            Ato = self.data["id"].max()
 
         log.info(f"update Range: {Afrom}, {Ato}")
 
         if Afrom != Ato:
-            self.aaa = self.data[Afrom:Ato]
 
-            self.bbb = self.aaa.drop(
-                self.painted.index, axis=0, errors="ignore"
-            )
+            # current range
+            tempDf = self.data[
+                (self.data["id"] >= Afrom) & (self.data["id"] <= Ato)
+            ].copy()
+
+            # difference with painted DF
+            self.bbb = tempDf.drop(self.painted.index, axis=0, errors="ignore")
 
             if self.bbb.shape[0] > 0:
+
+                # enhanced painted dataDF
                 self.painted = self.painted.append(self.bbb)
+
+                # DRAW ALL
                 self.plot.generatePicture(self.painted)
 
             self.setXRange(*currentRange, padding=0)
+            self.setYRange(
+                tempDf["Low"].min(), tempDf["High"].max(), padding=0,
+            )
 
 
 ## Create a subclass of GraphicsObject.

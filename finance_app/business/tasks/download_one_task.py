@@ -8,7 +8,11 @@ from typing import Any, List, Tuple
 from rx import operators as ops
 from rx.subject.behaviorsubject import BehaviorSubject
 
-from business.model.contracts import IBContract
+from business.model.contracts import (
+    IBContract,
+    IBFutureContract,
+    IBStockContract,
+)
 from business.model.timeframe import TimeFrame
 from business.services.ibclient.my_ib_client import MyIBClient
 from db.services.pystore_hist_service import PyStoreHistService
@@ -50,6 +54,9 @@ class DownloadOneDateTask(Thread):
 
         (startTemp, endTemp) = self.date
 
+        blockSizeTemp = (endTemp - startTemp).days
+        log.info(blockSizeTemp)
+
         logText = f"requested historical data from {startTemp.strftime('%Y%m%d %H:%M:%S')} to {endTemp.strftime('%Y%m%d %H:%M:%S')} with {self.blockSize}D block size "
         log.info(logText)
         # self.histDataLog.on_next(logText)
@@ -58,7 +65,7 @@ class DownloadOneDateTask(Thread):
             self.ibClient.getHistoricalData(
                 self.contract,
                 endTemp.strftime("%Y%m%d %H:%M:%S"),
-                f"{self.blockSize} D",
+                f"{blockSizeTemp} D",
                 self.timeframe.value,
                 "TRADES",
             )
@@ -111,9 +118,14 @@ class DownloadOneDateTask(Thread):
         timeframe: TimeFrame,
         data: List[Tuple[datetime, float, float, float, float, float]],
     ):
-        log.info(f"saveToDb - {contract.localSymbol}")
-        log.info(data)
-        self.histDataDbService.add(contract.localSymbol, timeframe, data)
+        fullSymbolName = f"{contract.localSymbol}"
+        if isinstance(contract, IBFutureContract):
+            fullSymbolName = f"{contract.localSymbol}-{contract.lastTradeDateOrContractMonth}"
+
+        log.info(f"saveToDb - {fullSymbolName}")
+        # log.info(data)
+
+        self.histDataDbService.add(fullSymbolName, timeframe, data)
 
     # --------------------------------------------------------
     # --------------------------------------------------------

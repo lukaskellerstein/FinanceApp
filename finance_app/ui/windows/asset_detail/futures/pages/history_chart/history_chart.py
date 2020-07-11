@@ -1,29 +1,31 @@
-from helpers import week_of_month
 import logging
 import time
-from datetime import datetime, timedelta
-from typing import Any, Callable
+from datetime import datetime
+from typing import Any, Tuple
 
 import numpy as np
 import pandas as pd
-import pyqtgraph as pg
 from dateutil.relativedelta import relativedelta
-from holidays import US
 from PyQt5 import uic
 from PyQt5.QtCore import Qt, pyqtSlot
-from trading_calendars import get_calendar
 
-from business.model.asset import Asset, AssetType
-from business.model.timeframe import TimeFrame, Duration
+from business.model.asset import Asset
+from business.model.timeframe import Duration, TimeFrame
 from business.modules.asset_bl import AssetBL
 from ui.base.base_page import BasePage
 from ui.components.multi_candlestick_chart.chart import MyMultiCandlestickChart
-from PyQt5.QtGui import QColor
+from ui.windows.asset_detail.shared.pages.history_chart.helpers import (
+    fillGapsInDays,
+    plotMonths,
+    plotQuarters,
+    plotSeasons,
+    plotUSHolidays,
+    plotWeeks,
+    plotYears,
+)
 
-
-from typing import Tuple
-from ui.components.candlestick_chart.candlestick_plot import (
-    CandlestickGraphics,
+from ui.windows.asset_detail.futures.pages.history_chart.helpers import (
+    plotWeekends,
 )
 
 # create logger
@@ -36,6 +38,7 @@ class FutureHistoryChartPage(BasePage):
 
     originData: pd.DataFrame
     dataDF: pd.DataFrame
+    datesDF: pd.DataFrame
 
     currentRange: Tuple[int, int]
 
@@ -68,22 +71,23 @@ class FutureHistoryChartPage(BasePage):
         # DEFAULTS
         self.currentRange = (0, 0)
         self.timeframe = TimeFrame.day1
-        self.duration = Duration.year1.value
+        # self.duration = Duration.year1.value
+        self.duration = Duration.years20.value
 
         # signals
         self.durationComboBox.currentTextChanged.connect(
             self.durationComboBoxChanged
         )
-        # self.usHolidaysCheckBox.stateChanged.connect(
-        #     self.usHolidaysCheckboxChanged
-        # )
-        # self.weeksCheckbox.stateChanged.connect(self.weeksCheckboxChanged)
-        # self.monthsCheckbox.stateChanged.connect(self.monthsCheckboxChanged)
-        # self.seasonsCheckbox.stateChanged.connect(self.seasonsCheckboxChanged)
-        # self.quartersCheckbox.stateChanged.connect(
-        #     self.quartersCheckboxChanged
-        # )
-        # self.yearsCheckbox.stateChanged.connect(self.yearsCheckboxChanged)
+        self.usHolidaysCheckBox.stateChanged.connect(
+            self.usHolidaysCheckboxChanged
+        )
+        self.weeksCheckbox.stateChanged.connect(self.weeksCheckboxChanged)
+        self.monthsCheckbox.stateChanged.connect(self.monthsCheckboxChanged)
+        self.seasonsCheckbox.stateChanged.connect(self.seasonsCheckboxChanged)
+        self.quartersCheckbox.stateChanged.connect(
+            self.quartersCheckboxChanged
+        )
+        self.yearsCheckbox.stateChanged.connect(self.yearsCheckboxChanged)
 
         # init chart ----------------------------------------------
         log.info("Running")
@@ -102,13 +106,16 @@ class FutureHistoryChartPage(BasePage):
             ]
         )
 
+        # init chart ----------------------------------------------
+
+        # collect all data from all contracts
         for cd in self.asset.contractDetails:
-            histData = self.__getHistData(
-                cd.contract.localSymbol, self.timeframe
-            )
+
+            fullSymbolName = f"{cd.contract.localSymbol}-{cd.contract.lastTradeDateOrContractMonth}"
+            histData = self.__getHistData(fullSymbolName, self.timeframe)
 
             if histData is not None:
-                histData = self.__fillGapsInDays(histData, self.timeframe)
+                histData = fillGapsInDays(histData, self.timeframe)
 
                 histData["LocalSymbol"] = cd.contract.localSymbol
                 histData[
@@ -132,22 +139,30 @@ class FutureHistoryChartPage(BasePage):
             )
 
             self.dataDF = allHistData.copy()
+            self.originData = allHistData.copy()
             self.datesDF = datesDf.copy()
 
+            self.dataDF_flat = (
+                allHistData.sort_values("LastTradeDate")
+                .groupby(["Datetime"])
+                .first()
+            )
+
+            # CANDLESTICK
+            start = time.time()
             self.__plotCandlestickChart(
                 self.dataDF, self.datesDF, duration=self.duration
             )
-
-            start = time.time()
-            # self.__plotWeekends(self.dataDF)
             end = time.time()
-            log.info(f"plotWeekends data takes: {end - start} sec.")
+            log.info(f"plotCandlestick data takes: {end - start} sec.")
 
-        # set Default duration
-        self.durationComboBox.setCurrentText(self.duration)
+            # WEEKENDS
+            # start = time.time()
+            # plotWeekends(self.dataDF, self.candlestickChart.candlestickPlot)
+            # end = time.time()
+            # log.info(f"plotWeekends data takes: {end - start} sec.")
 
-        end = time.time()
-        log.info(f"plotCandlestick data takes: {end - start} sec.")
+        # ---------------------------------------------------------
 
     def __fillID(self, row, dates):
         return dates.index.get_loc(row["Datetime"])
@@ -167,19 +182,9 @@ class FutureHistoryChartPage(BasePage):
 
         return data
 
-    def __fillGapsInDays(
-        self, data: pd.DataFrame, timeframe: TimeFrame
-    ) -> pd.DataFrame:
-
-        if timeframe.value == TimeFrame.day1.value:
-            data = data.asfreq("D").reset_index().set_index("Datetime")
-
-            return data
-
     def __plotCandlestickChart(
         self, data: pd.DataFrame, dates: pd.DataFrame, **kwargs: Any
     ):
-
         range = (0, 0)
         if "duration" in kwargs:
             range = self.getDuration(kwargs["duration"])
@@ -189,45 +194,6 @@ class FutureHistoryChartPage(BasePage):
         self.candlestickChart = MyMultiCandlestickChart(data, dates, range)
         self.candlestickChart.on_range_update.connect(self.__updateRange)
         self.chartBox.addWidget(self.candlestickChart, 0, 0, 0, 0)
-
-    def __plotWeekends(self, data: pd.DataFrame):
-        low = data["Low"].min()
-        high = data["High"].max()
-
-        tempData = data.ffill(axis=0)
-
-        tempData = tempData.set_index("Datetime")
-
-        # width
-        w = (1 - 0) / 3.0
-        ww = (1 - 0) / 2.0
-
-        aaa = tempData[
-            (tempData.index.weekday == 5) | (tempData.index.weekday == 6)
-        ]
-
-        aaa.apply(
-            lambda x: self.__plotWeekendBar(
-                x, low, high, self.candlestickChart.candlestickPlot, w, ww
-            ),
-            axis=1,
-        )
-
-    def __plotWeekendBar(self, row, low, high, plot, width1, width2):
-        # BAR ----------------------------------
-        # bar = pg.QtGui.QGraphicsRectItem(
-        #     row["id"] + width2 - width1, low, width1 * 2, high - low,
-        # )
-        bar = pg.QtGui.QGraphicsRectItem(
-            row["id"] + width2 - width1,
-            row["Low"],
-            width1 * 2,
-            row["High"] - row["Low"],
-        )
-        bar.setPen(pg.mkPen(None))
-        bar.setBrush(pg.mkBrush(QColor("#bdbdbd")))
-        bar.setOpacity(0.5)
-        plot.addItem(bar)
 
     # --------------------------------------------------------
     # COMBO-BOXES
@@ -247,508 +213,97 @@ class FutureHistoryChartPage(BasePage):
         end = time.time()
         log.info(f"durationComboBoxChanged data takes: {end - start} sec.")
 
-    # # --------------------------------------------------------
-    # # CHECK-BOXES
-    # # --------------------------------------------------------
-    # def __plotTimeRange(
-    #     self,
-    #     data: pd.DataFrame,
-    #     method: Callable[[pd.Series, Any, float, float], Any],
-    #     plot,
-    # ):
-    #     data["id"] = np.arange(data.shape[0])
-
-    #     minY = data["Low"].min()
-    #     maxY = data["High"].max()
-
-    #     data.apply(
-    #         lambda x: method(x, plot, minY, maxY), axis=1,
-    #     )
-
-    # def __plotTimeStatistics(
-    #     self,
-    #     rangeType: str,
-    #     data: pd.DataFrame,
-    #     method: Callable[[pd.Series, Any], Any],
-    #     plot,
-    # ):
-
-    #     data["Change"] = data["Close"].pct_change() * 100
-
-    #     sum_change_data = data["Change"].resample(rangeType).sum()
-    #     sum_change_data.name = "Sum"
-
-    #     avg_change_data = data["Change"].resample(rangeType).mean()
-    #     avg_change_data.name = "Avg"
-    #     var_change_data = data["Change"].resample(rangeType).var()  # variance
-    #     var_change_data.name = "Var"
-    #     std_change_data = (
-    #         data["Change"].resample(rangeType).std(ddof=2)
-    #     )  # std dev
-    #     std_change_data.name = "Std"
-
-    #     id_data = data["id"].resample(rangeType).max()
-    #     price_data = data["Close"].resample(rangeType).last()
-
-    #     full_data = pd.concat(
-    #         [
-    #             id_data,
-    #             price_data,
-    #             sum_change_data,
-    #             avg_change_data,
-    #             var_change_data,
-    #             std_change_data,
-    #         ],
-    #         axis=1,
-    #     )
-
-    #     full_data.apply(
-    #         lambda x: method(x, plot), axis=1,
-    #     )
-
-    # # HOLIDAYS ------------
-    # def __plotUSHolidays(self, data: pd.DataFrame):
-
-    #     plot = self.candlestickChart.candlestickPlot
-
-    #     holidayNames = US()
-    #     nyse = get_calendar("XNYS")
-    #     holidays = nyse.regular_holidays.holidays()
-
-    #     # width
-    #     w = (1 - 0) / 3.0
-    #     ww = (1 - 0) / 2.0
-
-    #     tempData = data.ffill(axis=0)
-    #     tempData["id"] = np.arange(data.shape[0])
-
-    #     tempDataMin = tempData.index.min()
-    #     tempDataMax = tempData.index.max()
-
-    #     for holiday in holidays:
-    #         if tempDataMin < holiday < tempDataMax:
-    #             # idx_holiday = tempData.index.get_loc(holiday.to_pydatetime())
-    #             # val_holiday = tempData.loc[holiday.to_pydatetime()]["High"]
-
-    #             row = tempData.loc[holiday.to_pydatetime()]
-
-    #             # ARROW -----------------------------------
-    #             arrow = pg.ArrowItem(
-    #                 pos=(row["id"] + ww, row["High"]),
-    #                 angle=-75,
-    #                 tipAngle=60,
-    #                 headLen=20,
-    #                 tailLen=20,
-    #                 tailWidth=10,
-    #                 # pen={"color": "w", "width": 1},
-    #                 brush=QColor("#8d8d8d"),
-    #             )
-    #             plot.addItem(arrow)
-
-    #             # LABEL ---------------------------------
-    #             label = pg.TextItem(
-    #                 # html=f'<div style="text-align: center"><span style="color: #FFF;">{holidayNames.get(holiday)}</span></div>',
-    #                 text=f"{holidayNames.get(holiday)}",
-    #                 border="w",
-    #                 # fill=(0, 0, 255, 100),
-    #                 fill=QColor("#8d8d8d"),
-    #                 anchor=(0.0, 2.5),
-    #             )
-    #             label.setPos(row["id"] + ww, row["High"])
-    #             plot.addItem(label)
-
-    #             # BAR ----------------------------------
-    #             bar = pg.QtGui.QGraphicsRectItem(
-    #                 row["id"] + ww - w,
-    #                 row["Low"],
-    #                 w * 2,
-    #                 row["High"] - row["Low"],
-    #             )
-
-    #             bar.setPen(pg.mkPen(None))
-    #             bar.setBrush(pg.mkBrush(QColor("gray")))
-    #             plot.addItem(bar)
-
-    # @pyqtSlot(int)
-    # def usHolidaysCheckboxChanged(self, state: int):
-    #     if state == Qt.Checked:
-    #         self.__plotUSHolidays(self.data)
-    #     else:
-    #         self.__reDrawChart()
-
-    # # WEEKS ------------
-    # def __plotWeeks(self, data: pd.DataFrame):
-    #     # COLOR BAR -------------------------
-    #     # data["Week"] = data.apply(lambda x: week_of_month(x.name), axis=1)
-    #     # self.__plotTimeRange(
-    #     #     data, self.__plotWeekBar, self.candlestickChart.candlestickPlot
-    #     # )
-
-    #     self.__plotTimeRange(
-    #         data, self.__plotWeekBar, self.candlestickChart.candlestickPlot
-    #     )
-
-    #     # STATISTICS -------------------------
-    #     self.__plotTimeStatistics(
-    #         "W-MON",
-    #         data,
-    #         self.__plotStatistic,
-    #         self.candlestickChart.candlestickPlot,
-    #     )
-
-    # def __plotWeekBar(self, row: pd.Series, plot, minY: float, maxY: float):
-
-    #     weekNum = row.name.isocalendar()[1]
-
-    #     color = ""
-    #     if (weekNum % 2) == 0:
-    #         # odd number
-    #         color = "#37474f"
-    #     else:
-    #         # even number
-    #         color = "#b0bec5"
-
-    #     # BAR ----------------------------------
-    #     bar = pg.QtGui.QGraphicsRectItem(row["id"], minY, 1, maxY - minY)
-
-    #     bar.setPen(pg.mkPen(None))
-    #     bar.setOpacity(0.2)
-    #     bar.setBrush(pg.mkBrush(QColor(color)))
-    #     plot.addItem(bar)
-
-    # @pyqtSlot(int)
-    # def weeksCheckboxChanged(self, state: int):
-    #     if state == Qt.Checked:
-    #         self.__plotWeeks(self.data.copy())
-    #     else:
-    #         self.__reDrawChart()
-
-    # # MONTHS ------------
-    # def __plotMonths(self, data: pd.DataFrame):
-
-    #     # COLOR BAR -------------------------
-    #     self.__plotTimeRange(
-    #         data, self.__plotMonthBar, self.candlestickChart.candlestickPlot
-    #     )
-
-    #     # STATISTICS -------------------------
-    #     self.__plotTimeStatistics(
-    #         "M",
-    #         data,
-    #         self.__plotStatistic,
-    #         self.candlestickChart.candlestickPlot,
-    #     )
-
-    # def __plotMonthBar(self, row, plot, minY, maxY):
-    #     color = ""
-
-    #     # January - Q1 - Winter
-    #     if row.name.month == 1:
-    #         color = "#d32f2f"
-    #     # February - Q1 - Winter
-    #     elif row.name.month == 2:
-    #         color = "#9c27b0"
-    #     # March - Q1 - Spring
-    #     elif row.name.month == 3:
-    #         color = "#3f51b5"
-    #     # April - Q2 - Spring
-    #     elif row.name.month == 4:
-    #         color = "#2196f3"
-    #     # May - Q2 - Spring
-    #     elif row.name.month == 5:
-    #         color = "#00bcd4"
-    #     # Jun - Q2 - Summer
-    #     elif row.name.month == 6:
-    #         color = "#009688"
-    #     # July - Q3 - Summer
-    #     elif row.name.month == 7:
-    #         color = "#4caf50"
-    #     # August - Q3 - Summer
-    #     elif row.name.month == 8:
-    #         color = "#cddc39"
-    #     # September - Q3 - Autumn
-    #     elif row.name.month == 9:
-    #         color = "#ffeb3b"
-    #     # October - Q4 - Autumn
-    #     elif row.name.month == 10:
-    #         color = "#ffc107"
-    #     # November - Q4 - Autumn
-    #     elif row.name.month == 11:
-    #         color = "#ff9800"
-    #     # December - Q4 - Winter
-    #     elif row.name.month == 12:
-    #         color = "#ff5722"
-    #     else:
-    #         log.info(row.name.month)
-    #         color = "red"
-
-    #     # BAR ----------------------------------
-    #     bar = pg.QtGui.QGraphicsRectItem(row["id"], minY, 1, maxY - minY)
-
-    #     bar.setPen(pg.mkPen(None))
-    #     bar.setOpacity(0.2)
-    #     bar.setBrush(pg.mkBrush(QColor(color)))
-    #     plot.addItem(bar)
-
-    # @pyqtSlot(int)
-    # def monthsCheckboxChanged(self, state: int):
-    #     if state == Qt.Checked:
-    #         self.__plotMonths(self.data.copy())
-    #     else:
-    #         self.__reDrawChart()
-
-    # # SEASONS ------------
-    # def __plotSeasons(self, data: pd.DataFrame):
-    #     self.__plotTimeRange(
-    #         data, self.__plotSeasonBar, self.candlestickChart.candlestickPlot
-    #     )
-
-    # def __plotSeasonBar(self, row, plot, minY, maxY):
-    #     color = ""
-
-    #     # January - Q1 - Winter
-    #     if row.name.month == 1:
-    #         color = "#1e88e5"
-    #     # February - Q1 - Winter
-    #     elif row.name.month == 2:
-    #         color = "#1e88e5"
-    #     # March - Q1 - Spring
-    #     elif row.name.month == 3:
-    #         color = "#7cb342"
-    #     # April - Q2 - Spring
-    #     elif row.name.month == 4:
-    #         color = "#7cb342"
-    #     # May - Q2 - Spring
-    #     elif row.name.month == 5:
-    #         color = "#7cb342"
-    #     # Jun - Q2 - Summer
-    #     elif row.name.month == 6:
-    #         color = "#e53935"
-    #     # July - Q3 - Summer
-    #     elif row.name.month == 7:
-    #         color = "#e53935"
-    #     # August - Q3 - Summer
-    #     elif row.name.month == 8:
-    #         color = "#e53935"
-    #     # September - Q3 - Autumn
-    #     elif row.name.month == 9:
-    #         color = "#4e342e"
-    #     # October - Q4 - Autumn
-    #     elif row.name.month == 10:
-    #         color = "#4e342e"
-    #     # November - Q4 - Autumn
-    #     elif row.name.month == 11:
-    #         color = "#4e342e"
-    #     # December - Q4 - Winter
-    #     elif row.name.month == 12:
-    #         color = "#1e88e5"
-    #     else:
-    #         color = "red"
-    #         print("????????????????????????")
-
-    #     # BAR ----------------------------------
-    #     bar = pg.QtGui.QGraphicsRectItem(row["id"], minY, 1, maxY - minY)
-
-    #     bar.setPen(pg.mkPen(None))
-    #     bar.setOpacity(0.2)
-    #     bar.setBrush(pg.mkBrush(QColor(color)))
-    #     plot.addItem(bar)
-
-    # @pyqtSlot(int)
-    # def seasonsCheckboxChanged(self, state: int):
-    #     if state == Qt.Checked:
-    #         self.__plotSeasons(self.data.copy())
-    #     else:
-    #         self.__reDrawChart()
-
-    # # QUARTERS ------------
-    # def __plotQuarters(self, data: pd.DataFrame):
-
-    #     # COLOR BAR -------------------------
-    #     self.__plotTimeRange(
-    #         data, self.__plotQuarterBar, self.candlestickChart.candlestickPlot
-    #     )
-
-    #     # STATISTICS -------------------------
-    #     self.__plotTimeStatistics(
-    #         "Q",
-    #         data,
-    #         self.__plotStatistic,
-    #         self.candlestickChart.candlestickPlot,
-    #     )
-
-    # def __plotQuarterBar(self, row, plot, minY, maxY):
-    #     color = ""
-
-    #     # January - Q1 - Winter
-    #     if row.name.month == 1:
-    #         color = "#b0bec5"
-    #     # February - Q1 - Winter
-    #     elif row.name.month == 2:
-    #         color = "#b0bec5"
-    #     # March - Q1 - Spring
-    #     elif row.name.month == 3:
-    #         color = "#b0bec5"
-    #     # April - Q2 - Spring
-    #     elif row.name.month == 4:
-    #         color = "#78909c"
-    #     # May - Q2 - Spring
-    #     elif row.name.month == 5:
-    #         color = "#78909c"
-    #     # Jun - Q2 - Summer
-    #     elif row.name.month == 6:
-    #         color = "#78909c"
-    #     # July - Q3 - Summer
-    #     elif row.name.month == 7:
-    #         color = "#546e7a"
-    #     # August - Q3 - Summer
-    #     elif row.name.month == 8:
-    #         color = "#546e7a"
-    #     # September - Q3 - Autumn
-    #     elif row.name.month == 9:
-    #         color = "#546e7a"
-    #     # October - Q4 - Autumn
-    #     elif row.name.month == 10:
-    #         color = "#37474f"
-    #     # November - Q4 - Autumn
-    #     elif row.name.month == 11:
-    #         color = "#37474f"
-    #     # December - Q4 - Winter
-    #     elif row.name.month == 12:
-    #         color = "#37474f"
-    #     else:
-    #         print("????????????????????????")
-
-    #     # BAR ----------------------------------
-    #     bar = pg.QtGui.QGraphicsRectItem(row["id"], minY, 1, maxY - minY)
-
-    #     bar.setPen(pg.mkPen(None))
-    #     bar.setOpacity(0.2)
-    #     bar.setBrush(pg.mkBrush(QColor(color)))
-    #     plot.addItem(bar)
-
-    # @pyqtSlot(int)
-    # def quartersCheckboxChanged(self, state: int):
-    #     if state == Qt.Checked:
-    #         self.__plotQuarters(self.data.copy())
-    #     else:
-    #         self.__reDrawChart()
-
-    # # YEARS ------------
-    # def __plotYears(self, data: pd.DataFrame):
-
-    #     # COLOR BAR -------------------------
-    #     self.__plotTimeRange(
-    #         data, self.__plotYearBar, self.candlestickChart.candlestickPlot
-    #     )
-
-    #     # STATISTICS -------------------------
-    #     self.__plotTimeStatistics(
-    #         "Y",
-    #         data,
-    #         self.__plotStatistic,
-    #         self.candlestickChart.candlestickPlot,
-    #     )
-
-    # def __plotYearBar(self, row, plot, minY, maxY):
-    #     color = ""
-
-    #     if (row.name.year % 2) == 0:
-    #         # odd number
-    #         color = "#37474f"
-    #     else:
-    #         # even number
-    #         color = "#b0bec5"
-
-    #     # BAR ----------------------------------
-    #     bar = pg.QtGui.QGraphicsRectItem(row["id"], minY, 1, maxY - minY)
-
-    #     bar.setPen(pg.mkPen(None))
-    #     bar.setOpacity(0.2)
-    #     bar.setBrush(pg.mkBrush(QColor(color)))
-    #     plot.addItem(bar)
-
-    #     # STATISTICS ----------------------------------
-
-    #     # if row.name.day == 1 and row.name.month == 1:
-
-    # def __plotStatistic(self, row, plot):
-
-    #     # ARROW -----------------------------------
-    #     arrow = pg.ArrowItem(
-    #         pos=(row["id"], row["Close"]),
-    #         angle=0,
-    #         tipAngle=60,
-    #         headLen=20,
-    #         tailLen=20,
-    #         tailWidth=10,
-    #         # pen={"color": "w", "width": 1},
-    #         brush=QColor("#303f9f"),
-    #     )
-    #     plot.addItem(arrow)
-
-    #     # LABELS ----------------------------------
-    #     label = pg.TextItem(
-    #         html=f"""
-    #         <div style="text-align: center">
-    #             <span style="color: #FFF;">Return: {round(row["Sum"])} %</span>
-    #         </div>
-    #         <div style="text-align: center">
-    #             <span style="color: #FFF;">Daily Return: {round(row["Avg"],2)} %</span>
-    #         </div>
-    #         <div style="text-align: center">
-    #             <span style="color: #FFF;">Variance: {round(row["Var"],2)}</span>
-    #         </div>
-    #         <div style="text-align: center">
-    #             <span style="color: #FFF;">StdDev: {round(row["Std"],2)}</span>
-    #         </div>
-    #         """,
-    #         # text=f"{round(row['Change'])} %",
-    #         # border="w",
-    #         # fill=(0, 0, 255, 100),
-    #         fill=QColor("#303f9f"),
-    #         anchor=(0.0, 0.0),
-    #     )
-    #     label.setPos(row["id"], row["Close"])
-    #     plot.addItem(label)
-
-    # @pyqtSlot(int)
-    # def yearsCheckboxChanged(self, state: int):
-    #     if state == Qt.Checked:
-    #         self.__plotYears(self.data.copy())
-    #     else:
-    #         self.__reDrawChart()
-
-    # # --------------------------------------------------------
-    # # --------------------------------------------------------
-    # # Helpers
-    # # --------------------------------------------------------
-    # # --------------------------------------------------------
-
-    # def __reDrawChart(self):
-    #     self.__plotCandlestickChart(self.originData, range=self.currentRange)
-    #     self.__plotWeekends(self.originData)
-
-    #     if self.usHolidaysCheckBox.isChecked():
-    #         self.__plotUSHolidays(self.originData)
-
-    #     if self.weeksCheckbox.isChecked():
-    #         self.__plotWeeks(self.originData)
-
-    #     if self.monthsCheckbox.isChecked():
-    #         self.__plotMonths(self.originData)
-
-    #     if self.seasonsCheckbox.isChecked():
-    #         self.__plotSeasons(self.originData)
-
-    #     if self.quartersCheckbox.isChecked():
-    #         self.__plotQuarters(self.originData)
-
-    #     if self.yearsCheckbox.isChecked():
-    #         self.__plotYears(self.originData)
+    # --------------------------------------------------------
+    # CHECK-BOXES
+    # --------------------------------------------------------
+    @pyqtSlot(int)
+    def usHolidaysCheckboxChanged(self, state: int):
+        if state == Qt.Checked:
+            plotUSHolidays(
+                self.dataDF_flat, self.candlestickChart.candlestickPlot
+            )
+        else:
+            self.__reDrawChart()
+
+    @pyqtSlot(int)
+    def weeksCheckboxChanged(self, state: int):
+        if state == Qt.Checked:
+            plotWeeks(self.dataDF_flat, self.candlestickChart.candlestickPlot)
+        else:
+            self.__reDrawChart()
+
+    @pyqtSlot(int)
+    def monthsCheckboxChanged(self, state: int):
+        if state == Qt.Checked:
+            plotMonths(self.dataDF_flat, self.candlestickChart.candlestickPlot)
+        else:
+            self.__reDrawChart()
+
+    @pyqtSlot(int)
+    def seasonsCheckboxChanged(self, state: int):
+        if state == Qt.Checked:
+            plotSeasons(
+                self.dataDF_flat, self.candlestickChart.candlestickPlot
+            )
+        else:
+            self.__reDrawChart()
+
+    @pyqtSlot(int)
+    def quartersCheckboxChanged(self, state: int):
+        if state == Qt.Checked:
+            plotQuarters(
+                self.dataDF_flat, self.candlestickChart.candlestickPlot
+            )
+        else:
+            self.__reDrawChart()
+
+    @pyqtSlot(int)
+    def yearsCheckboxChanged(self, state: int):
+        if state == Qt.Checked:
+            plotYears(self.dataDF_flat, self.candlestickChart.candlestickPlot)
+        else:
+            self.__reDrawChart()
+
+    # --------------------------------------------------------
+    # --------------------------------------------------------
+    # Helpers
+    # --------------------------------------------------------
+    # --------------------------------------------------------
+
+    def __reDrawChart(self):
+        self.__plotCandlestickChart(
+            self.originData, self.datesDF, range=self.currentRange
+        )
+        #  plotWeekends(self.originData, self.candlestickChart.candlestickPlot)
+
+        if self.usHolidaysCheckBox.isChecked():
+            plotUSHolidays(
+                self.dataDF_flat, self.candlestickChart.candlestickPlot
+            )
+
+        if self.weeksCheckbox.isChecked():
+            plotWeeks(self.dataDF_flat, self.candlestickChart.candlestickPlot)
+
+        if self.monthsCheckbox.isChecked():
+            plotMonths(self.dataDF_flat, self.candlestickChart.candlestickPlot)
+
+        if self.seasonsCheckbox.isChecked():
+            plotSeasons(
+                self.dataDF_flat, self.candlestickChart.candlestickPlot
+            )
+
+        if self.quartersCheckbox.isChecked():
+            plotQuarters(
+                self.dataDF_flat, self.candlestickChart.candlestickPlot
+            )
+
+        if self.yearsCheckbox.isChecked():
+            plotYears(self.dataDF_flat, self.candlestickChart.candlestickPlot)
 
     def __updateRange(self, range: Tuple[int, int]):
         self.currentRange = range
+
+        # self.__reDrawChart()
 
     def getDuration(self, duration: Duration):
         minVal = datetime.now()

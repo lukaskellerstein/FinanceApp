@@ -291,7 +291,7 @@ class MyIBClient(EWrapper, EClient):
 
         # log.info("______________")
         log.info(
-            f"startHistorical for {contract.symbol}-{contract.localSymbol} : reqId={reqId}"
+            f"startHistorical for {contract.symbol}-{contract.localSymbol}-{contract.lastTradeDateOrContractMonth} : reqId={reqId}"
         )
         # log.info("______________")
 

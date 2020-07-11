@@ -4,6 +4,7 @@ import pyqtgraph as pg
 from typing import Tuple
 
 import pandas as pd
+from PyQt5 import QtGui
 
 # create logger
 log = logging.getLogger("CellarLogger")
@@ -18,7 +19,9 @@ class VolumePlot(pg.PlotItem):
         self.setFixedHeight(100)
 
         # cross hair
-        self.vLine = pg.InfiniteLine(angle=90, movable=False)
+        self.vLine = pg.InfiniteLine(
+            angle=90, movable=False, pen=pg.mkPen(QtGui.QColor("black"))
+        )
         self.addItem(self.vLine, ignoreBounds=True)
 
         # current range

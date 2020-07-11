@@ -18,7 +18,6 @@ class HistoricalDataTable(QTableView):
         self.setSelectionBehavior(QTableView.SelectRows)
 
         self.tableModel = QStandardItemModel()
-
         self.setData(data)
 
         self.setModel(self.tableModel)

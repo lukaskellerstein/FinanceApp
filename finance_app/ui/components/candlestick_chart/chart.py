@@ -191,20 +191,20 @@ class MyCandlestickChart(pg.GraphicsLayoutWidget):
             self.volumePlot.setXRange(minVal, maxVal, padding=0)
 
             # udpate Y axis of Volume
-            if minVal < 0:
-                minVal = 0
-            elif minVal > self.data.shape[0] - 1:
-                minVal = self.data.shape[0] - 1
+            # if minVal < 0:
+            #     minVal = 0
+            # elif minVal > self.data.shape[0] - 1:
+            #     minVal = self.data.shape[0] - 1
 
-            if maxVal < 0:
-                maxVal = 0
-            elif maxVal > self.data.shape[0] - 1:
-                maxVal = self.data.shape[0] - 1
+            # if maxVal < 0:
+            #     maxVal = 0
+            # elif maxVal > self.data.shape[0] - 1:
+            #     maxVal = self.data.shape[0] - 1
 
-            tempDf = self.data.iloc[minVal:maxVal]
-            self.volumePlot.setYRange(
-                tempDf["Volume"].min(), tempDf["Volume"].max(), padding=0
-            )
+            # tempDf = self.data.iloc[minVal:maxVal]
+            # self.volumePlot.setYRange(
+            #     tempDf["Volume"].min(), tempDf["Volume"].max(), padding=0
+            # )
 
             # mi = tempDf["Low"].min()
             # ma = tempDf["High"].max()
@@ -212,13 +212,13 @@ class MyCandlestickChart(pg.GraphicsLayoutWidget):
             # diff = ((ma - mi) / ma) * 10  # percent
 
             # update Y axis of Candlestic
-            self.candlestickPlot.setYRange(
-                # tempDf["Low"].min() - round(diff),
-                # tempDf["High"].max() + round(diff),
-                tempDf["Low"].min(),
-                tempDf["High"].max(),
-                padding=0,
-            )
+            # self.candlestickPlot.setYRange(
+            #     # tempDf["Low"].min() - round(diff),
+            #     # tempDf["High"].max() + round(diff),
+            #     tempDf["Low"].min(),
+            #     tempDf["High"].max(),
+            #     padding=0,
+            # )
 
     # --------------------------------------------------------
     # --------------------------------------------------------

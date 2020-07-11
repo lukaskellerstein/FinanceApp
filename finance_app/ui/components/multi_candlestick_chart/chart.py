@@ -20,8 +20,6 @@ from ui.components.multi_candlestick_chart.candlestick_x import CandlesticXAxis
 from ui.components.multi_candlestick_chart.helpers import printOHLCInfo
 from ui.components.multi_candlestick_chart.volume_plot import VolumePlot
 
-# from ui.components.candlestick_chart.volume_plot import VolumePlot
-
 # create logger
 log = logging.getLogger("CellarLogger")
 
@@ -87,11 +85,11 @@ class MyMultiCandlestickChart(pg.GraphicsLayoutWidget):
 
         self.addItem(self.volumePlot, row=3, col=0, colspan=2)
 
-        # self.proxy2 = pg.SignalProxy(
-        #     self.volumePlot.scene().sigMouseMoved,
-        #     rateLimit=60,
-        #     slot=self.mouseMoved2,
-        # )
+        self.proxy2 = pg.SignalProxy(
+            self.volumePlot.scene().sigMouseMoved,
+            rateLimit=60,
+            slot=self.mouseMoved2,
+        )
 
         # CHART 3 ----------------------------
 
@@ -123,6 +121,7 @@ class MyMultiCandlestickChart(pg.GraphicsLayoutWidget):
             # set crosshair
             self.candlestickPlot.vLine.setPos(mousePoint.x())
             self.candlestickPlot.hLine.setPos(mousePoint.y())
+            self.volumePlot.vLine.setPos(mousePoint.x())
 
             # other
             index = int(mousePoint.x())
@@ -167,29 +166,49 @@ class MyMultiCandlestickChart(pg.GraphicsLayoutWidget):
                     else:
                         opacity = 0.1
 
-                    self.candlestickPlot.setGroupOpacity(vgn, opacity)
+                    vgnFullName = f"{vgn}-{currentBar[currentBar['LocalSymbol'] == vgn].iloc[0]['LastTradeDate']}"
+
+                    self.candlestickPlot.setGroupOpacity(vgnFullName, opacity)
                     currentGroupIndex += 1
 
                 for ogn in otherGroups:
-                    self.candlestickPlot.setGroupOpacity(ogn, 0.02)
 
-    # def mouseMoved2(self, evt):
-    #     pos = evt[
-    #         0
-    #     ]  ## using signal proxy turns original arguments into a tuple
-    #     if self.volumePlot.sceneBoundingRect().contains(pos):
-    #         mousePoint = self.volumePlot.vb.mapSceneToView(pos)
-    #         index = int(mousePoint.x())
-    #         value = round(mousePoint.y(), 2)
-    #         if index > 0 and index < self.data.shape[0]:
-    #             row = self.data.iloc[index]
+                    ognFullName = f"{ogn}-{self.data[self.data['LocalSymbol'] == ogn].iloc[0]['LastTradeDate']}"
 
-    #             self.labelXY.setText(f"x={row['Datetime']}, y={value}")
-    #             self.labelOHLC.setText(
-    #                 f"O={row['Open']}, H={row['High']}, L={row['Low']}, C={row['Close']}, V={row['Volume']:.0f}"
-    #             )
-    #         self.candlestickPlot.vLine.setPos(mousePoint.x())
-    #         self.volumePlot.vLine.setPos(mousePoint.x())
+                    self.candlestickPlot.setGroupOpacity(ognFullName, 0.02)
+
+    def mouseMoved2(self, evt):
+        pos = evt[
+            0
+        ]  ## using signal proxy turns original arguments into a tuple
+        if self.volumePlot.sceneBoundingRect().contains(pos):
+            mousePoint = self.volumePlot.vb.mapSceneToView(pos)
+            index = int(mousePoint.x())
+            value = round(mousePoint.y(), 2)
+
+            currentBar = self.data.loc[self.data["id"] == index]
+            currentBar = currentBar.sort_values(by=["LastTradeDate"])
+
+            if currentBar.shape[0] > 0:
+
+                # Labels ---
+                date = currentBar.iloc[0]["Datetime"]
+
+                resultXHtml = f"<div><span style='color:black'>x={date}</span>, <span style='color:black'>y={value}</span></div>"
+                resultOHLCHtml = printOHLCInfo(currentBar)
+                self.candlestickPlot.labelOHLC.setHtml(
+                    resultXHtml + resultOHLCHtml
+                )
+
+            # if index > 0 and index < self.data.shape[0]:
+            #     row = self.data.iloc[index]
+
+            #     self.labelXY.setText(f"x={row['Datetime']}, y={value}")
+            #     self.labelOHLC.setText(
+            #         f"O={row['Open']}, H={row['High']}, L={row['Low']}, C={row['Close']}, V={row['Volume']:.0f}"
+            #     )
+            self.candlestickPlot.vLine.setPos(mousePoint.x())
+            self.volumePlot.vLine.setPos(mousePoint.x())
 
     def __updateCandlestickRegion(self, window, viewRange):
         xRange = viewRange[0]
@@ -219,36 +238,36 @@ class MyMultiCandlestickChart(pg.GraphicsLayoutWidget):
 
             log.info(f"run update Range: {minVal}, {maxVal}")
 
-            # udpate X axis of CANDLESTICK
-            self.candlestickPlot.updateRange((minVal, maxVal))
-
             # udpate X axis of Volume
             self.volumePlot.setXRange(minVal, maxVal, padding=0)
 
+            # udpate X axis of CANDLESTICK
+            self.candlestickPlot.updateRange((minVal, maxVal))
+
             # udpate Y axis of Volume
-            if minVal < 0:
-                minVal = 0
-            elif minVal > self.data.shape[0] - 1:
-                minVal = self.data.shape[0] - 1
+            # if minVal < 0:
+            #     minVal = 0
+            # elif minVal > self.data.shape[0] - 1:
+            #     minVal = self.data.shape[0] - 1
 
-            if maxVal < 0:
-                maxVal = 0
-            elif maxVal > self.data.shape[0] - 1:
-                maxVal = self.data.shape[0] - 1
+            # if maxVal < 0:
+            #     maxVal = 0
+            # elif maxVal > self.data.shape[0] - 1:
+            #     maxVal = self.data.shape[0] - 1
 
-            tempDf = self.data[
-                (self.data["id"] >= minVal) & (self.data["id"] <= maxVal)
-            ].copy()
+            # tempDf = self.data[
+            #     (self.data["id"] >= minVal) & (self.data["id"] <= maxVal)
+            # ].copy()
 
-            # update Y axis of Candlestic
-            self.candlestickPlot.setYRange(
-                tempDf["Low"].min(), tempDf["High"].max(), padding=0,
-            )
+            # # update Y axis of Candlestic
+            # self.candlestickPlot.setYRange(
+            #     tempDf["Low"].min(), tempDf["High"].max(), padding=0,
+            # )
 
-            yPos = tempDf["High"].max()
-            print(f"Set text position ({minVal}, {yPos})")
+            # yPos = tempDf["High"].max()
+            # print(f"Set text position ({minVal}, {yPos})")
 
-            self.candlestickPlot.labelOHLC.setPos(minVal, yPos)
+            # self.candlestickPlot.labelOHLC.setPos(minVal, yPos)
 
     # --------------------------------------------------------
     # --------------------------------------------------------

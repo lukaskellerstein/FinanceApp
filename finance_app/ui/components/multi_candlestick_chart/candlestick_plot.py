@@ -37,8 +37,12 @@ class CandlestickPlot(pg.PlotItem):
         self.showGrid(x=True)
 
         # cross hair
-        self.vLine = pg.InfiniteLine(angle=90, movable=False)
-        self.hLine = pg.InfiniteLine(angle=0, movable=False)
+        self.vLine = pg.InfiniteLine(
+            angle=90, movable=False, pen=pg.mkPen(QtGui.QColor("black"))
+        )
+        self.hLine = pg.InfiniteLine(
+            angle=0, movable=False, pen=pg.mkPen(QtGui.QColor("black"))
+        )
         self.addItem(self.vLine, ignoreBounds=True)
         self.addItem(self.hLine, ignoreBounds=True)
 
@@ -76,14 +80,12 @@ class CandlestickPlot(pg.PlotItem):
         if Afrom != Ato:
 
             # current range
-            self.aaa = self.data[
+            tempDf = self.data[
                 (self.data["id"] >= Afrom) & (self.data["id"] <= Ato)
             ].copy()
 
-            # merge with painted DF
-            self.bbb = self.aaa.drop(
-                self.painted.index, axis=0, errors="ignore"
-            )
+            # difference with painted DF
+            self.bbb = tempDf.drop(self.painted.index, axis=0, errors="ignore")
 
             if self.bbb.shape[0] > 0:
 
@@ -95,24 +97,31 @@ class CandlestickPlot(pg.PlotItem):
                 self.drawAll(self.painted)
 
             self.setXRange(*currentRange, padding=0)
+            self.setYRange(
+                tempDf["Low"].min(), tempDf["High"].max(), padding=0,
+            )
+
+            self.labelOHLC.setPos(Afrom, tempDf["High"].max())
 
     def drawAll(self, data):
 
         self.clear()
 
         # DRAW ALL CONTRACT MONTHS - CANDLESTICK
-        data.groupby("LocalSymbol").apply(
+        data.groupby(["LocalSymbol", "LastTradeDate"]).apply(
             lambda x: self.drawContractMonthCandlestick(x)
         )
 
         # DRAW ALL CONTRACT MONTHS - EXPIRATIONS
-        data.groupby("LocalSymbol").apply(
+        data.groupby(["LocalSymbol", "LastTradeDate"]).apply(
             lambda x: self.drawContractMonthExpiration(x)
         )
 
     def drawContractMonthCandlestick(self, data):
         graphics = CandlestickGraphics(data)
-        self.plots[data.iloc[0]["LocalSymbol"]] = graphics
+        self.plots[
+            f"{data.iloc[0]['LocalSymbol']}-{data.iloc[0]['LastTradeDate']}"
+        ] = graphics
         self.addItem(graphics)
 
     def drawContractMonthExpiration(self, data):

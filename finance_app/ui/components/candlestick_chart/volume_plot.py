@@ -2,6 +2,7 @@ import logging
 import pyqtgraph as pg
 
 from typing import Tuple
+from PyQt5 import QtGui
 
 # create logger
 log = logging.getLogger("CellarLogger")
@@ -15,7 +16,9 @@ class VolumePlot(pg.PlotItem):
         self.setXRange(*currentRange, padding=0)
 
         # cross hair
-        self.vLine = pg.InfiniteLine(angle=90, movable=False)
+        self.vLine = pg.InfiniteLine(
+            angle=90, movable=False, pen=pg.mkPen(QtGui.QColor("black"))
+        )
         self.addItem(self.vLine, ignoreBounds=True)
 
         # (Afrom, Ato) = currentRange

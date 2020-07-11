@@ -7,13 +7,12 @@ from typing import Any, Dict, Union
 from PyQt5 import uic
 from PyQt5.QtCore import Qt, pyqtSlot
 
-
 from business.model.asset import Asset
 from business.model.timeframe import TimeFrame
 from business.modules.asset_bl import AssetBL
 from ui.base.base_page import BasePage
 from ui.components.historical_data_table.table import HistoricalDataTable
-
+from ui.windows.main.pages.assets.helpers import downloadFutures, updateFutures
 
 # create logger
 log = logging.getLogger("CellarLogger")
@@ -25,7 +24,6 @@ class FutureHistoryTablePage(BasePage):
     lock = threading.Lock()
 
     asset: Asset
-    localSymbolsRadioButtons: Dict
 
     timeframe = TimeFrame.day1
 
@@ -69,7 +67,7 @@ class FutureHistoryTablePage(BasePage):
             [f"{o['localSymbol']}-{o['lastTradeDate']}" for o in localSymbols]
         )
 
-        localSymbol = self.localSymbolComboBox.currentText().split("-")[0]
+        localSymbol = self.localSymbolComboBox.currentText()
         self.getHistData(self.timeframe, localSymbol)
 
         self.progressBar.hide()
@@ -121,36 +119,8 @@ class FutureHistoryTablePage(BasePage):
 
         blockSize = 365  # days
 
-        result = []
-        for cd in self.asset.contractDetails:
-
-            lastTradeDateTime = datetime.strptime(
-                cd.contract.lastTradeDateOrContractMonth, "%Y%m%d"
-            )
-            now = datetime.now()
-
-            if lastTradeDateTime > now:
-
-                localSymbol = cd.contract.localSymbol
-                symbolData = self.bl.getHistoricalDataFromDB(
-                    localSymbol, self.timeframe
-                )
-
-                if symbolData is not None:
-
-                    lastDateTime = symbolData.tail(1).index[0]
-
-                    if now > lastDateTime:
-                        result.append(
-                            {
-                                "contract": cd.contract,
-                                "from": lastDateTime,
-                                "to": now,
-                            }
-                        )
-
-        subscriptionTemp = self.bl.downloadHistoricalData(
-            result, blockSize, self.timeframe
+        subscriptionTemp = self.bl.updateHistoricalData2(
+            self.asset, blockSize, self.timeframe
         ).subscribe(self.__updateProgress)
 
         self.subscriptions.append(subscriptionTemp)
@@ -161,24 +131,8 @@ class FutureHistoryTablePage(BasePage):
 
         blockSize = 365  # days
 
-        result = []
-        for cd in self.asset.contractDetails:
-
-            lastTradeDateTime = datetime.strptime(
-                cd.contract.lastTradeDateOrContractMonth, "%Y%m%d"
-            )
-
-            if lastTradeDateTime > datetime.strptime("19860101", "%Y%m%d"):
-                result.append(
-                    {
-                        "contract": cd.contract,
-                        "from": lastTradeDateTime - timedelta(days=blockSize),
-                        "to": lastTradeDateTime,
-                    }
-                )
-
-        subscriptionTemp = self.bl.downloadHistoricalData(
-            result, blockSize, self.timeframe
+        subscriptionTemp = self.bl.downloadHistoricalData2(
+            self.asset, blockSize, self.timeframe
         ).subscribe(self.__updateProgress)
 
         self.subscriptions.append(subscriptionTemp)
@@ -193,9 +147,11 @@ class FutureHistoryTablePage(BasePage):
             if value == 100:
                 self.progressBar.hide()
 
-                localSymbol = self.localSymbolComboBox.currentText().split(
-                    "-"
-                )[0]
+                # localSymbol = self.localSymbolComboBox.currentText().split(
+                #     "-"
+                # )[0]
+
+                localSymbol = self.localSymbolComboBox.currentText()
 
                 self.getHistData(self.timeframe, localSymbol)
         finally:
@@ -203,8 +159,8 @@ class FutureHistoryTablePage(BasePage):
 
     @pyqtSlot(str)
     def localSymbolComboBoxChanged(self, value: str):
-        localSymbol = value.split("-")[0]
-        self.getHistData(self.timeframe, localSymbol)
+        # localSymbol = value.split("-")[0]
+        self.getHistData(self.timeframe, value)
 
     # --------------------------------------------------------
     # --------------------------------------------------------

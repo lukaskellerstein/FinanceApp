@@ -3,6 +3,7 @@ import threading
 import time
 from datetime import datetime
 from typing import Any, Union
+from ui.windows.main.pages.assets.helpers import downloadStock, updateStock
 
 from PyQt5 import uic
 from PyQt5.QtCore import Qt, pyqtSlot
@@ -64,8 +65,10 @@ class HistoryTablePage(BasePage):
         self.table = None
         self.getHistData(self.timeframe)
 
-    def getHistData(self, value: TimeFrame):
-        self.data = self.bl.getHistoricalDataFromDB(self.asset.symbol, value)
+    def getHistData(self, timeframe: TimeFrame):
+        self.data = self.bl.getHistoricalDataFromDB(
+            self.asset.symbol, timeframe
+        )
 
         if self.data is not None:
             # start = time.time()
@@ -110,19 +113,9 @@ class HistoryTablePage(BasePage):
         self.progressBar.show()
 
         blockSize = 365  # days
-        contract = self.asset.contractDetails[0].contract
 
-        result = []
-        lastDateTime = self.data.tail(1).index[0]
-        now = datetime.now()
-
-        if now > lastDateTime:
-            result.append(
-                {"contract": contract, "from": lastDateTime, "to": now}
-            )
-
-        subscriptionTemp = self.bl.downloadHistoricalData(
-            result, blockSize, self.timeframe
+        subscriptionTemp = self.bl.updateHistoricalData2(
+            self.asset, blockSize, self.timeframe
         ).subscribe(self.__updateProgress)
 
         self.subscriptions.append(subscriptionTemp)
@@ -132,25 +125,9 @@ class HistoryTablePage(BasePage):
         self.progressBar.show()
 
         blockSize = 365  # days
-        contract = self.asset.contractDetails[0].contract
 
-        timeBlocks = getTimeBlocks(
-            datetime.strptime("19860101", "%Y%m%d"), datetime.now(), blockSize
-        )
-
-        result = []
-
-        for timeBlock in timeBlocks:
-            result.append(
-                {
-                    "contract": contract,
-                    "from": timeBlock[0],
-                    "to": timeBlock[1],
-                }
-            )
-
-        subscriptionTemp = self.bl.downloadHistoricalData(
-            result, blockSize, self.timeframe
+        subscriptionTemp = self.bl.downloadHistoricalData2(
+            self.asset, blockSize, self.timeframe
         ).subscribe(self.__updateProgress)
 
         self.subscriptions.append(subscriptionTemp)

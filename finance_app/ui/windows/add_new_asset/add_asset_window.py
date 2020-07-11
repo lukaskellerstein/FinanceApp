@@ -11,11 +11,13 @@ from business.model.asset import Asset, AssetType
 from business.model.contract_details import IBContractDetails
 from business.model.contracts import ContractFactory
 from business.modules.asset_bl import AssetBL
-from ui.windows.add_new_asset.table.table_model_factory import (
+from ui.components.contract_details_table.table_model_factory import (
     ContractDetailsTableModelFactory,
 )
 
-from ui.windows.add_new_asset.table.table import AssetContractDetailsTable
+from ui.components.contract_details_table.table import (
+    AssetContractDetailsTable,
+)
 from PyQt5.Qt import QApplication
 from business.modules.asset_bl import AssetBL
 
@@ -43,7 +45,6 @@ class AssetAddWindow(QWidget):
 
         self.on_fillTable.connect(self.__fillTable)
 
-        self.asset: Asset = Asset()
         self.assetType: AssetType = kwargs["assetType"]
         self.bl = AssetBL()
 

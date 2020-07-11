@@ -1,6 +1,9 @@
 import logging
 import time
 from typing import Any, Callable, Type
+from ui.windows.asset_detail.shared.pages.contract_details.contract_details import (
+    ContractDetailsPage,
+)
 
 import rx.operators as ops
 from PyQt5 import uic
@@ -29,6 +32,8 @@ class AssetDetailWindow(QMainWindow):
     asset: Asset
 
     currentPage: BasePage
+
+    on_update = pyqtSignal()
 
     def __init__(self, asset: Asset):
         super().__init__()
@@ -61,6 +66,9 @@ class AssetDetailWindow(QMainWindow):
         self.actionChart.triggered.connect(
             self.setCurrentPage(HistoryChartPage, asset=self.asset)
         )
+        self.actionContractDetails.triggered.connect(
+            self.setCurrentPage(ContractDetailsPage, asset=self.asset)
+        )
 
         # Stacket Widget
         self.pageBox.removeWidget(self.pageBox.widget(0))
@@ -74,6 +82,9 @@ class AssetDetailWindow(QMainWindow):
         self.setWindowTitle(
             f"{self.asset.symbol} - {self.asset.shortDescription}"
         )
+
+    # def __pageOnUpdate(self):
+    #     self.on_update.emit()
 
     # --------------
     # HOF - High Ordered Function -> returns function
@@ -90,6 +101,8 @@ class AssetDetailWindow(QMainWindow):
                 self.currentPage = page(**kwargs)
             else:
                 self.currentPage = page()
+
+            self.currentPage.on_update.connect(self.on_update.emit)
             self.pageBox.addWidget(self.currentPage)
             self.pageBox.setCurrentIndex(0)
 
