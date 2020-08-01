@@ -76,6 +76,7 @@
     </property>
     <addaction name="actionBasicInfo"/>
     <addaction name="actionContractDetails"/>
+    <addaction name="actionFundamentals"/>
    </widget>
    <widget class="QMenu" name="menuHistory">
     <property name="title">
@@ -106,6 +107,11 @@
   <action name="actionChart">
    <property name="text">
     <string>Chart</string>
+   </property>
+  </action>
+  <action name="actionFundamentals">
+   <property name="text">
+    <string>Fundamentals</string>
    </property>
   </action>
  </widget>

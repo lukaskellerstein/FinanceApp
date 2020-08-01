@@ -254,7 +254,7 @@ def mapDictToLlContractDetail(d: Dict[str, Any]) -> LlContractDetails:
 
 def mapContractDetailsToLl(cd: ContractDetails) -> LlContractDetails:
     # contract -------------
-    result = LlContractDetails(cd.contract)
+    result = LlContractDetails(IBContract(**cd.contract))
     # result.conId = cd.contract.conId
     # result.symbol = cd.contract.symbol
     # result.secType = cd.contract.secType

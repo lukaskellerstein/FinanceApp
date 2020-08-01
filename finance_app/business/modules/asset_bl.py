@@ -154,6 +154,11 @@ class AssetBL(object):
     def getHistoricalDataFromDB(self, symbol: str, timeframe: TimeFrame):
         return self.histDataDbService.getAll(symbol, timeframe)
 
+    # FUNDAMENTALS DATA - IB -----------------------------------
+
+    def getFundamentals(self, contract: IBContract) -> Observable[Any]:
+        return self.ibClient.getFundamentalData(contract)
+
     # ----------------------------------------------------------
     # ----------------------------------------------------------
     # HELPER METHODS
@@ -164,6 +169,10 @@ class AssetBL(object):
         self, asset: Asset, timeframe: TimeFrame, maxBlockSize: int
     ) -> List[Dict]:
         result = []
+
+        if asset.symbol == "ZB":
+            print(asset)
+
         for cd in asset.contractDetails:
 
             lastTradeDateTime = datetime.strptime(

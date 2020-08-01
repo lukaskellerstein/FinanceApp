@@ -52,8 +52,6 @@ class ContractDetailsPage(BasePage):
         self.gridLayout.addWidget(self.table, 1, 0, 1, 1)
 
     def updateCD(self):
-        print(self.asset)
-
         exchange = self.asset.contractDetails[0].contract.exchange
 
         contract = ContractFactory.create(

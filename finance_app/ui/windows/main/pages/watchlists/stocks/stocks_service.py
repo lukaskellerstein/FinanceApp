@@ -60,6 +60,9 @@ class StocksWatchlistService(object):
 
     def aaa(self, data: dict, stateItem: StocksRealtimeDataItem):
 
+        if data == {}:
+            return
+
         if data["type"] == "ask":
             stateItem.ask.on_next(data)
         elif data["type"] == "ask_size":

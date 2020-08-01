@@ -16,6 +16,13 @@
   <layout class="QGridLayout" name="gridLayout">
    <item row="0" column="0" rowspan="2">
     <layout class="QFormLayout" name="basicInfoBox">
+     <item row="1" column="0">
+      <widget class="QLabel" name="localSymbolLabel">
+       <property name="text">
+        <string>TextLabel</string>
+       </property>
+      </widget>
+     </item>
      <item row="1" column="1">
       <widget class="QLabel" name="longNameLabel">
        <property name="text">
@@ -65,39 +72,56 @@
        </property>
       </widget>
      </item>
-     <item row="1" column="0">
-      <widget class="QLabel" name="localSymbolLabel">
+     <item row="5" column="0">
+      <widget class="QLabel" name="label_5">
+       <property name="text">
+        <string>primary Exchange</string>
+       </property>
+      </widget>
+     </item>
+     <item row="5" column="1">
+      <widget class="QLabel" name="primaryExchangeLabel">
        <property name="text">
         <string>TextLabel</string>
        </property>
       </widget>
      </item>
-    </layout>
-   </item>
-   <item row="1" column="1">
-    <layout class="QFormLayout" name="basicInfo2Box">
-     <item row="0" column="0">
+     <item row="6" column="0">
+      <widget class="QLabel" name="label_7">
+       <property name="text">
+        <string>Exchange</string>
+       </property>
+      </widget>
+     </item>
+     <item row="6" column="1">
+      <widget class="QLabel" name="exchangeLabel">
+       <property name="text">
+        <string>TextLabel</string>
+       </property>
+      </widget>
+     </item>
+     <item row="7" column="0">
       <widget class="QLabel" name="label_2">
        <property name="text">
         <string>minTicks</string>
        </property>
       </widget>
      </item>
-     <item row="1" column="0">
-      <widget class="QLabel" name="label_4">
-       <property name="text">
-        <string>multiplier</string>
-       </property>
-      </widget>
-     </item>
-     <item row="0" column="1">
+     <item row="7" column="1">
       <widget class="QLabel" name="minTicksLabel">
        <property name="text">
         <string>TextLabel</string>
        </property>
       </widget>
      </item>
-     <item row="1" column="1">
+     <item row="8" column="0">
+      <widget class="QLabel" name="label_4">
+       <property name="text">
+        <string>multiplier</string>
+       </property>
+      </widget>
+     </item>
+     <item row="8" column="1">
       <widget class="QLabel" name="multiplierLabel">
        <property name="text">
         <string>TextLabel</string>
@@ -106,37 +130,11 @@
      </item>
     </layout>
    </item>
+   <item row="1" column="1">
+    <layout class="QFormLayout" name="basicInfo2Box"/>
+   </item>
    <item row="0" column="1">
-    <layout class="QFormLayout" name="basicInfo3Box">
-     <item row="0" column="0">
-      <widget class="QLabel" name="label_5">
-       <property name="text">
-        <string>primary Exchange</string>
-       </property>
-      </widget>
-     </item>
-     <item row="0" column="1">
-      <widget class="QLabel" name="primaryExchangeLabel">
-       <property name="text">
-        <string>TextLabel</string>
-       </property>
-      </widget>
-     </item>
-     <item row="1" column="0">
-      <widget class="QLabel" name="label_7">
-       <property name="text">
-        <string>Exchange</string>
-       </property>
-      </widget>
-     </item>
-     <item row="1" column="1">
-      <widget class="QLabel" name="exchangeLabel">
-       <property name="text">
-        <string>TextLabel</string>
-       </property>
-      </widget>
-     </item>
-    </layout>
+    <layout class="QFormLayout" name="basicInfo3Box"/>
    </item>
   </layout>
  </widget>

@@ -152,64 +152,66 @@ class StockTableModel(QAbstractTableModel):
     @pyqtSlot(dict, name="on_update_model")
     def on_update_model(self, obj):
 
-        # start = time.time()
+        if obj != {}:
 
-        atype = obj["type"]
-        aticker = obj["ticker"]
-        aprice = obj["price"]
+            # start = time.time()
 
-        # if (atype in self._data.columns) == False:
-        #     print("_______________________")
-        #     print(atype)
-        #     print("_______________________")
+            atype = obj["type"]
+            aticker = obj["ticker"]
+            aprice = obj["price"]
 
-        if (aticker in self._data.index) == False:
-            self.addStock(aticker)
+            # if (atype in self._data.columns) == False:
+            #     print("_______________________")
+            #     print(atype)
+            #     print("_______________________")
 
-        if (atype in defaultValue([]).columns) == True:
-            self._data.loc[aticker, atype] = aprice
+            if (aticker in self._data.index) == False:
+                self.addStock(aticker)
 
-            if atype == "close" or atype == "last":
-                # change column - calculation
-                closeP = self._data.loc[aticker, "close"]
-                lastP = self._data.loc[aticker, "last"]
-                if closeP > 0 and lastP > 0:
-                    self._data.loc[aticker, "change"] = round(
-                        ((lastP - closeP) / closeP) * 100, 1
-                    )
-                else:
-                    self._data.loc[aticker, "change"] = 0
+            if (atype in defaultValue([]).columns) == True:
+                self._data.loc[aticker, atype] = aprice
 
-            # VAR 1. -----------------------------------
-            # bbb = QModelIndex()
-            # bbb.row = self._data.index.get_loc(aticker)
-            # bbb.column = self._data.columns.get_loc(atype)
-            # self.dataChanged.emit(bbb, bbb)  # <---
+                if atype == "close" or atype == "last":
+                    # change column - calculation
+                    closeP = self._data.loc[aticker, "close"]
+                    lastP = self._data.loc[aticker, "last"]
+                    if closeP > 0 and lastP > 0:
+                        self._data.loc[aticker, "change"] = round(
+                            ((lastP - closeP) / closeP) * 100, 1
+                        )
+                    else:
+                        self._data.loc[aticker, "change"] = 0
 
-            bbb = QModelIndex()
-            bbb.row = 1
-            bbb.column = 1
-            self.dataChanged.emit(bbb, bbb)
+                # VAR 1. -----------------------------------
+                # bbb = QModelIndex()
+                # bbb.row = self._data.index.get_loc(aticker)
+                # bbb.column = self._data.columns.get_loc(atype)
+                # self.dataChanged.emit(bbb, bbb)  # <---
 
-            # VAR 2. ----------------------------------
+                bbb = QModelIndex()
+                bbb.row = 1
+                bbb.column = 1
+                self.dataChanged.emit(bbb, bbb)
 
-            # rowCount = self._data.shape[0] - 1
-            # columnCount = self._data.shape[1] - 1
+                # VAR 2. ----------------------------------
 
-            # aaa = QModelIndex()
-            # aaa.row = 0
-            # aaa.column = 0
+                # rowCount = self._data.shape[0] - 1
+                # columnCount = self._data.shape[1] - 1
 
-            # bbb = QModelIndex()
-            # bbb.row = rowCount - 1
-            # bbb.column = columnCount - 1
+                # aaa = QModelIndex()
+                # aaa.row = 0
+                # aaa.column = 0
 
-            # self.dataChanged.emit(aaa, bbb)
+                # bbb = QModelIndex()
+                # bbb.row = rowCount - 1
+                # bbb.column = columnCount - 1
 
-        # ------------------------------------------
+                # self.dataChanged.emit(aaa, bbb)
 
-        # end = time.time()
-        # print(f"on_update_model - {aticker} - {(end - start) * 10000}sec.")
+            # ------------------------------------------
+
+            # end = time.time()
+            # print(f"on_update_model - {aticker} - {(end - start) * 10000}sec.")
 
     # ----------------------------------------------------------
     # Minimum methods to override

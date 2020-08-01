@@ -1,16 +1,20 @@
+from business.modules.asset_bl import AssetBL
+from ibapi.contract import Contract
 import logging
 from typing import Any
 
 from PyQt5 import uic
-from PyQt5.QtCore import Qt, pyqtSlot
-
+from PyQt5.QtCore import Qt, pyqtSignal
 from ui.base.base_page import BasePage
+from business.model.asset import Asset
 
 # create logger
 log = logging.getLogger("CellarLogger")
 
 
 class BasicInfoPage(BasePage):
+    asset: Asset
+
     def __init__(self, **kwargs: Any):
         super().__init__()
         log.info("Running ...")
@@ -34,6 +38,9 @@ class BasicInfoPage(BasePage):
         # INPUT data
         self.asset = kwargs["data"]
         self.mainContractDetail = self.asset.contractDetails[0]
+
+        # BL
+        self.bl = AssetBL()
 
         self.fillBasicInfo()
 

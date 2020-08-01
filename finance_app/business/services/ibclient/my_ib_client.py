@@ -21,7 +21,8 @@ from ibapi.common import TickAttrib
 from ibapi.contract import ContractDetails
 from ibapi.ticktype import TickType, TickTypeEnum
 from ibapi.wrapper import BarData, EWrapper
-from typings import ObservableType
+
+# from typings import ObservableType
 
 # create logger
 log = logging.getLogger("CellarLogger")
@@ -120,6 +121,13 @@ class MyIBClient(EWrapper, EClient):
 
         obs.on_next(data)
         obs.on_completed()
+
+    def fundamentalData(self, reqId: int, data: str):
+        # super().fundamentalData(reqId, data)
+        print("FundamentalData. ReqId:", reqId, "Data:", data)
+
+        obs: Observable[Any] = self.state.getObservable(reqId)
+        obs.on_next(data)
 
     def securityDefinitionOptionParameter(
         self,
@@ -269,13 +277,22 @@ class MyIBClient(EWrapper, EClient):
         if reqId != -1:
             obs: Observable[Any] = self.state.getObservable(reqId)
             if obs is not None:
-                obs.on_next([])
+                obs.on_next({})
 
     # --------------------------------------------------------------------
     # --------------------------------------------------------------------
     # CUSTOM METHODS
     # --------------------------------------------------------------------
     # --------------------------------------------------------------------
+
+    def getFundamentalData(self, contract: IBContract) -> Observable:
+        log.debug(f"STARTS - getFundamentalData - UID: {str(self.uid)}")
+
+        (reqId, obs) = self.state.registerOnlyNewObservable()
+
+        self.reqFundamentalData(reqId, contract, "CalendarReport", [])
+
+        return obs
 
     def getHistoricalData(
         self,

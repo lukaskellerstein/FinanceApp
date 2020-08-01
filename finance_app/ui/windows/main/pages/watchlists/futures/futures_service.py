@@ -8,7 +8,7 @@ from rx import operators as ops
 from rx.core.typing import Observable
 
 from business.modules.futures_watchlist_bl import FuturesWatchlistBL
-from business.model.contracts import IBFutureContract
+from business.model.contracts import IBContract, IBFutureContract
 from ibapi.contract import ContractDetails
 from ui.state.main import State
 
@@ -47,11 +47,13 @@ class FuturesWatchlistService(object):
         for cd in cds:
             contract = cd.contract
 
+            ibContract = IBContract(**contract)
+
             stateItem = self.state.futures_realtime_data.get(
                 contract.symbol, contract.localSymbol
             )
 
-            stateItem.ticks = self.bl.startRealtime(contract).pipe(
+            stateItem.ticks = self.bl.startRealtime(ibContract).pipe(
                 ops.filter(lambda x: x is not None),
             )
 

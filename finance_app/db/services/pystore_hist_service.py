@@ -59,6 +59,7 @@ class PyStoreHistService(object):
                 self.lock.release()
 
     def getAll(self, symbol: str, timeframe: TimeFrame) -> pd.DataFrame:
+        log.info(symbol)
         start = time.time()
 
         t = timeframe.value.strip()

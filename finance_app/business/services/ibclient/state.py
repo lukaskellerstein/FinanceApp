@@ -10,11 +10,12 @@ from typing import Tuple
 
 import pandas as pd
 
-# from rx.core.typing import Observable, Subject
+from rx.core.typing import Observable, Subject
 from rx.subject import BehaviorSubject
 
 from business.model.contracts import IBContract
-from typings import ObservableType, PandasDataFrameType, PandasSerieType
+
+# from typings import ObservableType, PandasDataFrameType, PandasSerieType
 from typing import List, Any
 
 # create logger
@@ -27,7 +28,7 @@ dfColumns = ["Symbol", "LocalSymbol", "ReqId", "ObservableName"]
 class State(object):
     __instance = None
 
-    __data: PandasDataFrameType = pd.DataFrame(columns=dfColumns)
+    __data: pd.DataFrame = pd.DataFrame(columns=dfColumns)
     __observablesInstances = defaultdict(None)  # key: reqId, value: Observable
 
     __tempData = defaultdict(None)  # key: reqId, value: List[Any]
@@ -57,7 +58,7 @@ class State(object):
     # OBSERVABLES
     # -----------------------------------------------------------------
 
-    def getObservable(self, key: int) -> ObservableType:
+    def getObservable(self, key: int) -> Observable:
         return self.__observablesInstances[key]
 
     def removeObservable(
@@ -68,7 +69,7 @@ class State(object):
         self.__observablesInstances.pop(reqId)
 
         # get data from DataFrame
-        isExist: PandasDataFrameType = self.__data[
+        isExist: pd.DataFrame = self.__data[
             (self.__data["Symbol"] == contract.symbol)
             & (self.__data["LocalSymbol"] == contract.localSymbol)
             & (self.__data["ObservableName"] == observableName)
@@ -77,12 +78,12 @@ class State(object):
         # remove isExist from global DataFrame
         self.__data = self.__data.append(isExist).drop_duplicates(keep=False)
 
-    def registerOnlyNewObservable(self) -> Tuple[int, ObservableType]:
+    def registerOnlyNewObservable(self) -> Tuple[int, Observable]:
         self.reqId += 1
 
         # -------------------------------------------------
         # ????? change type is ok
-        obs: ObservableType = BehaviorSubject(None)
+        obs = BehaviorSubject(None)
         # -------------------------------------------------
 
         self.__observablesInstances[self.reqId] = obs
@@ -90,7 +91,7 @@ class State(object):
 
     def observableForContract(
         self, contract: IBContract, observableName: str
-    ) -> Tuple[bool, int, ObservableType]:
+    ) -> Tuple[bool, int, Observable]:
         self.lock.acquire()
         try:
             # log.debug("LOCK - Acquired")
@@ -106,7 +107,7 @@ class State(object):
                 (reqId, newObs) = self.registerOnlyNewObservable()
 
                 # save information about observable and contract
-                a_row: PandasSerieType = pd.Series(
+                a_row: pd.Series = pd.Series(
                     [
                         contract.symbol,
                         contract.localSymbol,
@@ -115,9 +116,7 @@ class State(object):
                     ],
                     index=dfColumns,
                 )
-                row_df: PandasDataFrameType = pd.DataFrame(
-                    [a_row], columns=dfColumns
-                )
+                row_df: pd.DataFrame = pd.DataFrame([a_row], columns=dfColumns)
 
                 self.__data = self.__data.append(row_df, ignore_index=True)
                 # log.debug(self.__data)
@@ -129,8 +128,8 @@ class State(object):
 
     def getObservableForContract(
         self, contract: IBContract, observableName: str
-    ) -> Tuple[bool, int, ObservableType]:
-        isExist: PandasDataFrameType = self.__data[
+    ) -> Tuple[bool, int, Observable]:
+        isExist: pd.DataFrame = self.__data[
             (self.__data["Symbol"] == contract.symbol)
             & (self.__data["LocalSymbol"] == contract.localSymbol)
             & (self.__data["ObservableName"] == observableName)
@@ -143,22 +142,20 @@ class State(object):
             )
             log.info(isExist)
             reqId: int = isExist["ReqId"].item()
-            obs: ObservableType = self.getObservable(reqId)
+            obs: Observable = self.getObservable(reqId)
             return (True, reqId, obs)
         else:
             return (False, 0, None)
 
     def getObservableAndContract(
         self, reqId: int
-    ) -> Tuple[ObservableType, str, str]:
+    ) -> Tuple[Observable, str, str]:
 
         # observable
-        obs: ObservableType = self.getObservable(reqId)
+        obs: Observable = self.getObservable(reqId)
 
         # contract
-        isExist: PandasDataFrameType = self.__data[
-            self.__data["ReqId"] == reqId
-        ]
+        isExist: pd.DataFrame = self.__data[self.__data["ReqId"] == reqId]
 
         if isExist.shape[0] > 0:
             # print("IS ALREADY EXISTS - 2 ------------------------------------")
