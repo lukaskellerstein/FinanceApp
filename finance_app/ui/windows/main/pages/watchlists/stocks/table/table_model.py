@@ -152,6 +152,8 @@ class StockTableModel(QAbstractTableModel):
     @pyqtSlot(dict, name="on_update_model")
     def on_update_model(self, obj):
 
+        log.info(obj)
+
         if obj != {}:
 
             # start = time.time()

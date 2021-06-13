@@ -1,3 +1,6 @@
+from ui.windows.main.pages.options.manual_calc.manual_calc import (
+    ManualCalcPage,
+)
 from ui.windows.main.pages.debug.threads.threads import ThreadsDebugPage
 from business.model.asset import AssetType
 import logging
@@ -62,6 +65,9 @@ class MainWindow(QMainWindow):
             self.setCurrentPage(AssetPage, assetType=AssetType.FUTURE)
         )
         self.actionThreads.triggered.connect(self.openThreadsDebugWindow)
+        self.actionManual_Calc.triggered.connect(
+            self.setCurrentPage(ManualCalcPage)
+        )
 
         # Stacket Widget
         self.pageBox.removeWidget(self.pageBox.widget(0))

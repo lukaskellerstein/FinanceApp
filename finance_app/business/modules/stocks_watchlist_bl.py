@@ -1,21 +1,19 @@
 import logging
 import threading
-
-from typing import List, Any
+from typing import Any, List
 
 import pandas as pd
+from business.model.contracts import IBContract, IBStockContract
+from business.model.factory.contract_detail_factory import (
+    ContractDetailsFactory,
+)
+from business.model.factory.contract_factory import ContractFactory, SecType
+from business.services.ibclient.my_ib_client import MyIBClient
+from db.services.mongo_service import MongoService
+from ibapi.contract import ContractDetails
 from rx import Observable
 from rx import operators as ops
 from rx.core.typing import Observable
-
-from business.model.contracts import (
-    IBStockContract,
-    IBContract,
-)
-from business.services.ibclient.my_ib_client import MyIBClient
-from db.services.mongo_service import MongoService
-from helpers import mapContractDetailsToLl, obj_to_dict
-from ibapi.contract import ContractDetails
 
 # create logger
 log = logging.getLogger("CellarLogger")
@@ -42,35 +40,33 @@ class StocksWatchlistBL(object):
         # DB
         self.dbService = MongoService()
 
+        # Business object factory
+        self.contractFactory = ContractFactory()
+        self.contractDetailsFactory = ContractDetailsFactory()
+
     # ----------------------------------------------------------
     # ----------------------------------------------------------
     # BUSINESS LOGIC
     # ----------------------------------------------------------
     # ----------------------------------------------------------
 
-    def getContractDetails(self, contract: IBStockContract) -> Observable[Any]:
+    def getContractDetails(self, symbol: str) -> Observable[Any]:
+        contract = self.contractFactory.createNewIBContract(
+            SecType.STOCK, symbol, symbol
+        )
         return self.ibClient.getContractDetail(contract).pipe(
             ops.filter(
                 lambda contrDetails: isinstance(contrDetails, ContractDetails)
             ),
-            # ops.do_action(lambda x: log.info(x)),
+            ops.do_action(lambda x: log.info(x)),
             ops.do_action(lambda x: self.__addToDbContractDetails(x)),
         )
 
     # region "getContractDetails" operators
 
-    def __addToDbContractDetails(self, x):
-
-        aaa = mapContractDetailsToLl(x)
-        bbb = obj_to_dict(aaa)
-
-        # remove keys causing ERROR
-        if "secIdList" in bbb:
-            del bbb["secIdList"]
-
-        self.dbService.addToStockContractDetails_IfNotExits(bbb)
-
-        return aaa
+    def __addToDbContractDetails(self, x: ContractDetails):
+        dictionary = self.contractDetailsFactory.createDict(x)
+        self.dbService.addToStockContractDetails_IfNotExits(dictionary)
 
     # endregion
 
@@ -91,8 +87,10 @@ class StocksWatchlistBL(object):
         # remove from watchlist DB
         self.dbService.removeFromStockWatchlist(ticker)
 
-        # stop receiving data from Broker
-        contract = IBStockContract(symbol=ticker, localSymbol=ticker)
+        # stop receiving data from Brokermg
+        contract = self.contractFactory.createNewIBContract(
+            SecType.STOCK, ticker, ticker
+        )
         self.ibClient.stopRealtimeData(contract)
 
     def updateStockWatchlist(self, arr: List[str]):

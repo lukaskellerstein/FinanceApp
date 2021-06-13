@@ -1,3 +1,4 @@
+from business.model.factory.asset_factory import AssetFactory
 import logging
 import threading
 from datetime import datetime, timedelta
@@ -16,6 +17,10 @@ from business.services.ibclient.my_ib_client import MyIBClient
 from business.tasks.download_hist_data_task import DownloadHistDataTask
 from db.services.mongo_asset_service import MongoAssetService
 from db.services.pystore_hist_service import PyStoreHistService
+from business.model.factory.contract_factory import ContractFactory
+from business.model.factory.contract_detail_factory import (
+    ContractDetailsFactory,
+)
 
 # create logger
 log = logging.getLogger("CellarLogger")
@@ -45,6 +50,11 @@ class AssetBL(object):
         self.assetDbService = MongoAssetService()
         self.histDataDbService = PyStoreHistService()
 
+        # Business object factory
+        self.assetFactory = AssetFactory()
+        self.contractFactory = ContractFactory()
+        self.contractDetailsFactory = ContractDetailsFactory()
+
     # ----------------------------------------------------------
     # ----------------------------------------------------------
     # BUSINESS LOGIC
@@ -55,6 +65,7 @@ class AssetBL(object):
     def getContractDetails(
         self, assetType: AssetType, contract: IBContract
     ) -> Observable[IBContractDetails]:
+        log.info(contract)
         if assetType == AssetType.FUTURE:
             return self.ibClient.getContractDetail(contract).pipe(
                 ops.filter(lambda x: x is not None),
@@ -64,6 +75,7 @@ class AssetBL(object):
         elif assetType == AssetType.STOCK:
             return self.ibClient.getContractDetail(contract).pipe(
                 ops.filter(lambda x: x is not None),
+                ops.do_action(lambda x: log.info(x)),
                 ops.buffer_with_time(1),
                 ops.take(1),
             )
@@ -74,10 +86,15 @@ class AssetBL(object):
         return True if isExist is not None else False
 
     def saveToDb(self, asset: Asset):
-        self.assetDbService.add(AssetType.from_str(asset.type), asset)
+        dbobject = self.assetFactory.createDict(asset)
+        self.assetDbService.add(AssetType.from_str(asset.type), dbobject)
 
     def getAllFromDb(self, assetType: AssetType) -> List[Asset]:
-        return self.assetDbService.getAll(assetType)
+        dbobjects = self.assetDbService.getAll(assetType)
+        objects: List[Asset] = [
+            self.assetFactory.createAsset(dbobject) for dbobject in dbobjects
+        ]
+        return objects
 
     def removeFromDb(self, assetType: AssetType, symbol: str):
         self.assetDbService.remove(assetType, {"symbol": symbol})

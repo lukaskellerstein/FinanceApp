@@ -8,14 +8,14 @@ import pandas as pd
 from rx import operators as ops
 from rx.core.typing import Observable
 
-from business.model.contracts import (
-    IBContract,
-    IBFutureContract,
-)
+from business.model.contracts import IBContract
 from business.services.ibclient.my_ib_client import MyIBClient
 from db.services.mongo_service import MongoService
-from helpers import mapContractDetailsToLl, obj_to_dict
 from ibapi.contract import Contract, ContractDetails
+from business.model.factory.contract_factory import ContractFactory, SecType
+from business.model.factory.contract_detail_factory import (
+    ContractDetailsFactory,
+)
 
 # create logger
 log = logging.getLogger("CellarLogger")
@@ -42,6 +42,10 @@ class FuturesWatchlistBL(object):
         # DB
         self.dbService = MongoService()
 
+        # Business object factory
+        self.contractFactory = ContractFactory()
+        self.contractDetailsFactory = ContractDetailsFactory()
+
     # ----------------------------------------------------------
     # ----------------------------------------------------------
     # BUSINESS LOGIC
@@ -49,11 +53,7 @@ class FuturesWatchlistBL(object):
     # ----------------------------------------------------------
 
     def getNewestContractDetails(
-        self,
-        contract: IBContract,
-        count: int,
-        bufferTime: int
-        # ) -> Subject[ContractDetails, ContractDetails]:
+        self, contract: IBContract, count: int, bufferTime: int
     ) -> Observable[List[ContractDetails]]:
 
         return self.ibClient.getContractDetail(contract).pipe(
@@ -75,13 +75,9 @@ class FuturesWatchlistBL(object):
         return True if len(arr) > 0 else False
 
     def __addToDbContractDetails(self, x: ContractDetails):
-
-        aaa = mapContractDetailsToLl(x)
-        bbb = obj_to_dict(aaa)
-
-        self.dbService.addToFuturesContractDetails_IfNotExits(bbb)
-
-        return aaa
+        result = self.contractDetailsFactory.createDict(x)
+        self.dbService.addToFuturesContractDetails_IfNotExits(result)
+        return result
 
     def __filterOlderThanToday(self, cd: ContractDetails) -> bool:
         lastDate = datetime.strptime(
@@ -130,7 +126,9 @@ class FuturesWatchlistBL(object):
         self.dbService.removeFromFuturesWatchlist(symbol)
 
         # stop receiving data from Broker
-        contract = IBFutureContract(symbol=symbol, localSymbol=localSymbol)
+        contract = self.contractFactory.createNewIBContract(
+            SecType.FUTURE, symbol, localSymbol
+        )
         self.ibClient.stopRealtimeData(contract)
 
     def updateWatchlist(self, arr: List[Any]):

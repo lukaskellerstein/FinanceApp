@@ -13,7 +13,6 @@ from business.model.contracts import (
 )
 from business.services.ibclient.my_ib_client import MyIBClient
 from db.services.mongo_service import MongoService
-from helpers import mapDictToLlContractDetail, mapLlContractDetailsToContract
 
 import pandas as pd
 
@@ -47,11 +46,12 @@ class OptionsWatchlistBL(object):
             contract.symbol, contract.localSymbol
         )
 
-        contractDetail = mapDictToLlContractDetail(contractDetail)
+        # contractDetail = mapDictToLlContractDetail(contractDetail)
 
         if contractDetail is not None:
 
-            contractFull = mapLlContractDetailsToContract(contractDetail)
+            contractFull = IBContract()
+            # contractFull = mapLlContractDetailsToContract(contractDetail)
 
             return self.ibClient.getOptionChain(contractFull).pipe(
                 ops.filter(lambda x: x is not None),  # filter empty

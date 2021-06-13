@@ -26,14 +26,14 @@ class MongoService:
     # Dynamic
     # -----------------------------------------------------------------
     def find(
-        self, tableName: str, findObject: Dict[str, str] = {}
+        self, tableName: str, findObject: Dict[str, Any] = {}
     ) -> List[Any]:
         return self.db[tableName].find(findObject)
 
-    def findOne(self, tableName: str, findObject: Dict[str, str] = {}) -> Any:
+    def findOne(self, tableName: str, findObject: Dict[str, Any] = {}) -> Any:
         return self.db[tableName].find_one(findObject)
 
-    def add(self, tableName: str, obj: Dict[str, str] = {}):
+    def add(self, tableName: str, obj: Dict[str, Any] = {}):
         self.db[tableName].insert_one(obj)
 
     # -----------------------------------------------------------------
@@ -59,10 +59,11 @@ class MongoService:
     # Contract details---------------------------------------
 
     def addToStockContractDetails_IfNotExits(
-        self, contract_details: Dict[str, str]
+        self, contract_details: Dict[str, Any]
     ):
         asset: pd.DataFrame = self.getStockContractDetailsAsPanda(
-            contract_details["symbol"], contract_details["localSymbol"]
+            contract_details["contract"]["symbol"],
+            contract_details["contract"]["localSymbol"],
         )
 
         # print("----------------------")
@@ -89,10 +90,10 @@ class MongoService:
             {"symbol": symbol, "localSymbol": localSymbol}
         )
 
-    def addToStockContractDetails(self, contract_details: Dict[str, str]):
+    def addToStockContractDetails(self, contract_details: Dict[str, Any]):
         self.stocks_contract_details_table.insert_one(contract_details)
 
-    def removeFromStockContractDetails(self, contract_details: Dict[str, str]):
+    def removeFromStockContractDetails(self, contract_details: Dict[str, Any]):
         self.stocks_contract_details_table.delete_one(contract_details)
 
     # -----------------------------------------------------------------
@@ -121,10 +122,11 @@ class MongoService:
     # Contract details---------------------------------------
 
     def addToFuturesContractDetails_IfNotExits(
-        self, contract_details: Dict[str, str]
+        self, contract_details: Dict[str, Any]
     ):
         asset: pd.DataFrame = self.getFuturesContractDetails(
-            contract_details["symbol"], contract_details["localSymbol"]
+            contract_details["contract"]["symbol"],
+            contract_details["contract"]["localSymbol"],
         )
         # print("----------------------")
         # print(asset)
@@ -142,11 +144,11 @@ class MongoService:
             )
         )
 
-    def addToFuturesContractDetails(self, contract_details: Dict[str, str]):
+    def addToFuturesContractDetails(self, contract_details: Dict[str, Any]):
         self.futures_contract_details_table.insert_one(contract_details)
 
     def removeFromFuturesContractDetails(
-        self, contract_details: Dict[str, str]
+        self, contract_details: Dict[str, Any]
     ):
         self.futures_contract_details_table.delete_one(contract_details)
 

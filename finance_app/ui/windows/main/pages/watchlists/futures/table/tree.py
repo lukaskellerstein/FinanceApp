@@ -17,7 +17,9 @@ class FuturesTree(QTreeView):
         super(QTreeView, self).__init__()
 
         # load styles
-        with open("ui/pages/watchlists/futures/table/tree.qss", "r") as fh:
+        with open(
+            "ui/windows/main/pages/watchlists/futures/table/tree.qss", "r"
+        ) as fh:
             self.setStyleSheet(fh.read())
 
         self.tree_header_data = [

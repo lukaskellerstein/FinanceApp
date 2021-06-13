@@ -14,7 +14,9 @@ class OptionsTree(QTreeView):
         super(QTreeView, self).__init__()
 
         # load styles
-        with open("ui/pages/watchlists/options/table/tree.qss", "r") as fh:
+        with open(
+            "ui/windows/main/pages/watchlists/options/table/tree.qss", "r"
+        ) as fh:
             self.setStyleSheet(fh.read())
 
         self.tree_header_data = [

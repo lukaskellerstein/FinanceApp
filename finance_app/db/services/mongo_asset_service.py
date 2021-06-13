@@ -6,7 +6,6 @@ import pymongo
 
 from business.model.asset import Asset, AssetType
 
-from business.helpers import dict_to_obj, obj_to_dict
 
 # create logger
 log = logging.getLogger("CellarLogger")
@@ -44,17 +43,29 @@ class MongoAssetService:
     # Specific
     # -----------------------------------------------------------------
 
-    def add(self, assetType: AssetType, asset: Asset):
-        self.__add(assetType, obj_to_dict(asset))
+    def add(self, assetType: AssetType, asset: Dict[str, Any]):
+        self.__add(assetType, asset)
 
     def findOne(self, assetType: AssetType, findObject: Dict[str, str]):
         return self.__findOne(assetType, findObject)
 
-    def getAll(self, assetType: AssetType) -> List[Asset]:
-        return list(map(lambda x: dict_to_obj(x), self.__find(assetType)))
+    def getAll(self, assetType: AssetType) -> List[Dict[str, Any]]:
+        return list(map(lambda x: x, self.__find(assetType)))
 
     def remove(self, assetType: AssetType, findObject: Dict[str, str]):
         self.__remove(assetType, findObject)
+
+    # def add(self, assetType: AssetType, asset: Asset):
+    #     self.__add(assetType, obj_to_dict(asset))
+
+    # def findOne(self, assetType: AssetType, findObject: Dict[str, str]):
+    #     return self.__findOne(assetType, findObject)
+
+    # def getAll(self, assetType: AssetType) -> List[Asset]:
+    #     return list(map(lambda x: dict_to_obj(x), self.__find(assetType)))
+
+    # def remove(self, assetType: AssetType, findObject: Dict[str, str]):
+    #     self.__remove(assetType, findObject)
 
     # --------------------------------------------------------
     # --------------------------------------------------------

@@ -49,7 +49,6 @@ class FundamentalDataPage(BasePage):
         self.pushButton.clicked.connect(self.getFundamentals)
 
     def getFundamentals(self):
-
         self.bl.getFundamentals(self.mainContractDetail.contract).subscribe(
             self.__subscribe
         )

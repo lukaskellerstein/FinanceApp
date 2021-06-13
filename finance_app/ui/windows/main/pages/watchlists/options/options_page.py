@@ -92,7 +92,10 @@ class OptionsWatchlistPage(BasePage):
         # Rx - Combine Latest
         higherObs = (
             step1.pipe(ops.combine_latest(step2, step3))
-            .pipe(ops.flat_map(self.__startRealtimeOption))
+            .pipe(
+                ops.flat_map(self.__startRealtimeOption),
+                # ops.do_action(lambda x: log.info(x)),
+            )
             .subscribe(self.__subscribe)
         )
 
@@ -120,7 +123,7 @@ class OptionsWatchlistPage(BasePage):
 
                 count += 1
 
-                optionContract = IBOptionContract(symbol=lastPrice["ticker"])
+                optionContract = IBOptionContract(symbol="AAPL")
                 optionContract.exchange = optionChain["exchange"]
                 optionContract.lastTradeDateOrContractMonth = expiration
                 optionContract.strike = float(strike)
@@ -129,8 +132,8 @@ class OptionsWatchlistPage(BasePage):
 
                 temp = self.service.getOptionPrice(
                     optionContract,
-                    float(lastImplVolatility["price"]),
-                    float(lastPrice["price"]),
+                    float(lastImplVolatility),
+                    float(lastPrice),
                     timeout,
                 )
 

@@ -13,9 +13,6 @@ class AssetType(Enum):
     STOCK = "stock"
     FUTURE = "future"
 
-    # def __str__(self):
-    #     return str(self.name.lower())
-
     @staticmethod
     def from_str(value: str) -> AssetType:
         if value.lower() == AssetType.STOCK.value:
@@ -27,7 +24,7 @@ class AssetType(Enum):
 
 
 class Asset(DBObject):
-    def __init__(self, **kwargs):
+    def __init__(self):
         DBObject.__init__(self, self.__module__, type(self).__name__)
 
         self.symbol: str = ""
@@ -35,6 +32,3 @@ class Asset(DBObject):
         self.type: str = ""
         self.contractDetails: List[IBContractDetails] = []
 
-        # dynamically set attributes
-        for (k, v) in kwargs.items():
-            setattr(self, k, v)

@@ -9,12 +9,12 @@ from business.model.asset import Asset, AssetType
 from ui.base.base_page import BasePage
 from business.model.contract_details import IBContractDetails
 from ui.windows.asset_detail.shared.pages.contract_details.table import CDTable
-from business.model.contracts import ContractFactory
 from ui.components.contract_details_table.table import (
     AssetContractDetailsTable,
 )
 from rx import operators as ops
 from PyQt5.QtCore import pyqtSignal, pyqtSlot
+from business.model.factory.contract_factory import ContractFactory, SecType
 
 # create logger
 log = logging.getLogger("CellarLogger")
@@ -39,6 +39,9 @@ class ContractDetailsPage(BasePage):
         self.asset: Asset = kwargs["asset"]
         self.bl: AssetBL = AssetBL()
 
+        # Business object factory
+        self.contractFactory = ContractFactory()
+
         # signals
         self.updateButton.clicked.connect(self.updateCD)
 
@@ -54,25 +57,34 @@ class ContractDetailsPage(BasePage):
     def updateCD(self):
         exchange = self.asset.contractDetails[0].contract.exchange
 
-        contract = ContractFactory.create(
-            self.asset.type, symbol=self.asset.symbol, exchange=exchange
+        contract = self.contractFactory.createNewIBContract(
+            SecType.from_str(self.asset.type),
+            self.asset.symbol,
+            exchange=exchange,
         )
+        # contract = ContractFactory.create(
+        #     self.asset.type, symbol=self.asset.symbol, exchange=exchange
+        # )
 
         assetType = AssetType.from_str(self.asset.type)
 
         self.bl.getContractDetails(assetType, contract).pipe(
-            ops.do_action(lambda x: self.__updateAsset(x)),
+            ops.do_action(lambda x: log.info(x)),
+            # ops.do_action(lambda x: self.__updateAsset(x)),
+            # ops.do_action(lambda x: log.info(x)),
             # We have to use pyqtSignal, otherwise Qt will complain about threads
             # --> Cannot set parent, new parent is in a different thread
             ops.do_action(lambda x: self.on_fillTable.emit(x)),
         ).subscribe(self.__updateAsset)
 
     def __updateAsset(self, data: List[IBContractDetails]):
-
+        # log.info(self.asset.contractDetails)
+        # log.info(self.asset.contractDetails[0].contract.symbol)
         self.asset.contractDetails.clear()
 
         [self.asset.contractDetails.append(item) for item in data]
-
+        # log.info(self.asset.contractDetails)
+        # log.info(self.asset.contractDetails[0].contract.symbol)
         self.bl.removeFromDb(
             AssetType.from_str(self.asset.type), self.asset.symbol
         )
@@ -80,5 +92,6 @@ class ContractDetailsPage(BasePage):
 
     @pyqtSlot(list)
     def __fillTable(self, data: List[IBContractDetails]):
+
         self.table.tableModel.setData(data)
         self.on_update.emit()

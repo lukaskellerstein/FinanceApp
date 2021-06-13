@@ -84,6 +84,7 @@ class StocksWatchlistPage(BasePage):
         pass
 
     def updateWatchlist(self, data):
+        log.info(data)
         self.service.updateStockWatchlist(data)
 
     def loadTableLayout(self):

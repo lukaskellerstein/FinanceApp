@@ -7,7 +7,6 @@ from typing import Any, List, Set, Tuple
 from rx import Observable
 from rx.core.typing import Observable
 
-from business.helpers import obj_to_dict
 from business.model.contract_details import IBContractDetails
 from business.model.contracts import (
     IBContract,
@@ -21,6 +20,10 @@ from ibapi.common import TickAttrib
 from ibapi.contract import ContractDetails
 from ibapi.ticktype import TickType, TickTypeEnum
 from ibapi.wrapper import BarData, EWrapper
+from business.model.factory.contract_factory import ContractFactory
+from business.model.factory.contract_detail_factory import (
+    ContractDetailsFactory,
+)
 
 # from typings import ObservableType
 
@@ -43,9 +46,13 @@ class MyIBClient(EWrapper, EClient):
 
         log.info(f"uid: {self.uid}, state: {self.state.uid}")
 
+        # Business object factory
+        self.contractFactory = ContractFactory()
+        self.contractDetailsFactory = ContractDetailsFactory()
+
     def myStart(self):
         log.info(f"----Connect & Run----{self.uid}")
-        self.connect("127.0.0.1", 4002, self.uid)
+        self.connect("127.0.0.1", 4001, self.uid)
         self.run()
 
     # --------------------------------------------------------------------
@@ -62,32 +69,49 @@ class MyIBClient(EWrapper, EClient):
 
         obs: Observable[IBContractDetails] = self.state.getObservable(reqId)
 
-        # cast ContractDetails > IBContractDetails
-        aaa = obj_to_dict(contractDetails, ["secIdList"])
-        bbb = IBContractDetails(**aaa)
+        # log.debug(contractDetails)
+        # # cast ContractDetails > IBContractDetails
+        # aaa = obj_to_dict(contractDetails, ["secIdList"])
+        # log.debug(aaa)
+        # bbb = IBContractDetails(**aaa)
+        # log.debug(bbb)
 
-        # convert Contract to right IBContract
-        if aaa["contract"]["secType"] == "STK":
-            setattr(bbb, "contract", IBStockContract(**bbb.contract))
-        elif aaa["contract"]["secType"] == "FUT":
-            setattr(bbb, "contract", IBFutureContract(**bbb.contract))
-        else:
-            setattr(bbb, "contract", IBContract(**bbb.contract))
+        # log.debug(IBStockContract(bbb.contract))
 
-        obs.on_next(bbb)
+        # # convert Contract to right IBContract
+        # if aaa["contract"]["secType"] == "STK":
+        #     setattr(bbb, "contract", IBStockContract(bbb.contract))
+        # elif aaa["contract"]["secType"] == "FUT":
+        #     setattr(bbb, "contract", IBFutureContract(bbb.contract))
+        # else:
+        #     setattr(bbb, "contract", IBContract(bbb.contract))
+
+        # log.debug(bbb)
+
+        # ccc = IBContractDetails(contractDetails=contractDetails)
+        # log.debug(ccc)
+
+        # # convert Contract to right IBContract
+        # if aaa["contract"]["secType"] == "STK":
+        #     setattr(ccc, "contract", IBStockContract(bbb.contract))
+        # elif aaa["contract"]["secType"] == "FUT":
+        #     setattr(ccc, "contract", IBFutureContract(bbb.contract))
+        # else:
+        #     setattr(ccc, "contract", IBContract(bbb.contract))
+
+        # log.debug(ccc)
+
+        result = self.contractDetailsFactory.createIBContractDetails(
+            contractDetails
+        )
+        obs.on_next(result)
 
     def historicalData(self, reqId: int, bar: BarData):
         log.info(
             f"HistoricalData [{self.uid}]. Ticker Id: {reqId}, Date: {bar.date}, Open: {bar.open}, High: {bar.high}, Low: {bar.low}, Close: {bar.close}, Volume: {bar.volume}, Count: {bar.barCount}"
         )
 
-        # cast BarData > Bar
-        # aaa = obj_to_dict(bar, [])
-        # bbb = Bar(**aaa)
-
-        # self.data.append(bbb)
-
-        ccc = (
+        data = (
             try_parsing_date(bar.date, ["%Y%m%d", "%Y%m%d %H:%M:%S"]),
             bar.open,
             bar.high,
@@ -96,7 +120,7 @@ class MyIBClient(EWrapper, EClient):
             bar.volume,
         )
 
-        self.state.addToTempData(reqId, ccc)
+        self.state.addToTempData(reqId, data)
 
     def historicalDataEnd(self, reqId: int, start: str, end: str):
         log.info(
@@ -306,18 +330,12 @@ class MyIBClient(EWrapper, EClient):
 
         (reqId, obs) = self.state.registerOnlyNewObservable()
 
-        # log.info("______________")
         log.info(
             f"startHistorical for {contract.symbol}-{contract.localSymbol}-{contract.lastTradeDateOrContractMonth} : reqId={reqId}"
         )
-        # log.info("______________")
-
-        # self.data = []
 
         self.state.registerTempData(reqId, [])
 
-        # if isExist == False:
-        # log.info("isExist == FALSE")
         self.reqHistoricalData(
             reqId,
             contract,

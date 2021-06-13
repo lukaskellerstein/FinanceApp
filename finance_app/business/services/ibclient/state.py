@@ -137,10 +137,10 @@ class State(object):
 
         # IS ALREADY EXISTS ------------------------------------
         if isExist.shape[0] > 0:
-            log.info(
+            log.debug(
                 "Observable already exist in IBClient ------------------------------------"
             )
-            log.info(isExist)
+            log.debug(isExist)
             reqId: int = isExist["ReqId"].item()
             obs: Observable = self.getObservable(reqId)
             return (True, reqId, obs)

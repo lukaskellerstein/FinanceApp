@@ -1,3 +1,5 @@
+from business.model.factory.asset_factory import AssetFactory
+from business.model.factory.contract_factory import ContractFactory, SecType
 from business.model.contracts import IBContract
 import logging
 from typing import Any, List, Union
@@ -9,7 +11,6 @@ from rx import operators as ops
 
 from business.model.asset import Asset, AssetType
 from business.model.contract_details import IBContractDetails
-from business.model.contracts import ContractFactory
 from business.modules.asset_bl import AssetBL
 from ui.components.contract_details_table.table_model_factory import (
     ContractDetailsTableModelFactory,
@@ -57,22 +58,27 @@ class AssetAddWindow(QWidget):
 
         self.adjustSize()
 
+        # Business object factory
+        self.contractFactory = ContractFactory()
+        self.assetFactory = AssetFactory()
+
     @pyqtSlot()
     def checkSymbolAtBroker(self) -> None:
         symbol: str = self.symbolInput.text().upper()
         exchange: str = self.exchangeInput.text()
-        self.asset = Asset(symbol=symbol, type=self.assetType.value)
+        self.asset = self.assetFactory.createNewAsset(self.assetType, symbol)
 
         log.info(f"symbol={symbol}, exchange={exchange}")
 
         contract: IBContract
+        secType: SecType = SecType.from_str(self.assetType.value)
         if exchange != "":
-            contract = ContractFactory.create(
-                self.assetType.value, symbol=symbol, exchange=exchange
+            contract = self.contractFactory.createNewIBContract(
+                secType, symbol, exchange=exchange
             )
         else:
-            contract = ContractFactory.create(
-                self.assetType.value, symbol=symbol
+            contract = self.contractFactory.createNewIBContract(
+                secType, symbol
             )
 
         self.bl.getContractDetails(self.assetType, contract).pipe(

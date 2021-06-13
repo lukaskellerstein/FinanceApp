@@ -11,6 +11,10 @@ from business.modules.futures_watchlist_bl import FuturesWatchlistBL
 from business.model.contracts import IBContract, IBFutureContract
 from ibapi.contract import ContractDetails
 from ui.state.main import State
+from business.model.factory.contract_factory import ContractFactory, SecType
+from business.model.factory.contract_detail_factory import (
+    ContractDetailsFactory,
+)
 
 # create logger
 log = logging.getLogger("CellarLogger")
@@ -29,6 +33,10 @@ class FuturesWatchlistService(object):
         # BL
         self.bl = FuturesWatchlistBL()
 
+        # Business object factory
+        self.contractFactory = ContractFactory()
+        self.contractDetailsFactory = ContractDetailsFactory()
+
     # ----------------------------------------------------------
     # ----------------------------------------------------------
     # ACTIONS (affecting state)
@@ -45,12 +53,12 @@ class FuturesWatchlistService(object):
         # create Observables
         resultList = []
         for cd in cds:
-            contract = cd.contract
+            # contract = cd.contract
 
-            ibContract = IBContract(**contract)
+            ibContract = self.contractFactory.createIBContract(cd.contract)
 
             stateItem = self.state.futures_realtime_data.get(
-                contract.symbol, contract.localSymbol
+                ibContract.symbol, ibContract.localSymbol
             )
 
             stateItem.ticks = self.bl.startRealtime(ibContract).pipe(
@@ -127,9 +135,10 @@ class FuturesWatchlistService(object):
     def getNewestContractDetails(
         self, symbol: str
     ) -> Observable[List[ContractDetails]]:
-        return self.bl.getNewestContractDetails(
-            IBFutureContract(symbol=symbol), 3, 5
+        contract = self.contractFactory.createNewIBContract(
+            SecType.FUTURE, symbol
         )
+        return self.bl.getNewestContractDetails(contract, 3, 5)
 
     def getWatchlist(self) -> pd.DataFrame:
         return self.bl.getWatchlist()

@@ -37,28 +37,7 @@ class StocksWatchlistService(object):
     # ----------------------------------------------------------
     # ----------------------------------------------------------
 
-    tempColls = [
-        "ask",
-        "ask_size",
-        "ask_exch",
-        "last",
-        "last_size",
-        "last_exch",
-        "last_timestamp",
-        "bid",
-        "bid_size",
-        "bid_exch",
-        "open",
-        "high",
-        "low",
-        "close",
-        "volume",
-        "option_historical_vol",
-        "option_implied_vol",
-        "ib_dividends",
-    ]
-
-    def aaa(self, data: dict, stateItem: StocksRealtimeDataItem):
+    def _route(self, data: dict, stateItem: StocksRealtimeDataItem):
 
         if data == {}:
             return
@@ -105,154 +84,17 @@ class StocksWatchlistService(object):
 
         stateItem = self.state.stocks_realtime_data.get(ticker, ticker)
 
-        stateItem.ticks = self.bl.getContractDetails(
-            IBStockContract(symbol=ticker)
-        ).pipe(
-            # ops.do_action(lambda x: log.info(x)),
+        stateItem.ticks = self.bl.getContractDetails(ticker).pipe(
+            ops.do_action(lambda x: log.info(x)),
             ops.flat_map(
                 lambda x: self.bl.startRealtime(x.contract).pipe(
                     ops.filter(lambda x: x is not None),
                 )
             ),
-            ops.do_action(lambda x: self.aaa(x, stateItem)),
+            ops.do_action(lambda x: self._route(x, stateItem)),
         )
 
-        # stateItem.ask = stateItem.ticks.pipe(
-        #     ops.filter(lambda x: x["type"] == "ask")
-        # )
-        # stateItem.askSize = stateItem.ticks.pipe(
-        #     ops.filter(lambda x: x["type"] == "ask_size")
-        # )
-        # stateItem.askExch = stateItem.ticks.pipe(
-        #     ops.filter(lambda x: x["type"] == "ask_exch")
-        # )
-
-        # stateItem.last = stateItem.ticks.pipe(
-        #     ops.filter(lambda x: x["type"] == "last")
-        # )
-        # stateItem.lastSize = stateItem.ticks.pipe(
-        #     ops.filter(lambda x: x["type"] == "last_size")
-        # )
-        # stateItem.lastExch = stateItem.ticks.pipe(
-        #     ops.filter(lambda x: x["type"] == "last_exch")
-        # )
-        # stateItem.lastTimestamp = stateItem.ticks.pipe(
-        #     ops.filter(lambda x: x["type"] == "last_timestamp")
-        # )
-
-        # stateItem.bid = stateItem.ticks.pipe(
-        #     ops.filter(lambda x: x["type"] == "bid")
-        # )
-        # stateItem.bidSize = stateItem.ticks.pipe(
-        #     ops.filter(lambda x: x["type"] == "bid_size")
-        # )
-        # stateItem.bidExch = stateItem.ticks.pipe(
-        #     ops.filter(lambda x: x["type"] == "bid_exch")
-        # )
-
-        # stateItem.open = stateItem.ticks.pipe(
-        #     ops.filter(lambda x: x["type"] == "open")
-        # )
-        # stateItem.high = stateItem.ticks.pipe(
-        #     ops.filter(lambda x: x["type"] == "high")
-        # )
-        # stateItem.low = stateItem.ticks.pipe(
-        #     ops.filter(lambda x: x["type"] == "low")
-        # )
-        # stateItem.close = stateItem.ticks.pipe(
-        #     ops.filter(lambda x: x["type"] == "close")
-        # )
-
-        # stateItem.volume = stateItem.ticks.pipe(
-        #     ops.filter(lambda x: x["type"] == "volume")
-        # )
-
-        # stateItem.optionHistoricalVolatility = stateItem.ticks.pipe(
-        #     ops.filter(lambda x: x["type"] == "option_historical_vol")
-        # )
-        # stateItem.optionImpliedVolatility = stateItem.ticks.pipe(
-        #     ops.filter(lambda x: x["type"] == "option_implied_vol")
-        # )
-
-        # stateItem.dividends = stateItem.ticks.pipe(
-        #     ops.filter(lambda x: x["type"] == "ib_dividends")
-        # )
-
         return stateItem
-
-        # stateItem = self.state.stocks_realtime_data.get(ticker, ticker)
-
-        # stateItem.ticks = self.bl.getContractDetails(LlStock(ticker)).pipe(
-        #     # ops.do_action(lambda x: log.info(x)),
-        #     ops.flat_map(
-        #         lambda x: self.bl.startRealtime(x.contract).pipe(
-        #             ops.filter(lambda x: x is not None),
-        #         )
-        #     ),
-        # )
-
-        # stateItem.ask = stateItem.ticks.pipe(
-        #     ops.filter(lambda x: x["type"] == "ask")
-        # )
-        # stateItem.askSize = stateItem.ticks.pipe(
-        #     ops.filter(lambda x: x["type"] == "ask_size")
-        # )
-        # stateItem.askExch = stateItem.ticks.pipe(
-        #     ops.filter(lambda x: x["type"] == "ask_exch")
-        # )
-
-        # stateItem.last = stateItem.ticks.pipe(
-        #     ops.filter(lambda x: x["type"] == "last")
-        # )
-        # stateItem.lastSize = stateItem.ticks.pipe(
-        #     ops.filter(lambda x: x["type"] == "last_size")
-        # )
-        # stateItem.lastExch = stateItem.ticks.pipe(
-        #     ops.filter(lambda x: x["type"] == "last_exch")
-        # )
-        # stateItem.lastTimestamp = stateItem.ticks.pipe(
-        #     ops.filter(lambda x: x["type"] == "last_timestamp")
-        # )
-
-        # stateItem.bid = stateItem.ticks.pipe(
-        #     ops.filter(lambda x: x["type"] == "bid")
-        # )
-        # stateItem.bidSize = stateItem.ticks.pipe(
-        #     ops.filter(lambda x: x["type"] == "bid_size")
-        # )
-        # stateItem.bidExch = stateItem.ticks.pipe(
-        #     ops.filter(lambda x: x["type"] == "bid_exch")
-        # )
-
-        # stateItem.open = stateItem.ticks.pipe(
-        #     ops.filter(lambda x: x["type"] == "open")
-        # )
-        # stateItem.high = stateItem.ticks.pipe(
-        #     ops.filter(lambda x: x["type"] == "high")
-        # )
-        # stateItem.low = stateItem.ticks.pipe(
-        #     ops.filter(lambda x: x["type"] == "low")
-        # )
-        # stateItem.close = stateItem.ticks.pipe(
-        #     ops.filter(lambda x: x["type"] == "close")
-        # )
-
-        # stateItem.volume = stateItem.ticks.pipe(
-        #     ops.filter(lambda x: x["type"] == "volume")
-        # )
-
-        # stateItem.optionHistoricalVolatility = stateItem.ticks.pipe(
-        #     ops.filter(lambda x: x["type"] == "option_historical_vol")
-        # )
-        # stateItem.optionImpliedVolatility = stateItem.ticks.pipe(
-        #     ops.filter(lambda x: x["type"] == "option_implied_vol")
-        # )
-
-        # stateItem.dividends = stateItem.ticks.pipe(
-        #     ops.filter(lambda x: x["type"] == "ib_dividends")
-        # )
-
-        # return stateItem
 
     # ----------------------------------------------------------
     # ----------------------------------------------------------
