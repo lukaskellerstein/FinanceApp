@@ -29,6 +29,11 @@ class StockTable(QTableView):
         header.setStretchLastSection(False)
         # header.setSectionResizeMode(5, QHeaderView.Stretch)
 
+        # verHeader = self.verticalHeader()
+        # verHeader.setSectionsMovable(True)
+        # verHeader.setDragEnabled(True)
+        # verHeader.setDragDropMode(self.InternalMove)
+
         self.setSortingEnabled(True)
         self.setSelectionMode(QTableView.SingleSelection)
         self.setSelectionBehavior(QTableView.SelectRows)
@@ -40,7 +45,8 @@ class StockTable(QTableView):
         self.setDragEnabled(True)
         self.setDropIndicatorShown(True)
         self.setAcceptDrops(True)
-        self.setDragDropMode(QTableView.DragDrop)
+        # self.setDragDropMode(QTableView.DragDrop)
+        self.setDragDropMode(self.InternalMove)
         self.setDragDropOverwriteMode(False)
 
     def myclick(self, index):
@@ -56,7 +62,7 @@ class StockTable(QTableView):
     def dragEnterEvent(self, event):
         to_index = self.rowAt(event.pos().y())
         self.draggedItem = self.tableModel._data.iloc[to_index]
-        # print(self.draggedItem.name)
+        print(self.draggedItem.name)
         event.accept()
 
     def dropEvent(self, event):
@@ -64,13 +70,13 @@ class StockTable(QTableView):
         to_index = self.rowAt(event.pos().y())
 
         if dropPosition == QTableView.AboveItem:
-            # print("INSERT ABOVE")
+            print("INSERT ABOVE")
             to_index -= 1
         elif dropPosition == QTableView.BelowItem:
-            # print("INSERT BELOW")
+            print("INSERT BELOW")
             pass
         elif dropPosition == QTableView.OnItem:
-            # print("INSERT")
+            print("INSERT")
             pass
 
         self.tableModel.insertStock(to_index, self.draggedItem)

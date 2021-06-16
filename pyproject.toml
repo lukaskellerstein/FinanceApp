@@ -15,8 +15,7 @@ rx = "^3.1.0"
 pymongo = "^3.10.1"
 pylint = "^2.4.4"
 QuantLib = "^1.18"
-pystore = "^0.1.15"
-dask = {extras = ["dataframe"], version = "^2.16.0"}
+pystore = "0.1.22"
 trading_calendars = "^1.11.7"
 holidays = "^0.10.2"
 

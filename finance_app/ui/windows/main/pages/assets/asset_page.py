@@ -75,7 +75,7 @@ class AssetPage(BasePage):
         self.__updateProgress(0)
 
     def fillTable(self):
-        self.tableData = self.bl.getAllFromDb(self.assetType)
+        self.tableData = self.bl.getAll(self.assetType)
         self.table.tableModel.setData(self.tableData)
 
     @pyqtSlot()
@@ -118,7 +118,7 @@ class AssetPage(BasePage):
     def tableRemoveClickHandler(self, data: Tuple[pd.Series, QModelIndex]):
         (row, _) = data
         # remove from DB
-        self.bl.removeFromDb(self.assetType, row["symbol"])
+        self.bl.remove(self.assetType, row["symbol"])
 
     @pyqtSlot(object)
     def tableOpenClickHandler(self, data: Tuple[pd.Series, QModelIndex]):

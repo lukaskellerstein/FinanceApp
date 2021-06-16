@@ -1,5 +1,6 @@
-from __future__ import (
-    annotations,
+from __future__ import annotations
+from business.model.contract_details import (
+    IBContractDetails,
 )  # allow return same type as class ..... -> FuturesTreeNode
 
 import logging
@@ -172,7 +173,9 @@ class FuturesTreeModel(QAbstractItemModel):
     # def __allColumnsCount(self) -> int:
     #     return self._root.data.shape[1] + self.__indexColumnsCount()
 
-    def addGroup(self, data: List[ContractDetails]):
+    def addGroup(
+        self, data: Union[List[ContractDetails], List[IBContractDetails]]
+    ):
         # log.debug("Running...")
         # log.debug(locals())
 
@@ -217,7 +220,13 @@ class FuturesTreeModel(QAbstractItemModel):
     def on_update_model(self, obj: Dict[str, Any]):
         # log.debug("Running...")
         # log.debug(locals())
-        # log.debug(f"ticker={obj['ticker']}|localSymbol={obj['localSymbol']}|type={obj['type']}|price={obj['price']}")
+        log.debug(
+            f"ticker={obj['ticker']}|localSymbol={obj['localSymbol']}|type={obj['type']}|price={obj['price']}"
+        )
+
+        if obj == {}:
+            log.info("EMPTY")
+            return
 
         self.root.updateData(
             obj["ticker"], obj["localSymbol"], obj["type"], obj["price"]
@@ -238,7 +247,11 @@ class FuturesTreeModel(QAbstractItemModel):
         # log.debug(locals())
 
         if not index.isValid():
-            print("index invalid - return None")
+            log.error("index invalid - return None")
+            return None
+
+        if index.internalPointer().data.empty:
+            # log.error("index data are empty")
             return None
 
         if role == Qt.DisplayRole:

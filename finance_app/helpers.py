@@ -1,23 +1,17 @@
-from db.model.base import DBObject
 import logging
 import threading
-from typing import Any, Callable, Dict, List
-
-from business.model.contracts import (
-    IBContract,
-    IBFutureContract,
-    IBStockContract,
-)
-from db.services.model import LlContractDetails
-from ibapi.contract import Contract, ContractDetails
+from typing import List
 from datetime import datetime
-import pandas as pd
 
 # create logger
 log = logging.getLogger("CellarLogger")
 
 
-from math import ceil
+# ------------------------------------
+# HELEPRS
+# ------------------------------------
+def constructKey(symbol, localSymbol) -> str:
+    return f"{symbol}|{localSymbol}"
 
 
 def try_parsing_date(text, formats: List[str]) -> datetime:

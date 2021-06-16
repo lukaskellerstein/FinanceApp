@@ -3,9 +3,10 @@ from __future__ import (
 )  # allow return same type as class ..... -> State
 
 from business.model.contract_details import IBContractDetails
-from typing import List, Dict, Any
+from typing import List, Union
 from db.model.base import DBObject
 from enum import Enum
+from datetime import date, datetime
 
 
 class AssetType(Enum):
@@ -32,3 +33,34 @@ class Asset(DBObject):
         self.type: str = ""
         self.contractDetails: List[IBContractDetails] = []
 
+    def latestContractDetails(
+        self, count: int = 1
+    ) -> Union[None, List[IBContractDetails]]:
+        if self.contractDetails.count == 0:
+            return None
+        elif self.type == AssetType.STOCK.value:
+            self.contractDetails.sort(
+                key=lambda x: x.contract.lastTradeDateOrContractMonth
+            )
+            return self.contractDetails[:count]
+        elif self.type == AssetType.FUTURE.value:
+            result = list(
+                filter(self.__filterOlderThanToday, self.contractDetails)
+            )
+            return self.__chooseContractMonths(result, count)
+
+    def __chooseContractMonths(
+        self, data: List[IBContractDetails], count: int
+    ) -> List[IBContractDetails]:
+        data.sort(key=lambda x: x.contract.lastTradeDateOrContractMonth)
+        return data[:count]
+
+    def __filterOlderThanToday(self, cd: IBContractDetails) -> bool:
+        lastDate = datetime.strptime(
+            cd.contract.lastTradeDateOrContractMonth, "%Y%m%d"
+        ).date()
+        nowDate = date.today()
+        if lastDate < nowDate:
+            return False
+        else:
+            return True

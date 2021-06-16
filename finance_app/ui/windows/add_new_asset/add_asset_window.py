@@ -127,8 +127,8 @@ class AssetAddWindow(QWidget):
         note: str = self.noteInput.text()
         self.asset.shortDescription = note
 
-        if self.bl.existInDb(self.assetType, self.asset.symbol) == False:
-            self.bl.saveToDb(self.asset)
+        if self.bl.isExist(self.assetType, self.asset.symbol) == False:
+            self.bl.save(self.asset)
 
         self.on_close.emit()
 

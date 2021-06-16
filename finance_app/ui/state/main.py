@@ -6,8 +6,7 @@ import pandas as pd
 from rx import operators as ops
 from rx.subject import BehaviorSubject
 
-from ui.state.futures_realtime_data import FuturesRealtimeDataState
-from ui.state.stocks_realtime_data import StocksRealtimeDataState
+from ui.state.realtime_data import RealtimeDataState
 
 # ******************************
 # SINGLETON
@@ -30,5 +29,5 @@ class State(object):
         else:
             State.__instance = self
 
-            self.stocks_realtime_data = StocksRealtimeDataState()
-            self.futures_realtime_data = FuturesRealtimeDataState()
+            self.stocks_realtime_data = RealtimeDataState()
+            self.futures_realtime_data = RealtimeDataState()

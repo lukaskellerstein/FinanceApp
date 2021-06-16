@@ -2,7 +2,7 @@ from business.model.factory.asset_factory import AssetFactory
 import logging
 import threading
 from datetime import datetime, timedelta
-from typing import Any, Dict, List
+from typing import Any, Dict, List, Union
 
 from rx import operators as ops
 from rx.core.typing import Observable
@@ -34,26 +34,26 @@ class AssetBL(object):
         log.info("Running ...")
 
         # connect to IB
-        self.ibClient = MyIBClient()
+        self.__ibClient = MyIBClient()
 
         # start thread
-        self.ibClient_thread = threading.Thread(
-            name=f"AssetBL-ibClient-{self.ibClient.uid}-thread",
-            target=lambda: self.ibClient.myStart(),
+        self.__ibClient_thread = threading.Thread(
+            name=f"AssetBL-ibClient-{self.__ibClient.uid}-thread",
+            target=lambda: self.__ibClient.myStart(),
             daemon=True,
         )
-        self.ibClient_thread.start()
+        self.__ibClient_thread.start()
 
-        self.currentThread = None
+        self.__currentThread = None
 
         # DB
-        self.assetDbService = MongoAssetService()
-        self.histDataDbService = PyStoreHistService()
+        self.__assetDbService = MongoAssetService()
+        self.__histDataDbService = PyStoreHistService()
 
         # Business object factory
-        self.assetFactory = AssetFactory()
-        self.contractFactory = ContractFactory()
-        self.contractDetailsFactory = ContractDetailsFactory()
+        self.__assetFactory = AssetFactory()
+        self.__contractFactory = ContractFactory()
+        self.__contractDetailsFactory = ContractDetailsFactory()
 
     # ----------------------------------------------------------
     # ----------------------------------------------------------
@@ -61,50 +61,78 @@ class AssetBL(object):
     # ----------------------------------------------------------
     # ----------------------------------------------------------
 
+    # ASSET - DB ---------------------------
+    def get(self, assetType: AssetType, symbol: str) -> Union[None, Asset]:
+        resultDict = self.__assetDbService.findOne(
+            assetType, {"symbol": symbol}
+        )
+
+        if resultDict == None:
+            log.warn(f"Asset with symbol: {symbol} is not found in Asset DB")
+            return None
+
+        result = self.__assetFactory.createAsset(resultDict)
+        return result
+
+    def isExist(self, assetType: AssetType, symbol: str) -> bool:
+        isExist = self.__assetDbService.findOne(assetType, {"symbol": symbol})
+        return True if isExist is not None else False
+
+    def save(self, asset: Asset):
+        dbobject = self.__assetFactory.createDict(asset)
+        self.__assetDbService.add(AssetType.from_str(asset.type), dbobject)
+
+    def getAll(self, assetType: AssetType) -> List[Asset]:
+        dbobjects = self.__assetDbService.getAll(assetType)
+        objects: List[Asset] = [
+            self.__assetFactory.createAsset(dbobject) for dbobject in dbobjects
+        ]
+        return objects
+
+    def remove(self, assetType: AssetType, symbol: str):
+        self.__assetDbService.remove(assetType, {"symbol": symbol})
+
     # CONTRACT DETAILS - IB ---------------------------
     def getContractDetails(
         self, assetType: AssetType, contract: IBContract
     ) -> Observable[IBContractDetails]:
         log.info(contract)
         if assetType == AssetType.FUTURE:
-            return self.ibClient.getContractDetail(contract).pipe(
+            return self.__ibClient.getContractDetail(contract).pipe(
                 ops.filter(lambda x: x is not None),
                 ops.buffer_with_time(2),
                 ops.take(1),
             )
         elif assetType == AssetType.STOCK:
-            return self.ibClient.getContractDetail(contract).pipe(
+            return self.__ibClient.getContractDetail(contract).pipe(
                 ops.filter(lambda x: x is not None),
-                ops.do_action(lambda x: log.info(x)),
                 ops.buffer_with_time(1),
                 ops.take(1),
             )
 
-    # ASSET - DB ---------------------------
-    def existInDb(self, assetType: AssetType, symbol: str) -> bool:
-        isExist = self.assetDbService.findOne(assetType, {"symbol": symbol})
-        return True if isExist is not None else False
+    def getLatestContractDetails(
+        self, assetType: AssetType, symbol: str, latestContractDetails: int = 1
+    ) -> List[IBContractDetails]:
+        # Asset
+        asset = self.get(assetType, symbol)
+        if asset is None:
+            log.warn(f"Asset with symbol: {symbol} is not found in Asset DB")
+            return []
 
-    def saveToDb(self, asset: Asset):
-        dbobject = self.assetFactory.createDict(asset)
-        self.assetDbService.add(AssetType.from_str(asset.type), dbobject)
-
-    def getAllFromDb(self, assetType: AssetType) -> List[Asset]:
-        dbobjects = self.assetDbService.getAll(assetType)
-        objects: List[Asset] = [
-            self.assetFactory.createAsset(dbobject) for dbobject in dbobjects
-        ]
-        return objects
-
-    def removeFromDb(self, assetType: AssetType, symbol: str):
-        self.assetDbService.remove(assetType, {"symbol": symbol})
+        # Choose the right contract
+        contractDetails = asset.latestContractDetails(latestContractDetails)
+        return contractDetails if contractDetails is not None else []
 
     # REALTIME DATA - IB ---------------------------
     def startRealtime(self, contract: IBContract) -> Observable[Any]:
-        return self.ibClient.startRealtimeData(contract)
+        return self.__ibClient.startRealtimeData(contract).pipe(
+            ops.filter(lambda x: x is not None),
+        )
+
+    def stopRealtime(self, contract: IBContract) -> None:
+        return self.__ibClient.stopRealtimeData(contract)
 
     # HISTORICAL DATA - IB + DB ---------------------------
-
     def downloadHistoricalData(
         self,
         assets: List[Asset],
@@ -125,13 +153,13 @@ class AssetBL(object):
                     self.__downloadFutures(asset, maxBlockSize)
                 )
 
-        self.currentThread = DownloadHistDataTask(
-            self.ibClient,
+        self.__currentThread = DownloadHistDataTask(
+            self.__ibClient,
             progressResult0000,
             contractsAndTimeBlocks,
             timeframe,
         )
-        self.currentThread.start()
+        self.__currentThread.start()
 
         return progressResult0000
 
@@ -158,23 +186,22 @@ class AssetBL(object):
 
         log.info(contractsAndTimeBlocks)
 
-        self.currentThread = DownloadHistDataTask(
-            self.ibClient,
+        self.__currentThread = DownloadHistDataTask(
+            self.__ibClient,
             progressResult0000,
             contractsAndTimeBlocks,
             timeframe,
         )
-        self.currentThread.start()
+        self.__currentThread.start()
 
         return progressResult0000
 
     def getHistoricalDataFromDB(self, symbol: str, timeframe: TimeFrame):
-        return self.histDataDbService.getAll(symbol, timeframe)
+        return self.__histDataDbService.getAll(symbol, timeframe)
 
     # FUNDAMENTALS DATA - IB -----------------------------------
-
     def getFundamentals(self, contract: IBContract) -> Observable[Any]:
-        return self.ibClient.getFundamentalData(contract)
+        return self.__ibClient.getFundamentalData(contract)
 
     # ----------------------------------------------------------
     # ----------------------------------------------------------
@@ -359,16 +386,16 @@ class AssetBL(object):
     def onDestroy(self):
         log.info("Destroying ...")
 
-        if self.currentThread is not None:
-            self.currentThread.terminate()
+        if self.__currentThread is not None:
+            self.__currentThread.terminate()
 
         # Close DB
-        self.assetDbService.client.close()
-        self.assetDbService.db.logout()
+        self.__assetDbService.client.close()
+        self.__assetDbService.db.logout()
 
         # Close IB
-        self.ibClient.connectionClosed()  # close the EWrapper
-        self.ibClient.disconnect()  # close the EClient
+        self.__ibClient.connectionClosed()  # close the EWrapper
+        self.__ibClient.disconnect()  # close the EClient
 
     # 2. - Python destroy -----------------------------------------
     def __del__(self):

@@ -80,12 +80,12 @@ class OptionsWatchlistPage(BasePage):
         )
 
         # price (from state)
-        step2 = self.state.stocks_realtime_data.get(ticker, ticker).close.pipe(
-            ops.do_action(lambda x: log.info(x))
-        )
+        step2 = self.state.stocks_realtime_data.getOrCreate(
+            ticker, ticker
+        ).close.pipe(ops.do_action(lambda x: log.info(x)))
 
         # volatility (from state)
-        step3 = self.state.stocks_realtime_data.get(
+        step3 = self.state.stocks_realtime_data.getOrCreate(
             ticker, ticker
         ).optionImpliedVolatility.pipe(ops.do_action(lambda x: log.info(x)))
 

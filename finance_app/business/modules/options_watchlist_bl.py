@@ -1,3 +1,5 @@
+from business.modules.asset_bl import AssetBL
+from db.services.mongo_asset_service import MongoAssetService
 import logging
 import threading
 
@@ -15,6 +17,11 @@ from business.services.ibclient.my_ib_client import MyIBClient
 from db.services.mongo_service import MongoService
 
 import pandas as pd
+from business.model.factory.contract_factory import ContractFactory
+from business.model.factory.contract_detail_factory import (
+    ContractDetailsFactory,
+)
+from business.model.asset import AssetType
 
 # create logger
 log = logging.getLogger("CellarLogger")
@@ -37,20 +44,34 @@ class OptionsWatchlistBL(object):
 
         # DB
         self.dbService = MongoService()
+        self.assetDbService = MongoAssetService()
 
-    def getOptionChain(self, contract: IBContract) -> Observable[Any]:
+        # Asset BL
+        self.assetBl = AssetBL()
+
+        # Business object factory
+        self.contractFactory = ContractFactory()
+        self.contractDetailsFactory = ContractDetailsFactory()
+
+    def getOptionChain(self, symbol: str) -> Observable[Any]:
         # log.debug("Running...")
         # log.debug(locals())
 
-        contractDetail = self.dbService.getStockContractDetail(
-            contract.symbol, contract.localSymbol
+        contractDetailDict = self.dbService.getStockContractDetail(
+            symbol, symbol
         )
 
         # contractDetail = mapDictToLlContractDetail(contractDetail)
 
+        contractDetail = self.contractDetailsFactory.createIBContractDetails(
+            contractDetailDict
+        )
+
         if contractDetail is not None:
 
-            contractFull = IBContract()
+            contractFull = self.contractFactory.createIBContract(
+                contractDetail.contract
+            )
             # contractFull = mapLlContractDetailsToContract(contractDetail)
 
             return self.ibClient.getOptionChain(contractFull).pipe(

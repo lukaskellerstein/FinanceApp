@@ -124,13 +124,13 @@ class ContractFactory(object):
             resultContract = IBContract()
 
         if resultContract is not None:
-            resultContract.conId = int(contract["conId"])
+            resultContract.conId = contract["conId"]
             resultContract.symbol = contract["symbol"]
             resultContract.secType = contract["secType"]
             resultContract.lastTradeDateOrContractMonth = contract[
                 "lastTradeDateOrContractMonth"
             ]
-            resultContract.strike = float(contract["strike"])
+            resultContract.strike = contract["strike"]
             resultContract.right = contract["right"]
             resultContract.multiplier = contract["multiplier"]
             resultContract.exchange = contract["exchange"]
@@ -138,7 +138,7 @@ class ContractFactory(object):
             resultContract.currency = contract["currency"]
             resultContract.localSymbol = contract["localSymbol"]
             resultContract.tradingClass = contract["tradingClass"]
-            resultContract.includeExpired = bool(contract["includeExpired"])
+            resultContract.includeExpired = contract["includeExpired"]
             resultContract.secIdType = contract["secIdType"]
             resultContract.secId = contract["secId"]
             resultContract.comboLegsDescrip = contract["comboLegsDescrip"]
@@ -181,13 +181,13 @@ class ContractFactory(object):
 
         resultContract: Dict[str, Any] = {}
 
-        resultContract["conId"] = str(contract.conId)
+        resultContract["conId"] = contract.conId
         resultContract["symbol"] = contract.symbol
         resultContract["secType"] = contract.secType
         resultContract[
             "lastTradeDateOrContractMonth"
         ] = contract.lastTradeDateOrContractMonth
-        resultContract["strike"] = str(contract.strike)
+        resultContract["strike"] = contract.strike
         resultContract["right"] = contract.right
         resultContract["multiplier"] = contract.multiplier
         resultContract["exchange"] = contract.exchange
@@ -195,7 +195,7 @@ class ContractFactory(object):
         resultContract["currency"] = contract.currency
         resultContract["localSymbol"] = contract.localSymbol
         resultContract["tradingClass"] = contract.tradingClass
-        resultContract["includeExpired"] = str(contract.includeExpired)
+        resultContract["includeExpired"] = contract.includeExpired
         resultContract["secIdType"] = contract.secIdType
         resultContract["secId"] = contract.secId
         resultContract["comboLegsDescrip"] = contract.comboLegsDescrip

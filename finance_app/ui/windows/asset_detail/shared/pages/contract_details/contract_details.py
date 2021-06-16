@@ -62,16 +62,11 @@ class ContractDetailsPage(BasePage):
             self.asset.symbol,
             exchange=exchange,
         )
-        # contract = ContractFactory.create(
-        #     self.asset.type, symbol=self.asset.symbol, exchange=exchange
-        # )
 
         assetType = AssetType.from_str(self.asset.type)
 
         self.bl.getContractDetails(assetType, contract).pipe(
             ops.do_action(lambda x: log.info(x)),
-            # ops.do_action(lambda x: self.__updateAsset(x)),
-            # ops.do_action(lambda x: log.info(x)),
             # We have to use pyqtSignal, otherwise Qt will complain about threads
             # --> Cannot set parent, new parent is in a different thread
             ops.do_action(lambda x: self.on_fillTable.emit(x)),
@@ -85,10 +80,8 @@ class ContractDetailsPage(BasePage):
         [self.asset.contractDetails.append(item) for item in data]
         # log.info(self.asset.contractDetails)
         # log.info(self.asset.contractDetails[0].contract.symbol)
-        self.bl.removeFromDb(
-            AssetType.from_str(self.asset.type), self.asset.symbol
-        )
-        self.bl.saveToDb(self.asset)
+        self.bl.remove(AssetType.from_str(self.asset.type), self.asset.symbol)
+        self.bl.save(self.asset)
 
     @pyqtSlot(list)
     def __fillTable(self, data: List[IBContractDetails]):

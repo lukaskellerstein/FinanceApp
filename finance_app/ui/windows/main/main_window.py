@@ -1,3 +1,6 @@
+from ui.windows.main.pages.debug.realtime_data.realtime_data import (
+    RealtimeDataDebugPage,
+)
 from ui.windows.main.pages.options.manual_calc.manual_calc import (
     ManualCalcPage,
 )
@@ -65,6 +68,9 @@ class MainWindow(QMainWindow):
             self.setCurrentPage(AssetPage, assetType=AssetType.FUTURE)
         )
         self.actionThreads.triggered.connect(self.openThreadsDebugWindow)
+        self.actionRealtimeData.triggered.connect(
+            self.openRealtimeDataDebugWindow
+        )
         self.actionManual_Calc.triggered.connect(
             self.setCurrentPage(ManualCalcPage)
         )
@@ -103,6 +109,10 @@ class MainWindow(QMainWindow):
         self.threadsDebugWindowInstance = ThreadsDebugPage()
         self.threadsDebugWindowInstance.show()
 
+    def openRealtimeDataDebugWindow(self):
+        self.realtimeDataDebugWindowInstance = RealtimeDataDebugPage()
+        self.realtimeDataDebugWindowInstance.show()
+
     # --------------------------------------------------------
     # --------------------------------------------------------
     # DESTROY
@@ -112,9 +122,7 @@ class MainWindow(QMainWindow):
     # Qt destroy -----------------------------------------
     def closeEvent(self, event: Any):
         log.info("Running ...")
-
         helpers.logThreads()
-
         self.currentPage.onDestroy()
 
     # Python destroy -----------------------------------------

@@ -25,6 +25,8 @@ from business.model.factory.contract_detail_factory import (
     ContractDetailsFactory,
 )
 
+from business.services.config_service import AppConfig
+
 # from typings import ObservableType
 
 # create logger
@@ -41,6 +43,7 @@ class MyIBClient(EWrapper, EClient):
         EClient.__init__(self, wrapper=self)
 
         self.uid = random.randint(1000, 10000)
+        self.config = AppConfig()
 
         self.state = State.getInstance()
 
@@ -52,7 +55,9 @@ class MyIBClient(EWrapper, EClient):
 
     def myStart(self):
         log.info(f"----Connect & Run----{self.uid}")
-        self.connect("127.0.0.1", 4001, self.uid)
+        ip = self.config.twsIP()
+        port = self.config.twsPort()
+        self.connect(ip, int(port), self.uid)
         self.run()
 
     # --------------------------------------------------------------------

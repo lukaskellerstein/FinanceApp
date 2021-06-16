@@ -85,7 +85,7 @@ class MongoService:
 
     def getStockContractDetail(
         self, symbol: str, localSymbol: str
-    ) -> Dict[str, str]:
+    ) -> Dict[str, Any]:
         return self.stocks_contract_details_table.find_one(
             {"symbol": symbol, "localSymbol": localSymbol}
         )

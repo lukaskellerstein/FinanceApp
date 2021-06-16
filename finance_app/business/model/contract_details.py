@@ -15,3 +15,5 @@ class IBContractDetails(ContractDetails, DBObject):
         ContractDetails.__init__(self)
         DBObject.__init__(self, self.__module__, type(self).__name__)
 
+        self.contract = IBContract()
+

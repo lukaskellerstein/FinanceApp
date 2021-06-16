@@ -1,21 +1,14 @@
 import logging
-import threading
-from datetime import date, datetime
-from typing import Any, List, Union
+from typing import Any, List
 
-import pandas as pd
-
-from rx import operators as ops
-from rx.core.typing import Observable
-
+from business.model.asset import AssetType
 from business.model.contracts import IBContract
-from business.services.ibclient.my_ib_client import MyIBClient
-from db.services.mongo_service import MongoService
-from ibapi.contract import Contract, ContractDetails
-from business.model.factory.contract_factory import ContractFactory, SecType
 from business.model.factory.contract_detail_factory import (
     ContractDetailsFactory,
 )
+from business.model.factory.contract_factory import ContractFactory
+from business.services.ibclient.my_ib_client import MyIBClient
+from db.services.file_watchlist_service import FileWatchlistService
 
 # create logger
 log = logging.getLogger("CellarLogger")
@@ -28,19 +21,19 @@ class FuturesWatchlistBL(object):
     def __init__(self):
         log.info("Running ...")
 
-        # connect to IB
-        self.ibClient = MyIBClient()
+        # # connect to IB
+        # self.ibClient = MyIBClient()
 
-        # start thread
-        self.ibClient_thread = threading.Thread(
-            name="FuturesWatchlistBL-ibClient-thread",
-            target=lambda: self.ibClient.myStart(),
-            daemon=True,
-        )
-        self.ibClient_thread.start()
+        # # start thread
+        # self.ibClient_thread = threading.Thread(
+        #     name="FuturesWatchlistBL-ibClient-thread",
+        #     target=lambda: self.ibClient.myStart(),
+        #     daemon=True,
+        # )
+        # self.ibClient_thread.start()
 
         # DB
-        self.dbService = MongoService()
+        self.db = FileWatchlistService()
 
         # Business object factory
         self.contractFactory = ContractFactory()
@@ -52,89 +45,29 @@ class FuturesWatchlistBL(object):
     # ----------------------------------------------------------
     # ----------------------------------------------------------
 
-    def getNewestContractDetails(
-        self, contract: IBContract, count: int, bufferTime: int
-    ) -> Observable[List[ContractDetails]]:
+    def getWatchlist(self) -> List[str]:
+        return self.db.getWatchlist(AssetType.FUTURE.value)
 
-        return self.ibClient.getContractDetail(contract).pipe(
-            ops.filter(
-                lambda contrDetails: isinstance(contrDetails, ContractDetails)
-            ),
-            ops.filter(self.__filterExchange),
-            ops.filter(self.__filterOlderThanToday),
-            ops.do_action(self.__addToDbContractDetails),
-            ops.buffer_with_time(bufferTime),
-            ops.filter(self.__filterEmptyArray),
-            ops.map(lambda x: self.__chooseContractMonths(x, count)),
-            # ops.map(self.__selectContract),
-        )
+    def addToWatchlist(self, symbol: str):
+        self.db.addSymbol(AssetType.FUTURE.value, symbol)
 
-    # region "getFirstContractDetails" operators
-
-    def __filterEmptyArray(self, arr: List[Any]) -> bool:
-        return True if len(arr) > 0 else False
-
-    def __addToDbContractDetails(self, x: ContractDetails):
-        result = self.contractDetailsFactory.createDict(x)
-        self.dbService.addToFuturesContractDetails_IfNotExits(result)
-        return result
-
-    def __filterOlderThanToday(self, cd: ContractDetails) -> bool:
-        lastDate = datetime.strptime(
-            cd.contract.lastTradeDateOrContractMonth, "%Y%m%d"
-        ).date()
-        nowDate = date.today()
-        if lastDate < nowDate:
-            return False
-        else:
-            return True
-
-    def __filterExchange(self, cd: ContractDetails) -> bool:
-        if cd.contract.exchange in allowExchanges:
-            return True
-        else:
-            return False
-
-    def __chooseContractMonths(
-        self, data: List[ContractDetails], count: int
-    ) -> List[ContractDetails]:
-        data.sort(key=lambda x: x.contract.lastTradeDateOrContractMonth)
-        return data[:count]
-
-    # def __selectContract(
-    #     self, data: List[ContractDetails]
-    # ) -> List[MyContract]:
-    #     return map(lambda x: x.contract, data)
-
-    # endregion
-
-    # def getHistoricalData(self, ticker):
-    #     contract = LlFuture(ticker)
-    #     return self.ibClient.getHistoricalData(contract)
-
-    def getWatchlist(self) -> pd.DataFrame:
-        return self.dbService.getFuturesWatchlist()
-
-    def addToWatchlist(self, contract: Union[IBContract, Contract]):
-        self.dbService.addToFuturesWatchlist_IfNotExists(contract.symbol)
-
-    def startRealtime(self, contract: IBContract) -> Observable[Any]:
-        return self.ibClient.startRealtimeData(contract)
-
-    def remove(self, symbol: str, localSymbol: str):
-        # remove from watchlist DB
-        self.dbService.removeFromFuturesWatchlist(symbol)
+    def remove(self, symbol: str):
+        self.db.removeSymbol(AssetType.FUTURE.value, symbol)
 
         # stop receiving data from Broker
-        contract = self.contractFactory.createNewIBContract(
-            SecType.FUTURE, symbol, localSymbol
-        )
-        self.ibClient.stopRealtimeData(contract)
+        # contract = self.contractFactory.createNewIBContract(
+        #     SecType.FUTURE, symbol, localSymbol
+        # )
+        # self.ibClient.stopRealtimeData(contract)
 
     def updateWatchlist(self, arr: List[Any]):
-        self.dbService.futures_watchlist_table.drop()
-        for item in arr:
-            self.dbService.addToFuturesWatchlist(item)
+        self.db.updateWatchlist(AssetType.STOCK.value, arr)
+
+        aaa = self.db.getWatchlist(AssetType.STOCK.value)
+
+        # self.dbService.futures_watchlist_table.drop()
+        # for item in arr:
+        #     self.dbService.addToFuturesWatchlist(item)
 
     # --------------------------------------------------------
     # --------------------------------------------------------
@@ -146,13 +79,9 @@ class FuturesWatchlistBL(object):
     def onDestroy(self):
         log.info("Destroying ...")
 
-        # Close DB
-        self.dbService.client.close()
-        self.dbService.db.logout()
-
         # Close IB
-        self.ibClient.connectionClosed()  # close the EWrapper
-        self.ibClient.disconnect()  # close the EClient
+        # self.ibClient.connectionClosed()  # close the EWrapper
+        # self.ibClient.disconnect()  # close the EClient
 
     # 2. - Python destroy -----------------------------------------
     def __del__(self):

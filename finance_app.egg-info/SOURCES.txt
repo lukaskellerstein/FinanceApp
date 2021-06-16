@@ -21,12 +21,16 @@ finance_app/business/model/asset.py
 finance_app/business/model/contract_details.py
 finance_app/business/model/contracts.py
 finance_app/business/model/timeframe.py
+finance_app/business/model/factory/asset_factory.py
+finance_app/business/model/factory/contract_detail_factory.py
+finance_app/business/model/factory/contract_factory.py
 finance_app/business/modules/__init__.py
 finance_app/business/modules/asset_bl.py
 finance_app/business/modules/futures_watchlist_bl.py
 finance_app/business/modules/options_watchlist_bl.py
 finance_app/business/modules/stocks_watchlist_bl.py
 finance_app/business/services/__init__.py
+finance_app/business/services/config_service.py
 finance_app/business/services/ibclient/my_ib_client.py
 finance_app/business/services/ibclient/state.py
 finance_app/business/tasks/download_hist_data_task.py
@@ -773,6 +777,10 @@ finance_app/db/pystore/cellarstone_db/1 day/GCG1-20210224/_common_metadata
 finance_app/db/pystore/cellarstone_db/1 day/GCG1-20210224/_metadata
 finance_app/db/pystore/cellarstone_db/1 day/GCG1-20210224/metadata.json
 finance_app/db/pystore/cellarstone_db/1 day/GCG1-20210224/part.0.parquet
+finance_app/db/pystore/cellarstone_db/1 day/GCG2/_common_metadata
+finance_app/db/pystore/cellarstone_db/1 day/GCG2/_metadata
+finance_app/db/pystore/cellarstone_db/1 day/GCG2/metadata.json
+finance_app/db/pystore/cellarstone_db/1 day/GCG2/part.0.parquet
 finance_app/db/pystore/cellarstone_db/1 day/GCG2-20220224/_common_metadata
 finance_app/db/pystore/cellarstone_db/1 day/GCG2-20220224/_metadata
 finance_app/db/pystore/cellarstone_db/1 day/GCG2-20220224/metadata.json
@@ -801,6 +809,10 @@ finance_app/db/pystore/cellarstone_db/1 day/GCJ1-20210428/_common_metadata
 finance_app/db/pystore/cellarstone_db/1 day/GCJ1-20210428/_metadata
 finance_app/db/pystore/cellarstone_db/1 day/GCJ1-20210428/metadata.json
 finance_app/db/pystore/cellarstone_db/1 day/GCJ1-20210428/part.0.parquet
+finance_app/db/pystore/cellarstone_db/1 day/GCJ2/_common_metadata
+finance_app/db/pystore/cellarstone_db/1 day/GCJ2/_metadata
+finance_app/db/pystore/cellarstone_db/1 day/GCJ2/metadata.json
+finance_app/db/pystore/cellarstone_db/1 day/GCJ2/part.0.parquet
 finance_app/db/pystore/cellarstone_db/1 day/GCJ2-20220427/_common_metadata
 finance_app/db/pystore/cellarstone_db/1 day/GCJ2-20220427/_metadata
 finance_app/db/pystore/cellarstone_db/1 day/GCJ2-20220427/metadata.json
@@ -825,22 +837,42 @@ finance_app/db/pystore/cellarstone_db/1 day/GCM0-20200626/_common_metadata
 finance_app/db/pystore/cellarstone_db/1 day/GCM0-20200626/_metadata
 finance_app/db/pystore/cellarstone_db/1 day/GCM0-20200626/metadata.json
 finance_app/db/pystore/cellarstone_db/1 day/GCM0-20200626/part.0.parquet
+finance_app/db/pystore/cellarstone_db/1 day/GCM1/_common_metadata
+finance_app/db/pystore/cellarstone_db/1 day/GCM1/_metadata
+finance_app/db/pystore/cellarstone_db/1 day/GCM1/metadata.json
+finance_app/db/pystore/cellarstone_db/1 day/GCM1/part.0.parquet
 finance_app/db/pystore/cellarstone_db/1 day/GCM1-20210628/_common_metadata
 finance_app/db/pystore/cellarstone_db/1 day/GCM1-20210628/_metadata
 finance_app/db/pystore/cellarstone_db/1 day/GCM1-20210628/metadata.json
 finance_app/db/pystore/cellarstone_db/1 day/GCM1-20210628/part.0.parquet
+finance_app/db/pystore/cellarstone_db/1 day/GCM2/_common_metadata
+finance_app/db/pystore/cellarstone_db/1 day/GCM2/_metadata
+finance_app/db/pystore/cellarstone_db/1 day/GCM2/metadata.json
+finance_app/db/pystore/cellarstone_db/1 day/GCM2/part.0.parquet
 finance_app/db/pystore/cellarstone_db/1 day/GCM2-20220628/_common_metadata
 finance_app/db/pystore/cellarstone_db/1 day/GCM2-20220628/_metadata
 finance_app/db/pystore/cellarstone_db/1 day/GCM2-20220628/metadata.json
 finance_app/db/pystore/cellarstone_db/1 day/GCM2-20220628/part.0.parquet
+finance_app/db/pystore/cellarstone_db/1 day/GCM3/_common_metadata
+finance_app/db/pystore/cellarstone_db/1 day/GCM3/_metadata
+finance_app/db/pystore/cellarstone_db/1 day/GCM3/metadata.json
+finance_app/db/pystore/cellarstone_db/1 day/GCM3/part.0.parquet
 finance_app/db/pystore/cellarstone_db/1 day/GCM3-20230628/_common_metadata
 finance_app/db/pystore/cellarstone_db/1 day/GCM3-20230628/_metadata
 finance_app/db/pystore/cellarstone_db/1 day/GCM3-20230628/metadata.json
 finance_app/db/pystore/cellarstone_db/1 day/GCM3-20230628/part.0.parquet
+finance_app/db/pystore/cellarstone_db/1 day/GCM4/_common_metadata
+finance_app/db/pystore/cellarstone_db/1 day/GCM4/_metadata
+finance_app/db/pystore/cellarstone_db/1 day/GCM4/metadata.json
+finance_app/db/pystore/cellarstone_db/1 day/GCM4/part.0.parquet
 finance_app/db/pystore/cellarstone_db/1 day/GCM4-20240626/_common_metadata
 finance_app/db/pystore/cellarstone_db/1 day/GCM4-20240626/_metadata
 finance_app/db/pystore/cellarstone_db/1 day/GCM4-20240626/metadata.json
 finance_app/db/pystore/cellarstone_db/1 day/GCM4-20240626/part.0.parquet
+finance_app/db/pystore/cellarstone_db/1 day/GCM5/_common_metadata
+finance_app/db/pystore/cellarstone_db/1 day/GCM5/_metadata
+finance_app/db/pystore/cellarstone_db/1 day/GCM5/metadata.json
+finance_app/db/pystore/cellarstone_db/1 day/GCM5/part.0.parquet
 finance_app/db/pystore/cellarstone_db/1 day/GCM5-20250626/_common_metadata
 finance_app/db/pystore/cellarstone_db/1 day/GCM5-20250626/_metadata
 finance_app/db/pystore/cellarstone_db/1 day/GCM5-20250626/metadata.json
@@ -873,6 +905,10 @@ finance_app/db/pystore/cellarstone_db/1 day/GCQ0-20200827/_common_metadata
 finance_app/db/pystore/cellarstone_db/1 day/GCQ0-20200827/_metadata
 finance_app/db/pystore/cellarstone_db/1 day/GCQ0-20200827/metadata.json
 finance_app/db/pystore/cellarstone_db/1 day/GCQ0-20200827/part.0.parquet
+finance_app/db/pystore/cellarstone_db/1 day/GCQ1/_common_metadata
+finance_app/db/pystore/cellarstone_db/1 day/GCQ1/_metadata
+finance_app/db/pystore/cellarstone_db/1 day/GCQ1/metadata.json
+finance_app/db/pystore/cellarstone_db/1 day/GCQ1/part.0.parquet
 finance_app/db/pystore/cellarstone_db/1 day/GCQ1-20210827/_common_metadata
 finance_app/db/pystore/cellarstone_db/1 day/GCQ1-20210827/_metadata
 finance_app/db/pystore/cellarstone_db/1 day/GCQ1-20210827/metadata.json
@@ -905,6 +941,10 @@ finance_app/db/pystore/cellarstone_db/1 day/GCV0-20201028/_common_metadata
 finance_app/db/pystore/cellarstone_db/1 day/GCV0-20201028/_metadata
 finance_app/db/pystore/cellarstone_db/1 day/GCV0-20201028/metadata.json
 finance_app/db/pystore/cellarstone_db/1 day/GCV0-20201028/part.0.parquet
+finance_app/db/pystore/cellarstone_db/1 day/GCV1/_common_metadata
+finance_app/db/pystore/cellarstone_db/1 day/GCV1/_metadata
+finance_app/db/pystore/cellarstone_db/1 day/GCV1/metadata.json
+finance_app/db/pystore/cellarstone_db/1 day/GCV1/part.0.parquet
 finance_app/db/pystore/cellarstone_db/1 day/GCV1-20211027/_common_metadata
 finance_app/db/pystore/cellarstone_db/1 day/GCV1-20211027/_metadata
 finance_app/db/pystore/cellarstone_db/1 day/GCV1-20211027/metadata.json
@@ -933,22 +973,42 @@ finance_app/db/pystore/cellarstone_db/1 day/GCZ0-20201229/_common_metadata
 finance_app/db/pystore/cellarstone_db/1 day/GCZ0-20201229/_metadata
 finance_app/db/pystore/cellarstone_db/1 day/GCZ0-20201229/metadata.json
 finance_app/db/pystore/cellarstone_db/1 day/GCZ0-20201229/part.0.parquet
+finance_app/db/pystore/cellarstone_db/1 day/GCZ1/_common_metadata
+finance_app/db/pystore/cellarstone_db/1 day/GCZ1/_metadata
+finance_app/db/pystore/cellarstone_db/1 day/GCZ1/metadata.json
+finance_app/db/pystore/cellarstone_db/1 day/GCZ1/part.0.parquet
 finance_app/db/pystore/cellarstone_db/1 day/GCZ1-20211229/_common_metadata
 finance_app/db/pystore/cellarstone_db/1 day/GCZ1-20211229/_metadata
 finance_app/db/pystore/cellarstone_db/1 day/GCZ1-20211229/metadata.json
 finance_app/db/pystore/cellarstone_db/1 day/GCZ1-20211229/part.0.parquet
+finance_app/db/pystore/cellarstone_db/1 day/GCZ2/_common_metadata
+finance_app/db/pystore/cellarstone_db/1 day/GCZ2/_metadata
+finance_app/db/pystore/cellarstone_db/1 day/GCZ2/metadata.json
+finance_app/db/pystore/cellarstone_db/1 day/GCZ2/part.0.parquet
 finance_app/db/pystore/cellarstone_db/1 day/GCZ2-20221228/_common_metadata
 finance_app/db/pystore/cellarstone_db/1 day/GCZ2-20221228/_metadata
 finance_app/db/pystore/cellarstone_db/1 day/GCZ2-20221228/metadata.json
 finance_app/db/pystore/cellarstone_db/1 day/GCZ2-20221228/part.0.parquet
+finance_app/db/pystore/cellarstone_db/1 day/GCZ3/_common_metadata
+finance_app/db/pystore/cellarstone_db/1 day/GCZ3/_metadata
+finance_app/db/pystore/cellarstone_db/1 day/GCZ3/metadata.json
+finance_app/db/pystore/cellarstone_db/1 day/GCZ3/part.0.parquet
 finance_app/db/pystore/cellarstone_db/1 day/GCZ3-20231227/_common_metadata
 finance_app/db/pystore/cellarstone_db/1 day/GCZ3-20231227/_metadata
 finance_app/db/pystore/cellarstone_db/1 day/GCZ3-20231227/metadata.json
 finance_app/db/pystore/cellarstone_db/1 day/GCZ3-20231227/part.0.parquet
+finance_app/db/pystore/cellarstone_db/1 day/GCZ4/_common_metadata
+finance_app/db/pystore/cellarstone_db/1 day/GCZ4/_metadata
+finance_app/db/pystore/cellarstone_db/1 day/GCZ4/metadata.json
+finance_app/db/pystore/cellarstone_db/1 day/GCZ4/part.0.parquet
 finance_app/db/pystore/cellarstone_db/1 day/GCZ4-20241227/_common_metadata
 finance_app/db/pystore/cellarstone_db/1 day/GCZ4-20241227/_metadata
 finance_app/db/pystore/cellarstone_db/1 day/GCZ4-20241227/metadata.json
 finance_app/db/pystore/cellarstone_db/1 day/GCZ4-20241227/part.0.parquet
+finance_app/db/pystore/cellarstone_db/1 day/GCZ5/_common_metadata
+finance_app/db/pystore/cellarstone_db/1 day/GCZ5/_metadata
+finance_app/db/pystore/cellarstone_db/1 day/GCZ5/metadata.json
+finance_app/db/pystore/cellarstone_db/1 day/GCZ5/part.0.parquet
 finance_app/db/pystore/cellarstone_db/1 day/GCZ5-20251229/_common_metadata
 finance_app/db/pystore/cellarstone_db/1 day/GCZ5-20251229/_metadata
 finance_app/db/pystore/cellarstone_db/1 day/GCZ5-20251229/metadata.json
@@ -1409,19 +1469,104 @@ finance_app/db/pystore/cellarstone_db/1 day/UBER/_common_metadata
 finance_app/db/pystore/cellarstone_db/1 day/UBER/_metadata
 finance_app/db/pystore/cellarstone_db/1 day/UBER/metadata.json
 finance_app/db/pystore/cellarstone_db/1 day/UBER/part.0.parquet
+finance_app/db/pystore/cellarstone_db/1 day/ZB   DEC 19/_common_metadata
+finance_app/db/pystore/cellarstone_db/1 day/ZB   DEC 19/_metadata
+finance_app/db/pystore/cellarstone_db/1 day/ZB   DEC 19/metadata.json
+finance_app/db/pystore/cellarstone_db/1 day/ZB   DEC 19/part.0.parquet
+finance_app/db/pystore/cellarstone_db/1 day/ZB   DEC 19-20191219/_common_metadata
+finance_app/db/pystore/cellarstone_db/1 day/ZB   DEC 19-20191219/_metadata
+finance_app/db/pystore/cellarstone_db/1 day/ZB   DEC 19-20191219/metadata.json
+finance_app/db/pystore/cellarstone_db/1 day/ZB   DEC 19-20191219/part.0.parquet
+finance_app/db/pystore/cellarstone_db/1 day/ZB   DEC 20/_common_metadata
+finance_app/db/pystore/cellarstone_db/1 day/ZB   DEC 20/_metadata
+finance_app/db/pystore/cellarstone_db/1 day/ZB   DEC 20/metadata.json
+finance_app/db/pystore/cellarstone_db/1 day/ZB   DEC 20/part.0.parquet
 finance_app/db/pystore/cellarstone_db/1 day/ZB   DEC 20-20201221/_common_metadata
 finance_app/db/pystore/cellarstone_db/1 day/ZB   DEC 20-20201221/_metadata
 finance_app/db/pystore/cellarstone_db/1 day/ZB   DEC 20-20201221/metadata.json
 finance_app/db/pystore/cellarstone_db/1 day/ZB   DEC 20-20201221/part.0.parquet
+finance_app/db/pystore/cellarstone_db/1 day/ZB   DEC 21/_common_metadata
+finance_app/db/pystore/cellarstone_db/1 day/ZB   DEC 21/_metadata
+finance_app/db/pystore/cellarstone_db/1 day/ZB   DEC 21/metadata.json
+finance_app/db/pystore/cellarstone_db/1 day/ZB   DEC 21/part.0.parquet
+finance_app/db/pystore/cellarstone_db/1 day/ZB   DEC 21-20211221/_common_metadata
+finance_app/db/pystore/cellarstone_db/1 day/ZB   DEC 21-20211221/_metadata
+finance_app/db/pystore/cellarstone_db/1 day/ZB   DEC 21-20211221/metadata.json
+finance_app/db/pystore/cellarstone_db/1 day/ZB   DEC 21-20211221/part.0.parquet
+finance_app/db/pystore/cellarstone_db/1 day/ZB   JUN 19/_common_metadata
+finance_app/db/pystore/cellarstone_db/1 day/ZB   JUN 19/_metadata
+finance_app/db/pystore/cellarstone_db/1 day/ZB   JUN 19/metadata.json
+finance_app/db/pystore/cellarstone_db/1 day/ZB   JUN 19/part.0.parquet
+finance_app/db/pystore/cellarstone_db/1 day/ZB   JUN 19-20190619/_common_metadata
+finance_app/db/pystore/cellarstone_db/1 day/ZB   JUN 19-20190619/_metadata
+finance_app/db/pystore/cellarstone_db/1 day/ZB   JUN 19-20190619/metadata.json
+finance_app/db/pystore/cellarstone_db/1 day/ZB   JUN 19-20190619/part.0.parquet
+finance_app/db/pystore/cellarstone_db/1 day/ZB   JUN 20/_common_metadata
+finance_app/db/pystore/cellarstone_db/1 day/ZB   JUN 20/_metadata
+finance_app/db/pystore/cellarstone_db/1 day/ZB   JUN 20/metadata.json
+finance_app/db/pystore/cellarstone_db/1 day/ZB   JUN 20/part.0.parquet
+finance_app/db/pystore/cellarstone_db/1 day/ZB   JUN 20-20200619/_common_metadata
+finance_app/db/pystore/cellarstone_db/1 day/ZB   JUN 20-20200619/_metadata
+finance_app/db/pystore/cellarstone_db/1 day/ZB   JUN 20-20200619/metadata.json
+finance_app/db/pystore/cellarstone_db/1 day/ZB   JUN 20-20200619/part.0.parquet
+finance_app/db/pystore/cellarstone_db/1 day/ZB   JUN 21/_common_metadata
+finance_app/db/pystore/cellarstone_db/1 day/ZB   JUN 21/_metadata
+finance_app/db/pystore/cellarstone_db/1 day/ZB   JUN 21/metadata.json
+finance_app/db/pystore/cellarstone_db/1 day/ZB   JUN 21/part.0.parquet
+finance_app/db/pystore/cellarstone_db/1 day/ZB   JUN 21-20210621/_common_metadata
+finance_app/db/pystore/cellarstone_db/1 day/ZB   JUN 21-20210621/_metadata
+finance_app/db/pystore/cellarstone_db/1 day/ZB   JUN 21-20210621/metadata.json
+finance_app/db/pystore/cellarstone_db/1 day/ZB   JUN 21-20210621/part.0.parquet
+finance_app/db/pystore/cellarstone_db/1 day/ZB   MAR 20/_common_metadata
+finance_app/db/pystore/cellarstone_db/1 day/ZB   MAR 20/_metadata
+finance_app/db/pystore/cellarstone_db/1 day/ZB   MAR 20/metadata.json
+finance_app/db/pystore/cellarstone_db/1 day/ZB   MAR 20/part.0.parquet
+finance_app/db/pystore/cellarstone_db/1 day/ZB   MAR 20-20200320/_common_metadata
+finance_app/db/pystore/cellarstone_db/1 day/ZB   MAR 20-20200320/_metadata
+finance_app/db/pystore/cellarstone_db/1 day/ZB   MAR 20-20200320/metadata.json
+finance_app/db/pystore/cellarstone_db/1 day/ZB   MAR 20-20200320/part.0.parquet
+finance_app/db/pystore/cellarstone_db/1 day/ZB   MAR 21/_common_metadata
+finance_app/db/pystore/cellarstone_db/1 day/ZB   MAR 21/_metadata
+finance_app/db/pystore/cellarstone_db/1 day/ZB   MAR 21/metadata.json
+finance_app/db/pystore/cellarstone_db/1 day/ZB   MAR 21/part.0.parquet
+finance_app/db/pystore/cellarstone_db/1 day/ZB   MAR 21-20210322/_common_metadata
+finance_app/db/pystore/cellarstone_db/1 day/ZB   MAR 21-20210322/_metadata
+finance_app/db/pystore/cellarstone_db/1 day/ZB   MAR 21-20210322/metadata.json
+finance_app/db/pystore/cellarstone_db/1 day/ZB   MAR 21-20210322/part.0.parquet
+finance_app/db/pystore/cellarstone_db/1 day/ZB   SEP 19/_common_metadata
+finance_app/db/pystore/cellarstone_db/1 day/ZB   SEP 19/_metadata
+finance_app/db/pystore/cellarstone_db/1 day/ZB   SEP 19/metadata.json
+finance_app/db/pystore/cellarstone_db/1 day/ZB   SEP 19/part.0.parquet
+finance_app/db/pystore/cellarstone_db/1 day/ZB   SEP 19-20190919/_common_metadata
+finance_app/db/pystore/cellarstone_db/1 day/ZB   SEP 19-20190919/_metadata
+finance_app/db/pystore/cellarstone_db/1 day/ZB   SEP 19-20190919/metadata.json
+finance_app/db/pystore/cellarstone_db/1 day/ZB   SEP 19-20190919/part.0.parquet
+finance_app/db/pystore/cellarstone_db/1 day/ZB   SEP 20/_common_metadata
+finance_app/db/pystore/cellarstone_db/1 day/ZB   SEP 20/_metadata
+finance_app/db/pystore/cellarstone_db/1 day/ZB   SEP 20/metadata.json
+finance_app/db/pystore/cellarstone_db/1 day/ZB   SEP 20/part.0.parquet
 finance_app/db/pystore/cellarstone_db/1 day/ZB   SEP 20-20200921/_common_metadata
 finance_app/db/pystore/cellarstone_db/1 day/ZB   SEP 20-20200921/_metadata
 finance_app/db/pystore/cellarstone_db/1 day/ZB   SEP 20-20200921/metadata.json
 finance_app/db/pystore/cellarstone_db/1 day/ZB   SEP 20-20200921/part.0.parquet
+finance_app/db/pystore/cellarstone_db/1 day/ZB   SEP 21/_common_metadata
+finance_app/db/pystore/cellarstone_db/1 day/ZB   SEP 21/_metadata
+finance_app/db/pystore/cellarstone_db/1 day/ZB   SEP 21/metadata.json
+finance_app/db/pystore/cellarstone_db/1 day/ZB   SEP 21/part.0.parquet
+finance_app/db/pystore/cellarstone_db/1 day/ZB   SEP 21-20210921/_common_metadata
+finance_app/db/pystore/cellarstone_db/1 day/ZB   SEP 21-20210921/_metadata
+finance_app/db/pystore/cellarstone_db/1 day/ZB   SEP 21-20210921/metadata.json
+finance_app/db/pystore/cellarstone_db/1 day/ZB   SEP 21-20210921/part.0.parquet
+finance_app/db/pystore/cellarstone_db/watchlists/stock/_common_metadata
+finance_app/db/pystore/cellarstone_db/watchlists/stock/_metadata
+finance_app/db/pystore/cellarstone_db/watchlists/stock/metadata.json
+finance_app/db/pystore/cellarstone_db/watchlists/stock/part.0.parquet
 finance_app/db/services/__init__.py
 finance_app/db/services/model.py
 finance_app/db/services/mongo_asset_service.py
 finance_app/db/services/mongo_service.py
 finance_app/db/services/pystore_hist_service.py
+finance_app/db/services/pystore_watchlist_service.py
 finance_app/ibapi/__init__.py
 finance_app/ibapi/__init__.pyc
 finance_app/ibapi/account_summary_tags.py
@@ -1471,9 +1616,9 @@ finance_app/ui/components/multi_candlestick_chart/volume_plot.py
 finance_app/ui/components/search_input/search_input.py
 finance_app/ui/components/search_input/search_input.qss
 finance_app/ui/components/search_input/search_input.ui
-finance_app/ui/state/futures_realtime_data.py
+finance_app/ui/services/realtime_data_service.py
 finance_app/ui/state/main.py
-finance_app/ui/state/stocks_realtime_data.py
+finance_app/ui/state/realtime_data.py
 finance_app/ui/windows/add_new_asset/add_asset_window.py
 finance_app/ui/windows/add_new_asset/add_asset_window.ui
 finance_app/ui/windows/asset_detail/futures/future_detail_window.py
@@ -1524,7 +1669,6 @@ finance_app/ui/windows/main/pages/options/manual_calc/manual_calc.ui
 finance_app/ui/windows/main/pages/watchlists/futures/futures_page.py
 finance_app/ui/windows/main/pages/watchlists/futures/futures_page.qss
 finance_app/ui/windows/main/pages/watchlists/futures/futures_page.ui
-finance_app/ui/windows/main/pages/watchlists/futures/futures_service.py
 finance_app/ui/windows/main/pages/watchlists/futures/table/item_delegate.py
 finance_app/ui/windows/main/pages/watchlists/futures/table/tree.py
 finance_app/ui/windows/main/pages/watchlists/futures/table/tree.qss
@@ -1539,6 +1683,5 @@ finance_app/ui/windows/main/pages/watchlists/options/table/tree_model.py
 finance_app/ui/windows/main/pages/watchlists/stocks/stocks_page.py
 finance_app/ui/windows/main/pages/watchlists/stocks/stocks_page.qss
 finance_app/ui/windows/main/pages/watchlists/stocks/stocks_page.ui
-finance_app/ui/windows/main/pages/watchlists/stocks/stocks_service.py
 finance_app/ui/windows/main/pages/watchlists/stocks/table/table.py
 finance_app/ui/windows/main/pages/watchlists/stocks/table/table_model.py

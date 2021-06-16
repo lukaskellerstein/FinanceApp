@@ -151,9 +151,6 @@ class StockTableModel(QAbstractTableModel):
     # ----------------------------------------------------------
     @pyqtSlot(dict, name="on_update_model")
     def on_update_model(self, obj):
-
-        log.info(obj)
-
         if obj != {}:
 
             # start = time.time()
@@ -365,14 +362,14 @@ class StockTableModel(QAbstractTableModel):
             # if orientation == Qt.Vertical:
             #     return str(self._data.index[section])
 
-    # def flags(self, index):
-    #     flags = super(self.__class__, self).flags(index)
-    #     flags |= Qt.ItemIsEditable
-    #     flags |= Qt.ItemIsSelectable
-    #     flags |= Qt.ItemIsEnabled
-    #     flags |= Qt.ItemIsDragEnabled
-    #     flags |= Qt.ItemIsDropEnabled
-    #     return flags
+    def flags(self, index):
+        return (
+            Qt.ItemIsEnabled
+            | Qt.ItemIsSelectable
+            | Qt.ItemIsEditable
+            | Qt.ItemIsDragEnabled
+            | Qt.ItemIsDropEnabled
+        )
 
     def sort(self, Ncol, order):
         """Sort table by given column number.

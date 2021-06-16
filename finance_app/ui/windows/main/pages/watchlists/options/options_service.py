@@ -15,7 +15,6 @@ from business.model.contracts import (
     IBContract,
 )
 from ui.state.main import State
-from ui.state.stocks_realtime_data import StocksRealtimeDataItem
 
 # create logger
 log = logging.getLogger("CellarLogger")
@@ -124,10 +123,10 @@ class OptionsWatchlistService(object):
     # ----------------------------------------------------------
 
     def getPriceAction(self, ticker: str) -> Observable[float]:
-        return self.state.stocks_realtime_data.get(ticker, ticker).last
+        return self.state.stocks_realtime_data.getOrCreate(ticker, ticker).last
 
     def getImpliedVolatilityAction(self, ticker: str) -> Observable[float]:
-        return self.state.stocks_realtime_data.get(
+        return self.state.stocks_realtime_data.getOrCreate(
             ticker, ticker
         ).optionImpliedVolatility
 
@@ -152,9 +151,7 @@ class OptionsWatchlistService(object):
         pass
 
     def getOptionChain(self, ticker: str) -> Observable[dict]:
-        return self.bl.getOptionChain(
-            IBStockContract(symbol=ticker, localSymbol=ticker)
-        )
+        return self.bl.getOptionChain(ticker)
 
     # def getWatchlist(self) -> pd.DataFrame:
     #     return self.bl.getWatchlist()
