@@ -1,5 +1,8 @@
 import logging
 from typing import Any, Dict, List, Tuple
+from ui.windows.asset_detail.futures.future_detail_window import (
+    FutureDetailWindow,
+)
 
 import pandas as pd
 from business.model.asset import AssetType
@@ -55,8 +58,8 @@ class FuturesWatchlistPage(BasePage):
         # treeView
         self.tree = FuturesTree()
         self.tree.on_remove.connect(self.removeFuture)
-        # self.table.on_open.connect(self.open)
-        # self.table.on_order_changed.connect(self.update_watchlist)
+        self.tree.on_open.connect(self.openFuture)
+        self.tree.on_order_changed.connect(self.updateWatchlist)
         self.tableBox1.addWidget(self.tree)
 
         # SIGNALS
@@ -119,14 +122,16 @@ class FuturesWatchlistPage(BasePage):
 
     def removeFuture(self, node: FuturesTreeNode):
         symbol: str = node.data.index.values[0][0]
-        localSymbol: str = node.data.index.values[0][1]
+        # localSymbol: str = node.data.index.values[0][1]
         self.__stopRealtime(symbol)
         self.tree.tree_model.removeFuture(symbol)
         self.bl.remove(symbol)
 
-    # def open(self, data):
-    #     self.detailWindow = StocksDetailPage(data)
-    #     self.detailWindow.show()
+    def openFuture(self, data: Any):
+        symbol = data.data.index[0][0]
+        asset = self.bl.getAsset(AssetType.FUTURE, symbol)
+        self.detailWindow = FutureDetailWindow(asset)
+        self.detailWindow.show()
 
     def updateWatchlist(self, data):
         log.info(data)

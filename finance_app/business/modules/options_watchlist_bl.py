@@ -14,7 +14,8 @@ from business.model.contracts import (
     IBOptionContract,
 )
 from business.services.ibclient.my_ib_client import MyIBClient
-from db.services.mongo_service import MongoService
+
+# from db.services.mongo_service import MongoService
 
 import pandas as pd
 from business.model.factory.contract_factory import ContractFactory
@@ -43,8 +44,7 @@ class OptionsWatchlistBL(object):
         self.ibClient_thread.start()
 
         # DB
-        self.dbService = MongoService()
-        self.assetDbService = MongoAssetService()
+        # self.dbService = MongoService()
 
         # Asset BL
         self.assetBl = AssetBL()
@@ -54,41 +54,37 @@ class OptionsWatchlistBL(object):
         self.contractDetailsFactory = ContractDetailsFactory()
 
     def getOptionChain(self, symbol: str) -> Observable[Any]:
-        # log.debug("Running...")
-        # log.debug(locals())
+        log.debug("Running...")
+        log.debug(locals())
 
-        contractDetailDict = self.dbService.getStockContractDetail(
-            symbol, symbol
-        )
+        # contractDetailDict = self.dbService.getStockContractDetail(
+        #     symbol, symbol
+        # )
 
-        # contractDetail = mapDictToLlContractDetail(contractDetail)
+        # contractDetail = self.contractDetailsFactory.createIBContractDetails(
+        #     contractDetailDict
+        # )
 
-        contractDetail = self.contractDetailsFactory.createIBContractDetails(
-            contractDetailDict
-        )
+        # if contractDetail is not None:
 
-        if contractDetail is not None:
-
-            contractFull = self.contractFactory.createIBContract(
-                contractDetail.contract
-            )
-            # contractFull = mapLlContractDetailsToContract(contractDetail)
-
-            return self.ibClient.getOptionChain(contractFull).pipe(
-                ops.filter(lambda x: x is not None),  # filter empty
-                ops.filter(
-                    lambda x: self.__filterExchange(x, contractFull.exchange)
-                ),
-            )
-        else:
-            print("-----------------------------------------------")
-            print("-----------------------------------------------")
-            print("-----------------------------------------------")
-            print("????????")
-            print("-----------------------------------------------")
-            print("-----------------------------------------------")
-            print("-----------------------------------------------")
-            return of(None)
+        #     contractFull = self.contractFactory.createIBContract(
+        #         contractDetail.contract
+        #     )
+        #     return self.ibClient.getOptionChain(contractFull).pipe(
+        #         ops.filter(lambda x: x is not None),  # filter empty
+        #         ops.filter(
+        #             lambda x: self.__filterExchange(x, contractFull.exchange)
+        #         ),
+        #     )
+        # else:
+        #     print("-----------------------------------------------")
+        #     print("-----------------------------------------------")
+        #     print("-----------------------------------------------")
+        #     print("????????")
+        #     print("-----------------------------------------------")
+        #     print("-----------------------------------------------")
+        #     print("-----------------------------------------------")
+        #     return of(None)
 
     # region "getOptionChain" operators
 
@@ -146,8 +142,8 @@ class OptionsWatchlistBL(object):
         log.info("Destroying ...")
 
         # Close DB
-        self.dbService.client.close()
-        self.dbService.db.logout()
+        # self.dbService.client.close()
+        # self.dbService.db.logout()
 
         # Close IB
         self.ibClient.connectionClosed()  # close the EWrapper

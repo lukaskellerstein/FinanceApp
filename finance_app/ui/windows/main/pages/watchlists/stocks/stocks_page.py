@@ -1,6 +1,6 @@
 import logging
 from typing import List
-
+import pandas as pd
 from business.model.asset import AssetType
 from business.modules.stocks_watchlist_bl import StocksWatchlistBL
 from PyQt5 import uic
@@ -12,6 +12,9 @@ from ui.windows.main.pages.watchlists.stocks.table.table import StockTable
 from typing import Dict
 from rx.core.typing import Disposable
 from helpers import constructKey
+from ui.windows.asset_detail.stocks.stock_detail_window import (
+    StockDetailWindow,
+)
 
 # create logger
 log = logging.getLogger("CellarLogger")
@@ -96,13 +99,12 @@ class StocksWatchlistPage(BasePage):
         self.table.tableModel.removeStock(ticker)
         self.bl.remove(ticker)
 
-    def openStock(self, data):
-        # self.detailWindow = StocksDetailPage(data)
-        # self.detailWindow.show()
-        pass
+    def openStock(self, data: pd.Series):
+        asset = self.bl.getAsset(AssetType.STOCK, data.name)
+        self.detailWindow = StockDetailWindow(asset)
+        self.detailWindow.show()
 
     def updateWatchlist(self, data):
-        log.info(data)
         self.bl.updateStockWatchlist(data)
 
     def loadTableLayout(self):

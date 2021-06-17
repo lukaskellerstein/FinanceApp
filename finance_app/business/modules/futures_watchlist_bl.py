@@ -1,5 +1,5 @@
 import logging
-from typing import Any, List
+from typing import Any, List, Union
 
 from business.model.asset import AssetType
 from business.model.contracts import IBContract
@@ -9,6 +9,8 @@ from business.model.factory.contract_detail_factory import (
 from business.model.factory.contract_factory import ContractFactory
 from business.services.ibclient.my_ib_client import MyIBClient
 from db.services.file_watchlist_service import FileWatchlistService
+from business.model.asset import Asset
+from business.modules.asset_bl import AssetBL
 
 # create logger
 log = logging.getLogger("CellarLogger")
@@ -34,10 +36,10 @@ class FuturesWatchlistBL(object):
 
         # DB
         self.db = FileWatchlistService()
+        self.assetBL = AssetBL()
 
         # Business object factory
-        self.contractFactory = ContractFactory()
-        self.contractDetailsFactory = ContractDetailsFactory()
+        # self.contractFactory = ContractFactory()
 
     # ----------------------------------------------------------
     # ----------------------------------------------------------
@@ -63,11 +65,14 @@ class FuturesWatchlistBL(object):
     def updateWatchlist(self, arr: List[Any]):
         self.db.updateWatchlist(AssetType.STOCK.value, arr)
 
-        aaa = self.db.getWatchlist(AssetType.STOCK.value)
+    # ----------------------------------------------------------
+    # ASSET
+    # ----------------------------------------------------------
 
-        # self.dbService.futures_watchlist_table.drop()
-        # for item in arr:
-        #     self.dbService.addToFuturesWatchlist(item)
+    def getAsset(
+        self, assetType: AssetType, symbol: str
+    ) -> Union[None, Asset]:
+        return self.assetBL.get(assetType, symbol)
 
     # --------------------------------------------------------
     # --------------------------------------------------------

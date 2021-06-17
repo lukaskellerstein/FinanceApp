@@ -1,5 +1,6 @@
+from business.modules.asset_bl import AssetBL
 import logging
-from typing import List
+from typing import List, Union
 
 from business.model.asset import AssetType
 from business.model.contracts import IBContract, IBStockContract
@@ -9,6 +10,7 @@ from business.model.factory.contract_detail_factory import (
 from business.model.factory.contract_factory import ContractFactory
 from business.services.ibclient.my_ib_client import MyIBClient
 from db.services.file_watchlist_service import FileWatchlistService
+from business.model.asset import Asset
 
 # create logger
 log = logging.getLogger("CellarLogger")
@@ -34,10 +36,10 @@ class StocksWatchlistBL(object):
 
         # DB
         self.db = FileWatchlistService()
+        self.assetBL = AssetBL()
 
         # Business object factory
-        self.contractFactory = ContractFactory()
-        self.contractDetailsFactory = ContractDetailsFactory()
+        # self.contractFactory = ContractFactory()
 
     # ----------------------------------------------------------
     # ----------------------------------------------------------
@@ -47,11 +49,9 @@ class StocksWatchlistBL(object):
 
     def getWatchlist(self) -> List[str]:
         return self.db.getWatchlist(AssetType.STOCK.value)
-        # return self.dbService.getStockWatchlist()
 
     def addToWatchlist(self, symbol: str):
         self.db.addSymbol(AssetType.STOCK.value, symbol)
-        # self.dbService.addToStockWatchlist_IfNotExists(symbol)
 
     def remove(self, symbol: str):
         self.db.removeSymbol(AssetType.STOCK.value, symbol)
@@ -63,14 +63,16 @@ class StocksWatchlistBL(object):
         # self.ibClient.stopRealtimeData(contract)
 
     def updateStockWatchlist(self, arr: List[str]):
-
         self.db.updateWatchlist(AssetType.STOCK.value, arr)
 
-        aaa = self.db.getWatchlist(AssetType.STOCK.value)
+    # ----------------------------------------------------------
+    # ASSET
+    # ----------------------------------------------------------
 
-        # self.dbService.stocks_watchlist_table.drop()
-        # for item in arr:
-        #     self.dbService.addToStockWatchlist(item)
+    def getAsset(
+        self, assetType: AssetType, symbol: str
+    ) -> Union[None, Asset]:
+        return self.assetBL.get(assetType, symbol)
 
     # --------------------------------------------------------
     # --------------------------------------------------------

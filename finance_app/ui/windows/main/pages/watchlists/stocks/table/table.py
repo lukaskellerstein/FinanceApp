@@ -45,8 +45,8 @@ class StockTable(QTableView):
         self.setDragEnabled(True)
         self.setDropIndicatorShown(True)
         self.setAcceptDrops(True)
-        # self.setDragDropMode(QTableView.DragDrop)
-        self.setDragDropMode(self.InternalMove)
+        self.setDragDropMode(QTableView.DragDrop)
+        # self.setDragDropMode(self.InternalMove)
         self.setDragDropOverwriteMode(False)
 
     def myclick(self, index):
@@ -59,25 +59,49 @@ class StockTable(QTableView):
         row = self.tableModel._data.iloc[index.row()]
         self.on_open.emit(row)
 
-    def dragEnterEvent(self, event):
-        to_index = self.rowAt(event.pos().y())
-        self.draggedItem = self.tableModel._data.iloc[to_index]
-        print(self.draggedItem.name)
-        event.accept()
+    # def dragEnterEvent(self, event):
+
+    #     from_index = self.indexAt(event.pos()).row()
+
+    #     # log.info(from_index)
+    #     # log.info(from_index)
+
+    #     # from_index = self.rowAt(event.pos().y())
+    #     # log.info(event.pos().y())
+
+    #     # log.info(from_index)
+
+    #     self.draggedItem = self.tableModel._data.iloc[from_index]
+    #     log.info(
+    #         f"from index: {from_index}; from name: {self.draggedItem.name}"
+    #     )
+    #     event.accept()
 
     def dropEvent(self, event):
-        dropPosition = self.dropIndicatorPosition()
-        to_index = self.rowAt(event.pos().y())
+        # dropPosition = self.dropIndicatorPosition()
+        # to_index = self.rowAt(event.pos().y())
 
-        if dropPosition == QTableView.AboveItem:
-            print("INSERT ABOVE")
-            to_index -= 1
-        elif dropPosition == QTableView.BelowItem:
-            print("INSERT BELOW")
-            pass
-        elif dropPosition == QTableView.OnItem:
-            print("INSERT")
-            pass
+        # if dropPosition == QTableView.AboveItem:
+        #     print("INSERT ABOVE")
+        #     to_index -= 1
+        # elif dropPosition == QTableView.BelowItem:
+        #     print("INSERT BELOW")
+        #     pass
+        # elif dropPosition == QTableView.OnItem:
+        #     print("INSERT")
+        #     pass
 
-        self.tableModel.insertStock(to_index, self.draggedItem)
+        # print(f"to index: {to_index}")
+
+        selection = self.selectedIndexes()
+        from_index = selection[0].row() if selection else -1
+        fromItem = self.tableModel._data.iloc[from_index]
+        log.info(f"from index: {from_index}; from name: {fromItem.name}")
+
+        to_index = self.indexAt(event.pos()).row()
+        toItem = self.tableModel._data.iloc[to_index]
+
+        log.info(f"to index: {to_index}; to name: {toItem.name}")
+
+        self.tableModel.insertStock(to_index, fromItem)
         self.on_order_changed.emit(self.tableModel.getStocks().tolist())

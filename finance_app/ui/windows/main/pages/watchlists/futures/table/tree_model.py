@@ -56,7 +56,11 @@ def defaultValue(data: Union[List[Any], None]) -> pd.DataFrame:
 class FuturesTreeNode(object):
     def __init__(self, data: Union[List[Any], None]):
         self.data: pd.DataFrame = defaultValue(data)
-        self._columncount: int = self.data.shape[1]
+        log.info("------------------")
+        log.info(data)
+        log.info(self.data)
+        log.info("------------------")
+
         self._children: List[FuturesTreeNode] = []
         self._parent: Union[FuturesTreeNode, Any] = None
         self._row: int = 0
@@ -124,8 +128,16 @@ class FuturesTreeNode(object):
     def addChild(self, child: FuturesTreeNode):
         child._parent = self
         child._row = len(self._children)
+
+        log.info("-addChild-1----------------")
+        log.info(self.data)
+        log.info("------------------")
+
         self._children.append(child)
-        self._columncount = max(child.columnCount(), self._columncount)
+
+        log.info("-addChild-2----------------")
+        log.info(self.data)
+        log.info("------------------")
 
     def removeChild(self, ticker: str):
         resIndex = -1
@@ -139,6 +151,26 @@ class FuturesTreeNode(object):
         if resIndex != -1:
             self._children.pop(resIndex)
 
+    def moveChild(self, fromIndex: int, toIndex: int):
+        if fromIndex < 0 or toIndex < 0:
+            raise Exception("THIS SHOULD NOT HAPPENED")
+
+        fromItem = self._children.pop(fromIndex)
+        self._children.insert(toIndex, fromItem)
+
+        log.info("CHILDRENCHILDRENCHILDRENCHILDRENCHILDREN ---")
+        for a in self._children:
+            log.info(a.data)
+        log.info("CHILDRENCHILDRENCHILDRENCHILDRENCHILDREN ---")
+
+        # data
+        log.info("DATADATADATADATADATADATADATA ---")
+        log.info(self.data)
+
+        # self.data: pd.DataFrame = defaultValue(self._children)
+        # log.info(self.data)
+        log.info("DATADATADATADATADATADATADATA ---")
+
 
 class FuturesTreeModel(QAbstractItemModel):
     def __init__(
@@ -148,6 +180,7 @@ class FuturesTreeModel(QAbstractItemModel):
         parent=None,
     ):
         super(FuturesTreeModel, self).__init__(parent)
+        self._data = defaultValue(data)
 
         # data
         self.root = FuturesTreeNode(None)
@@ -396,6 +429,15 @@ class FuturesTreeModel(QAbstractItemModel):
             )
             # print(aaa)
             return aaa
+
+    def flags(self, index):
+        return (
+            Qt.ItemIsEnabled
+            | Qt.ItemIsSelectable
+            | Qt.ItemIsEditable
+            | Qt.ItemIsDragEnabled
+            | Qt.ItemIsDropEnabled
+        )
 
     # # ----------------------------------------------------------
     # # AbstractItemModel - methods
