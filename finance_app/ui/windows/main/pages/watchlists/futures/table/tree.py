@@ -5,7 +5,7 @@ from PyQt5.QtWidgets import QTreeView, QHeaderView
 from ui.windows.main.pages.watchlists.futures.table.item_delegate import (
     MyRenderDelegate,
 )
-from ui.windows.main.pages.watchlists.futures.table.tree_model import (
+from ui.windows.main.pages.watchlists.futures.table.tree_model_new import (
     FuturesTreeModel,
 )
 
@@ -28,29 +28,30 @@ class FuturesTree(QTreeView):
         ) as fh:
             self.setStyleSheet(fh.read())
 
-        self.tree_header_data = [
-            "symbol",
-            "localSymbol",
-            "contractMonth",
-            "contractEndDate",
-            "diff",
-            "bid_size",
-            "bid",
-            "last",
-            "ask",
-            "ask_size",
-            "open",
-            "high",
-            "low",
-            "close",
-            "change",
-            "volume",
-            "avg_volume",
-            "option_historical_vol",
-            "option_implied_vol",
-            "delete",
-        ]
-        self.tree_model = FuturesTreeModel([], self.tree_header_data)
+        # self.tree_header_data = [
+        #     "symbol",
+        #     "localSymbol",
+        #     "contractMonth",
+        #     "contractEndDate",
+        #     "diff",
+        #     "bid_size",
+        #     "bid",
+        #     "last",
+        #     "ask",
+        #     "ask_size",
+        #     "open",
+        #     "high",
+        #     "low",
+        #     "close",
+        #     "change",
+        #     "volume",
+        #     "avg_volume",
+        #     "option_historical_vol",
+        #     "option_implied_vol",
+        #     "delete",
+        # ]
+        # self.tree_model = FuturesTreeModel([], self.tree_header_data)
+        self.tree_model = FuturesTreeModel()
         self.setModel(self.tree_model)
 
         header = self.header()
@@ -58,26 +59,29 @@ class FuturesTree(QTreeView):
         header.setStretchLastSection(False)
         # header.setSectionResizeMode(5, QHeaderView.Stretch)
 
-        self.setItemDelegate(MyRenderDelegate(self))
+        # self.setItemDelegate(MyRenderDelegate(self))
+        self.collapseAll()
 
         self.clicked.connect(self.myclick)
         self.doubleClicked.connect(self.mydoubleclick)
 
-        self.setDragEnabled(True)
-        self.setDropIndicatorShown(True)
-        self.setAcceptDrops(True)
-        self.setDragDropMode(QTreeView.DragDrop)
-        # self.setDragDropMode(self.InternalMove)
-        self.setDragDropOverwriteMode(False)
+        # self.setDragEnabled(True)
+        # self.setDropIndicatorShown(True)
+        # self.setAcceptDrops(True)
+        # self.setDragDropMode(QTreeView.DragDrop)
+        # # self.setDragDropMode(self.InternalMove)
+        # self.setDragDropOverwriteMode(False)
 
     def myclick(self, index: QModelIndex):
-        if index.column() == 19:
-            row = self.tree_model.root.child(index.row())
-            self.on_remove.emit(row)
+        pass
+        # if index.column() == 19:
+        #     row = self.tree_model.root.child(index.row())
+        #     self.on_remove.emit(row)
 
     def mydoubleclick(self, index):
-        row = self.tree_model.root.child(index.row())
-        self.on_open.emit(row)
+        pass
+        # row = self.tree_model.root.child(index.row())
+        # self.on_open.emit(row)
 
     # def dragEnterEvent(self, event):
     #     # to_index = self.rowAt(event.pos().y())

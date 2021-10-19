@@ -132,7 +132,7 @@ class DownloadOneDateTask(Thread):
 
     def terminate(self):
         log.info(f"{self.uid}.... Terminate one task")
-        print(self.subscriptions)
+        # print(self.subscriptions)
 
         # stop the Thread
         self._running = False

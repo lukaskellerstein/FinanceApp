@@ -214,9 +214,6 @@ class AssetBL(object):
     ) -> List[Dict]:
         result = []
 
-        if asset.symbol == "ZB":
-            print(asset)
-
         for cd in asset.contractDetails:
 
             lastTradeDateTime = datetime.strptime(

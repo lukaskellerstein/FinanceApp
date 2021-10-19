@@ -200,7 +200,8 @@ class OptionsWatchlistPage(BasePage):
     # endregion
 
     def resendRealtime(self, data):
-        print(data)
+        i = 5
+        # print(data)
         # self.treeSignal.emit(data)
 
     # def remove(self, data):

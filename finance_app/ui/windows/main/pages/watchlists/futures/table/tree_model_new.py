@@ -2,7 +2,7 @@ from __future__ import annotations
 from business.model.contract_details import (
     IBContractDetails,
 )  # allow return same type as class ..... -> FuturesTreeNode
-
+import math
 import logging
 from collections import defaultdict
 from typing import Any, Dict, List, Union
@@ -23,14 +23,16 @@ from ibapi.contract import ContractDetails
 log = logging.getLogger("CellarLogger")
 
 
-def defaultValue(data: Union[List[Any], None]) -> pd.DataFrame:
+def defaultValue(data: Union[List[List[Any]], None]) -> pd.DataFrame:
     df = pd.DataFrame(
         data=data,
         columns=[
+            "order",
             "symbol",
             "localSymbol",
             "contractMonth",
             "contractEndDate",
+            "parentId",
             "diff",
             "bid_size",
             "bid",
@@ -46,157 +48,52 @@ def defaultValue(data: Union[List[Any], None]) -> pd.DataFrame:
             "avg_volume",
             "option_historical_vol",
             "option_implied_vol",
-            "delete",
         ],
     )
-    df.set_index(["symbol", "localSymbol"], inplace=True)
+    # df.set_index(["symbol", "localSymbol"], inplace=True)
     return df
 
 
-class FuturesTreeNode(object):
-    def __init__(self, data: Union[List[Any], None]):
-        self.data: pd.DataFrame = defaultValue(data)
-        log.info("------------------")
-        log.info(data)
-        log.info(self.data)
-        log.info("------------------")
-
-        self._children: List[FuturesTreeNode] = []
-        self._parent: Union[FuturesTreeNode, Any] = None
-
-    # def data(self, column_index: int) -> Any:
-    #     if column_index >= 0 and column_index < self.columnCount():
-    #         return self.data.iloc[[], column_index]
-    #     else:
-    #         return None
-
-    def columnCount(self) -> int:
-        return int(self.data.shape[1]) + len(self.data.index.names)
-
-    def childCount(self) -> int:
-        return len(self._children)
-
-    def child(self, row_index: int) -> Union[FuturesTreeNode, None]:
-        if row_index >= 0 and row_index < self.childCount():
-            return self._children[row_index]
-        else:
-            return None
-
-    def parent(self):
-        return self._parent
-
-    def row(self):
-        return 0
-
-    def updateData(
-        self, index1: str, index2: str, columnName: str, value: Any
-    ) -> bool:
-        # log.debug("Running...")
-        # log.debug(locals())
-        isExist = (index1, index2) in self.data.index
-
-        if isExist:
-            self.data.loc[(index1, index2), columnName] = value
-
-            if columnName == "close" or columnName == "last":
-                # change column - calculation
-                closeP: float = self.data.loc[(index1, index2), "close"]
-                lastP: float = self.data.loc[(index1, index2), "last"]
-                if closeP > 0 and lastP > 0:
-                    self.data.loc[(index1, index2), "change"] = round(
-                        ((lastP - closeP) / closeP) * 100, 1
-                    )
-                else:
-                    self.data.loc[(index1, index2), "change"] = 0
-
-            return True
-        else:
-            # print("SEARCH IN CHILDREN")
-            result = False
-
-            for child in self._children:
-                childResult = child.updateData(
-                    index1, index2, columnName, value
-                )
-                if childResult:
-                    result = childResult
-                    continue
-
-            return result
-
-    def addChild(self, child: FuturesTreeNode):
-        child._parent = self
-
-        log.info("-addChild-1----------------")
-        log.info(self.data)
-        log.info("------------------")
-
-        self._children.append(child)
-
-        log.info("-addChild-2----------------")
-        log.info(self.data)
-        log.info("------------------")
-
-    def removeChild(self, ticker: str):
-        resIndex = -1
-        curIndex = 0
-        for child in self._children:
-
-            if child.data.index[0][0] == ticker:
-                resIndex = curIndex
-            curIndex += 1
-
-        if resIndex != -1:
-            self._children.pop(resIndex)
-
-    def moveChild(self, fromIndex: int, toIndex: int):
-        if fromIndex < 0 or toIndex < 0:
-            raise Exception("THIS SHOULD NOT HAPPENED")
-
-        fromItem = self._children.pop(fromIndex)
-        self._children.insert(toIndex, fromItem)
-
-        log.info("CHILDRENCHILDRENCHILDRENCHILDRENCHILDREN ---")
-        for a in self._children:
-            log.info(a.data)
-        log.info("CHILDRENCHILDRENCHILDRENCHILDRENCHILDREN ---")
-
-        # data
-        log.info("DATADATADATADATADATADATADATA ---")
-        log.info(self.data)
-
-        # self.data: pd.DataFrame = defaultValue(self._children)
-        # log.info(self.data)
-        log.info("DATADATADATADATADATADATADATA ---")
+# header: List[str] = [
+#     "symbol",
+#     "localSymbol",
+#     "contractMonth",
+#     "contractEndDate",
+#     "diff",
+#     "bid_size",
+#     "bid",
+#     "last",
+#     "ask",
+#     "ask_size",
+#     "open",
+#     "high",
+#     "low",
+#     "close",
+#     "change",
+#     "volume",
+#     "avg_volume",
+#     "option_historical_vol",
+#     "option_implied_vol",
+#     "delete",
+# ]
 
 
 class FuturesTreeModel(QAbstractItemModel):
-    def __init__(
-        self,
-        data: Union[List[FuturesTreeNode], None],
-        headerData: List[str],
-        parent=None,
-    ):
-        super(FuturesTreeModel, self).__init__(parent)
-        self._data = defaultValue(data)
-
-        # data
-        self.root = FuturesTreeNode(None)
-        if data is not None:
-            for item in data:
-                self.root.addChild(item)
+    def __init__(self):
+        super().__init__()
+        self._data = defaultValue([])
+        self.firstLevel = defaultValue([])
 
         # header
-        self.header_data = defaultdict()
-        for index, value in enumerate(headerData):
-            self.setHeaderData(index, Qt.Horizontal, value)
+        # for index, value in enumerate(header):
+        #     self.setHeaderData(index, Qt.Horizontal, value)
 
     # ----------------------------------------------------------
     # Custom methods
     # ----------------------------------------------------------
 
-    def __indexColumnsCount(self):
-        return len(self.root.data.index.names)
+    # def __indexColumnsCount(self):
+    #     return len(self.root.data.index.names)
 
     # def __dataColumnsCount(self) -> int:
     #     return self._root.data.shape[1]
@@ -211,64 +108,81 @@ class FuturesTreeModel(QAbstractItemModel):
         # log.debug(locals())
 
         # ITEMS ----------------------------------
-        helpIndex = 0
-        rootItem = FuturesTreeNode([])
+        firstIndex: int = -1
         for row in data:
+
+            # add new row to the tree
+            self.beginInsertRows(QModelIndex(), 0, 0)
+
+            # find last "order" number
+            lastOrderNumber = self._data["order"].max()
+            if math.isnan(lastOrderNumber):
+                lastOrderNumber = 0
+
             vals: List[Any] = [
+                lastOrderNumber + 1,
                 row.contract.symbol,
                 row.contract.localSymbol,
                 row.contractMonth,
                 row.contract.lastTradeDateOrContractMonth,
-                *np.zeros(16),
+                firstIndex,
+                *np.zeros(15),
             ]
-            item = FuturesTreeNode([vals])
+            vals_series = pd.Series(vals, index=self._data.columns)
 
-            if helpIndex == 0:
-                rootItem = item
-            else:
-                rootItem.addChild(item)
+            self._data = self._data.append(vals_series, ignore_index=True)
 
-            helpIndex += 1
+            # if this is parent of the group
+            if firstIndex == -1:
+                parentRow = self._data[
+                    (self._data["symbol"] == row.contract.symbol)
+                    & (self._data["localSymbol"] == row.contract.localSymbol)
+                ]
+                if parentRow.empty:
+                    raise Exception("THIS SHOULD NOT HAPPENED")
+                else:
+                    firstIndex = parentRow.index[0]
+                    self.firstLevel = self.firstLevel.append(
+                        vals_series, ignore_index=True
+                    )
 
-        self.beginInsertRows(QModelIndex(), 0, 0)
-        self.root.addChild(rootItem)
-        self.endInsertRows()
+            self.endInsertRows()
 
-    def reset(self):
-        self.beginResetModel()
-        self.root = FuturesTreeNode(None)
-        self.endResetModel()
+    # def reset(self):
+    #     self.beginResetModel()
+    #     self.root = FuturesTreeNode(None)
+    #     self.endResetModel()
 
     def removeFuture(self, ticker: str):
         self.beginRemoveRows(QModelIndex(), 0, 0)
-        self.root.removeChild(ticker)
+        self._data = self._data[self._data["symbol"] != ticker]
         self.endRemoveRows()
 
     # ----------------------------------------------------------
     # Signals / Slots
     # ----------------------------------------------------------
-    @pyqtSlot(dict, name="on_update_model")
-    def on_update_model(self, obj: Dict[str, Any]):
-        # log.debug("Running...")
-        # log.debug(locals())
-        log.debug(
-            f"ticker={obj['ticker']}|localSymbol={obj['localSymbol']}|type={obj['type']}|price={obj['price']}"
-        )
+    # @pyqtSlot(dict, name="on_update_model")
+    # def on_update_model(self, obj: Dict[str, Any]):
+    #     # log.debug("Running...")
+    #     # log.debug(locals())
+    #     log.debug(
+    #         f"ticker={obj['ticker']}|localSymbol={obj['localSymbol']}|type={obj['type']}|price={obj['price']}"
+    #     )
 
-        if obj == {}:
-            log.info("EMPTY")
-            return
+    #     if obj == {}:
+    #         log.info("EMPTY")
+    #         return
 
-        self.root.updateData(
-            obj["ticker"], obj["localSymbol"], obj["type"], obj["price"]
-        )
+    #     self.root.updateData(
+    #         obj["ticker"], obj["localSymbol"], obj["type"], obj["price"]
+    #     )
 
-        bbb = QModelIndex()
-        bbb.row = 1
-        bbb.column = 1
+    #     bbb = QModelIndex()
+    #     bbb.row = 1
+    #     bbb.column = 1
 
-        # self.dataChanged.emit(QModelIndex(), QModelIndex())
-        self.dataChanged.emit(bbb, bbb)
+    #     # self.dataChanged.emit(QModelIndex(), QModelIndex())
+    #     self.dataChanged.emit(bbb, bbb)
 
     # ----------------------------------------------------------
     # Minimum methods to override
@@ -277,59 +191,58 @@ class FuturesTreeModel(QAbstractItemModel):
         # log.debug("Running...")
         # log.debug(locals())
 
-        if not index.isValid():
-            log.error("index invalid - return None")
-            return None
-
-        if index.internalPointer().data.empty:
-            # log.error("index data are empty")
-            return None
+        # if not index.isValid():
+        #     log.error("index invalid - return None")
+        #     return None
 
         if role == Qt.DisplayRole:
-            columnIndex: int = index.column()
-            if columnIndex <= 1:
-                return str(
-                    index.internalPointer().data.index.values[0][columnIndex]
+
+            if index.parent().row() != -1:
+                log.info(
+                    f"index.row: {index.row()}, index.col: {index.column()}, index.parent.row: {index.parent().row()}, index.parent.col: {index.parent().column()}"
                 )
-            else:
-                value: str = index.internalPointer().data.iloc[
-                    0, columnIndex - self.__indexColumnsCount()
-                ]
 
-                if columnIndex == 3:  # contract-end-date
-                    return value
-                elif columnIndex == 4:  # diff
-                    return f"{value:.0f}"
-                elif columnIndex == 5:  # bid-size
-                    return f"{value:.0f}"
-                elif columnIndex == 6:  # bid
-                    return f"{value:.2f}"
-                if columnIndex == 7:  # last
-                    return f"{value:.2f}"
-                elif columnIndex == 8:  # ask
-                    return f"{value:.2f}"
-                elif columnIndex == 9:  # ask-size
-                    return f"{value:.0f}"
-                elif columnIndex == 10:  # open
-                    return f"{value:.2f}"
-                elif columnIndex == 11:  # high
-                    return f"{value:.2f}"
-                elif columnIndex == 12:  # low
-                    return f"{value:.2f}"
-                elif columnIndex == 13:  # close
-                    return f"{value:.2f}"
-                # elif columnIndex == 14:  # change
-                #     return f"{value:.1f}"
-                elif columnIndex == 15:  # volume
-                    return f"{value:.0f}"
-                elif columnIndex == 16:  # avg volume
-                    return f"{value:.0f}"
-                elif columnIndex == 17:  # hist volatility
-                    return f"{value:.2f}"
-                elif columnIndex == 18:  # implied volatility
-                    return f"{value:.2f}"
+            columnIndex: int = index.column()
+            rowIndex: int = index.row()
 
-                return str(value)
+            value = self.firstLevel.iloc[rowIndex, columnIndex]
+
+            # value = self._data.iloc[rowIndex, columnIndex]
+
+            if columnIndex == 3:  # contract-end-date
+                return value
+            elif columnIndex == 6:  # diff
+                return f"{value:.0f}"
+            elif columnIndex == 7:  # bid-size
+                return f"{value:.0f}"
+            elif columnIndex == 8:  # bid
+                return f"{value:.2f}"
+            if columnIndex == 9:  # last
+                return f"{value:.2f}"
+            elif columnIndex == 10:  # ask
+                return f"{value:.2f}"
+            elif columnIndex == 11:  # ask-size
+                return f"{value:.0f}"
+            elif columnIndex == 12:  # open
+                return f"{value:.2f}"
+            elif columnIndex == 13:  # high
+                return f"{value:.2f}"
+            elif columnIndex == 14:  # low
+                return f"{value:.2f}"
+            elif columnIndex == 15:  # close
+                return f"{value:.2f}"
+            # elif columnIndex == 14:  # change
+            #     return f"{value:.1f}"
+            elif columnIndex == 17:  # volume
+                return f"{value:.0f}"
+            elif columnIndex == 18:  # avg volume
+                return f"{value:.0f}"
+            elif columnIndex == 19:  # hist volatility
+                return f"{value:.2f}"
+            elif columnIndex == 20:  # implied volatility
+                return f"{value:.2f}"
+
+            return str(value)
 
         return None
 
@@ -337,79 +250,238 @@ class FuturesTreeModel(QAbstractItemModel):
         # log.debug("Running...")
         # log.debug(locals())
 
-        if parent is None:
+        # log.info(
+        #     f"isValid: {parent.isValid()}, parent.row: {parent.row()}, parent.col: {parent.column()}"
+        # )
+
+        if self._data.empty:
             return 0
-        elif parent.isValid():
-            return int(parent.internalPointer().childCount())
+
+        if parent.isValid():
+            # number of children in parent
+            childRowsCount = self._data[
+                self._data["parentId"] == parent.row()
+            ].shape[0]
+            return childRowsCount
         else:
-            return self.root.childCount()
+            # all data
+            # return self._data.shape[0]
+            # # number of parents
+            return self._data[self._data["parentId"] == -1].shape[0]
 
     def columnCount(self, parent: QModelIndex) -> int:
         # log.debug("Running...")
         # log.debug(locals())
 
-        if parent.isValid():
-            return int(parent.internalPointer().columnCount())
-        else:
-            return self.root.columnCount()
+        if self._data.empty:
+            return 0
 
-    def index(self, row: int, col: int, _parent=QModelIndex()) -> QModelIndex:
+        return self._data.shape[1]
+
+        # if parent.isValid():
+
+        #     print(parent)
+
+        #     return 0
+        # else:
+        #     return self._data[self._data["parentId"] == -1].shape[1]
+
+    def index(self, row: int, col: int, parent: QModelIndex) -> QModelIndex:
+        # log.info("Running...")
+        # # log.info(locals())
+        # log.info(
+        #     f"row: {row}, col: {col}, parent.row: {parent.row()}, parent.col: {parent.column()}"
+        # )
+
+        # if col > 0:
+        #     return QModelIndex()
+
+        # return self.createIndex(row, col, None)
+
+        # item = self._data.iloc[
+        #     row,
+        # ]
+        # return self.createIndex(row, col, item)
+
+        if not parent.isValid():
+            # log.info("not parent.isValid()")
+            item = self.firstLevel.iloc[
+                row,
+            ]
+            return self.createIndex(row, col, item["order"])
+        else:
+            log.info("is parent.isValid()")
+            # if row == 0 and parent.row() == 0:
+            #     i = 6
+            parentDf = self.firstLevel.iloc[parent.row()]
+            item = self._data[self._data["parentId"] == parentDf.name].iloc[
+                row, col
+            ]
+
+            return self.createIndex(row, col, item["order"])
+
+        # if not self.hasIndex(row, col, parent):
+        #     return QModelIndex()
+
+        # if parent.column() != 0:
+        #     return QModelIndex()
+
+        # if parent.isValid() and parent.column() != 0:
+        #     return QModelIndex()
+
+        onlyParents = self._data[self._data["parentId"] == -1]
+
+        item = onlyParents.iloc[
+            row,
+        ]
+        return self.createIndex(row, col, item)
+
+        if not parent.isValid():
+            item = onlyParents.iloc[
+                row,
+            ]
+            return self.createIndex(row, col, item)
+        else:
+            item = self._data[self._data["parentId"] == parent.row()].loc[
+                row,
+            ]
+            return self.createIndex(row, col, item)
+
+        # OLD
+        if parent.isValid() and parent.column() != 0:
+            return QModelIndex()
+
+        if not self.hasIndex(row, col, parent):
+            return QModelIndex()
+
+        if not parent or not parent.isValid():
+
+            # index = (
+            #     self._data[self._data["parentId"] == -1]
+            #     .reset_index()
+            #     .iloc[row,]
+            #     .name
+            # )
+
+            index = self._data[self._data["parentId"] == -1].iloc[row,].name
+
+            return QAbstractItemModel.createIndex(self, index, col, None)
+
+        else:
+
+            # index = (
+            #     self._data[self._data["parentId"] == parent.row()]
+            #     .reset_index()
+            #     .iloc[row,]
+            #     .name
+            # )
+
+            index = (
+                self._data[self._data["parentId"] == parent.row()]
+                .reset_index()
+                .iloc[row,]["index"]
+            )
+            return QAbstractItemModel.createIndex(self, index, col, None)
+
+            return QModelIndex()
+
+        dfRow = self._data.loc[row]
+        return QAbstractItemModel.createIndex(self, row, col, dfRow)
+
+        # if not _parent or not _parent.isValid():
+        #     parent = self.root
+        # else:
+        #     parent = _parent.internalPointer()
+
+        # if not QAbstractItemModel.hasIndex(self, row, col, _parent):
+        #     return QModelIndex()
+
+        # child = parent.child(row)
+        # if child:
+        #     return QAbstractItemModel.createIndex(self, row, col, child)
+        # else:
+        #     return QModelIndex()
+
+    def parent(self, index: QModelIndex) -> QModelIndex:
         # log.debug("Running...")
         # log.debug(locals())
 
-        if not self.hasIndex(self, row, col, _parent):
+        # log.info(f"index.row: {index.row()}, index.col: {index.column()}")
+
+        # parentId = self._data.iloc[index.row(),]["parentId"]
+        parentId = self.firstLevel.iloc[index.row(),]["parentId"]
+
+        if parentId == -1:
             return QModelIndex()
-
-        if not _parent or not _parent.isValid():
-            parent = self.root
         else:
-            parent = _parent.internalPointer()
+            parent = self._data.iloc[
+                parentId,
+            ]
+            return self.createIndex(parentId, 0, parent)
 
-        child = parent.child(row)
-        if child:
-            return self.createIndex(self, row, col, child)
-        else:
-            return QModelIndex()
+        # # OLD 1
+        # if not index.isValid():
+        #     return QModelIndex()
 
-    def parent(self, child: QModelIndex) -> QModelIndex:
-        # log.debug("Running...")
-        # log.debug(locals())
+        # onlyParents = self._data[self._data["parentId"] == -1]
 
-        if child.isValid():
-            p = child.internalPointer().parent()
-            if p:
-                return self.createIndex(self, p.row(), 0, p)
+        # parentId = onlyParents.iloc[index.row(),]["parentId"]
 
-        return QModelIndex()
+        # if parentId == -1:
+        #     return QModelIndex()
+        # else:
+        #     parent = onlyParents.iloc[
+        #         parentId,
+        #     ]
+        #     return self.createIndex(parentId, 0, parent)
+
+        # # OLD
+        # if index.isValid():
+
+        #     parentId = self._data.iloc[index.row(),]["parentId"]
+
+        #     if parentId == -1:
+        #         return QAbstractItemModel.createIndex(self, -1, -1, None)
+
+        #     parent = self._data.iloc[
+        #         parentId,
+        #     ]
+
+        #     return QAbstractItemModel.createIndex(self, parentId, 0, parent)
+
+        # else:
+        #     return QModelIndex()
+        # raise Exception("??????????")
+        # return QAbstractItemModel.createIndex(self, -1, -1, None)
 
     # ----------------------------------------------------------
     # Override - headers
     # ----------------------------------------------------------
 
-    def setHeaderData(
-        self,
-        section: int,
-        orientation: Qt.Orientation,
-        value: QVariant,
-        role=Qt.DisplayRole,
-    ) -> bool:
-        # log.debug("Running...")
-        # log.debug(locals())
+    # def setHeaderData(
+    #     self,
+    #     section: int,
+    #     orientation: Qt.Orientation,
+    #     value: QVariant,
+    #     role=Qt.DisplayRole,
+    # ) -> bool:
+    #     # log.debug("Running...")
+    #     # log.debug(locals())
 
-        if orientation == Qt.Horizontal:
+    #     if orientation == Qt.Horizontal:
 
-            # print("Setting value: " + value)
-            self.header_data[section] = value
+    #         # print("Setting value: " + value)
+    #         self.header_data[section] = value
 
-            return True
+    #         return True
 
-        else:
+    #     else:
 
-            aaa = super(FuturesTreeModel, self).setHeaderData(
-                section, orientation, value, role
-            )
-            # print(aaa)
-            return aaa
+    #         aaa = super(FuturesTreeModel, self).setHeaderData(
+    #             section, orientation, value, role
+    #         )
+    #         # print(aaa)
+    #         return aaa
 
     def headerData(
         self, section: int, orientation: Qt.Orientation, role=Qt.DisplayRole
@@ -417,14 +489,10 @@ class FuturesTreeModel(QAbstractItemModel):
         # log.debug("Running...")
         # log.debug(locals())
 
+        # print(section)
+
         if role == Qt.DisplayRole:
-            aaa = self.header_data[section]
-            # print(aaa)
-            return aaa
-        else:
-            aaa = super(FuturesTreeModel, self).headerData(
-                section, orientation, role
-            )
+            aaa = self._data.columns[section]
             # print(aaa)
             return aaa
 
@@ -492,9 +560,12 @@ class FuturesTreeModel(QAbstractItemModel):
     #     super(FuturesTreeModel, self).checkIndex(index, options)
 
     # def createIndex(self, row, column, ptr):
-    #     log.debug("Running...")
-    #     log.debug(locals())
+    #     # log.debug("Running...")
+    #     # log.debug(locals())
     #     aaa = super(FuturesTreeModel, self).createIndex(row, column, ptr)
+
+    #     # log.info(f"row: {row}, col: {column}")
+    #     # log.info(ptr)
 
     #     # log.debug("S - -----------------------")
     #     # print(type(aaa))
@@ -623,9 +694,21 @@ class FuturesTreeModel(QAbstractItemModel):
     # def canFetchMore(self, parent) -> bool:
     #     # log.debug("Running...")
     #     # log.debug(locals())
-    #     aaa = super(FuturesTreeModel, self).canFetchMore(parent)
-    #     # print(aaa)
-    #     return aaa
+
+    #     log.info(f"parent.row: {parent.row()}, parent.col: {parent.column()}")
+
+    #     # result = self.hasChildren(parent)
+    #     if parent.row() < self.firstLevel.shape[0]:
+    #         return True
+    #     else:
+    #         return False
+
+    # print(result)
+    # return result
+
+    # aaa = super(FuturesTreeModel, self).canFetchMore(parent)
+    # print(aaa)
+    # return aaa
 
     # # def columnCount(self, parent) -> int:
     # #     log.debug("Running...")
@@ -653,9 +736,12 @@ class FuturesTreeModel(QAbstractItemModel):
     #     return aaa
 
     # def fetchMore(self, parent):
-    #     log.debug("Running...")
-    #     log.debug(locals())
-    #     super(FuturesTreeModel, self).fetchMore(parent)
+    #     # log.debug("Running...")
+    #     # log.debug(locals())
+
+    #     log.info(f"parent.row: {parent.row()}, parent.col: {parent.column()}")
+
+    #     # super(FuturesTreeModel, self).fetchMore(parent)
 
     # def flags(self, index) -> Qt.ItemFlags:
     #     # log.debug("Running...")
@@ -664,24 +750,43 @@ class FuturesTreeModel(QAbstractItemModel):
     #     # print(aaa)
     #     return aaa
 
-    # def hasChildren(self, parent) -> bool:
-    #     # log.debug("Running...")
-    #     # log.debug(locals())
-    #     # print(traceback.print_stack(file=sys.stdout))
-    #     # print("--")
-    #     # print("parent")
-    #     # print(parent.isValid())
-    #     # print(parent.row())
-    #     # print(parent.column())
-    #     # print(parent.model())
-    #     # print(parent.internalPointer())
-    #     # if parent.internalPointer() is not None:
-    #     #     print(parent.internalPointer().data)
-    #     aaa = super(FuturesTreeModel, self).hasChildren(parent)
-    #     # print("--")
-    #     # print(aaa)
-    #     # print("--")
-    #     return aaa
+    def hasChildren(self, parent) -> bool:
+        # log.debug("Running...")
+        # log.debug(locals())
+        # print(traceback.print_stack(file=sys.stdout))
+        # print("--")
+        # print("parent")
+        # print(parent.isValid())
+        # print(parent.row())
+        # print(parent.column())
+        # print(parent.model())
+        # print(parent.internalPointer())
+        # if parent.internalPointer() is not None:
+        #     print(parent.internalPointer().data)
+
+        # log.info(f"parent.row: {parent.row()}, parent.col: {parent.column()}")
+
+        # if not parent.isValid():
+        #     return True
+
+        if parent.row() < self.firstLevel.shape[0]:
+            return True
+        else:
+            return False
+
+        itemId = self.firstLevel.iloc[
+            parent.row(),
+        ]
+
+        childrenCount = self._data[self._data["parentId"] == itemId.name]
+
+        result = True if childrenCount.shape[0] > 0 else False
+
+        # aaa = super(FuturesTreeModel, self).hasChildren(parent)
+        # print("--")
+        # print(aaa)
+        # print("--")
+        return result
 
     # # def headerData(self, section, orientation, role=Qt.DisplayRole) -> object:
     # #     # log.debug("Running...")

@@ -153,7 +153,7 @@ class MyIBClient(EWrapper, EClient):
 
     def fundamentalData(self, reqId: int, data: str):
         # super().fundamentalData(reqId, data)
-        print("FundamentalData. ReqId:", reqId, "Data:", data)
+        # print("FundamentalData. ReqId:", reqId, "Data:", data)
 
         obs: Observable[Any] = self.state.getObservable(reqId)
         obs.on_next(data)
@@ -441,14 +441,14 @@ class MyIBClient(EWrapper, EClient):
     ) -> Observable[Any]:
         log.info("Running ...")
 
-        print(contract)
-        print(f"vol:{volatility}, price:{underPrice}")
-        print(timeout)
+        # print(contract)
+        # print(f"vol:{volatility}, price:{underPrice}")
+        # print(timeout)
 
         time.sleep(timeout)
 
         (reqId, obs) = self.state.registerOnlyNewObservable()
-        print(reqId)
+        # print(reqId)
 
         # optionContract = LlOption("AAPL")
         # optionContract.exchange = "SMART"

@@ -63,7 +63,7 @@ class FuturesWatchlistPage(BasePage):
         self.tableBox1.addWidget(self.tree)
 
         # SIGNALS
-        self.treeSignal.connect(self.tree.tree_model.on_update_model)
+        # self.treeSignal.connect(self.tree.tree_model.on_update_model)
 
         self.loadTableLayout()
 
@@ -81,13 +81,13 @@ class FuturesWatchlistPage(BasePage):
             self.tree.tree_model.addGroup(cds)
 
             # Start realtime data
-            realtimeDataObjects: Dict[
-                str, RealtimeDataItem
-            ] = self.realtimeService.startRealtime(AssetType.FUTURE, ticker, 3)
+            # realtimeDataObjects: Dict[
+            #     str, RealtimeDataItem
+            # ] = self.realtimeService.startRealtime(AssetType.FUTURE, ticker, 3)
 
-            for key, rdi in realtimeDataObjects.items():
-                subscriptionTemp = rdi.ticks.subscribe(self.treeSignal.emit)
-                self.subscriptions[key] = subscriptionTemp
+            # for key, rdi in realtimeDataObjects.items():
+            #     subscriptionTemp = rdi.ticks.subscribe(self.treeSignal.emit)
+            #     self.subscriptions[key] = subscriptionTemp
 
     def __stopRealtime(self, symbol):
         cds = self.assetBL.getLatestContractDetails(
@@ -138,7 +138,7 @@ class FuturesWatchlistPage(BasePage):
         self.bl.updateWatchlist(data)
 
     def loadTableLayout(self):
-        self.tree.tree_model.reset()
+        # self.tree.tree_model.reset()
 
         tickers: List[str] = self.bl.getWatchlist()
         for ticker in tickers:
