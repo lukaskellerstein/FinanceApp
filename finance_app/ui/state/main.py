@@ -6,7 +6,7 @@ import pandas as pd
 from rx import operators as ops
 from rx.subject import BehaviorSubject
 
-from ui.state.realtime_data import RealtimeDataState
+from finance_app.ui.state.realtime_data import RealtimeDataState
 
 # ******************************
 # SINGLETON

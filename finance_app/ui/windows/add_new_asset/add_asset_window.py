@@ -1,26 +1,26 @@
-from business.model.factory.asset_factory import AssetFactory
-from business.model.factory.contract_factory import ContractFactory, SecType
-from business.model.contracts import IBContract
+from finance_app.business.model.factory.asset_factory import AssetFactory
+from finance_app.business.model.factory.contract_factory import ContractFactory, SecType
+from finance_app.business.model.contracts import IBContract
 import logging
 from typing import Any, List, Union
 
-from PyQt5 import uic
-from PyQt5.QtCore import pyqtSignal, pyqtSlot
-from PyQt5.QtWidgets import QHeaderView, QLabel, QWidget
+from PyQt6 import uic
+from PyQt6.QtCore import pyqtSignal, pyqtSlot
+from PyQt6.QtWidgets import QHeaderView, QLabel, QWidget
 from rx import operators as ops
 
-from business.model.asset import Asset, AssetType
-from business.model.contract_details import IBContractDetails
-from business.modules.asset_bl import AssetBL
-from ui.components.contract_details_table.table_model_factory import (
+from finance_app.business.model.asset import Asset, AssetType
+from finance_app.business.model.contract_details import IBContractDetails
+from finance_app.business.modules.asset_bl import AssetBL
+from finance_app.ui.components.contract_details_table.table_model_factory import (
     ContractDetailsTableModelFactory,
 )
 
-from ui.components.contract_details_table.table import (
+from finance_app.ui.components.contract_details_table.table import (
     AssetContractDetailsTable,
 )
-from PyQt5.Qt import QApplication
-from business.modules.asset_bl import AssetBL
+from PyQt6.QtWidgets import QApplication
+from finance_app.business.modules.asset_bl import AssetBL
 
 # create logger
 log = logging.getLogger("CellarLogger")
@@ -92,10 +92,11 @@ class AssetAddWindow(QWidget):
         self.setFixedHeight(800)
 
         # center
-        screenGeometry = QApplication.desktop().screenGeometry()
+        screen = QApplication.primaryScreen()
+        screenGeometry = screen.geometry()
         x = (screenGeometry.width() - self.width()) / 2
         y = (screenGeometry.height() - self.height()) / 2
-        self.move(x, y)
+        self.move(int(x), int(y))
 
     # region "checkSymbolAtBroker" operators
 

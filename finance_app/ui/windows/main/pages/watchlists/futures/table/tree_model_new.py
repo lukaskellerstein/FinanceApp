@@ -1,5 +1,5 @@
 from __future__ import annotations
-from business.model.contract_details import (
+from finance_app.business.model.contract_details import (
     IBContractDetails,
 )  # allow return same type as class ..... -> FuturesTreeNode
 import math
@@ -9,7 +9,7 @@ from typing import Any, Dict, List, Union
 
 import numpy as np
 import pandas as pd
-from PyQt5.QtCore import (
+from PyQt6.QtCore import (
     QAbstractItemModel,
     QModelIndex,
     Qt,
@@ -130,7 +130,7 @@ class FuturesTreeModel(QAbstractItemModel):
             ]
             vals_series = pd.Series(vals, index=self._data.columns)
 
-            self._data = self._data.append(vals_series, ignore_index=True)
+            self._data = pd.concat([self._data, pd.DataFrame([vals_series])], ignore_index=True)
 
             # if this is parent of the group
             if firstIndex == -1:
@@ -142,8 +142,8 @@ class FuturesTreeModel(QAbstractItemModel):
                     raise Exception("THIS SHOULD NOT HAPPENED")
                 else:
                     firstIndex = parentRow.index[0]
-                    self.firstLevel = self.firstLevel.append(
-                        vals_series, ignore_index=True
+                    self.firstLevel = pd.concat(
+                        [self.firstLevel, pd.DataFrame([vals_series])], ignore_index=True
                     )
 
             self.endInsertRows()
@@ -195,7 +195,7 @@ class FuturesTreeModel(QAbstractItemModel):
         #     log.error("index invalid - return None")
         #     return None
 
-        if role == Qt.DisplayRole:
+        if role == Qt.ItemDataRole.DisplayRole:
 
             if index.parent().row() != -1:
                 log.info(
@@ -484,25 +484,25 @@ class FuturesTreeModel(QAbstractItemModel):
     #         return aaa
 
     def headerData(
-        self, section: int, orientation: Qt.Orientation, role=Qt.DisplayRole
+        self, section: int, orientation: Qt.Orientation, role=Qt.ItemDataRole.DisplayRole
     ) -> object:
         # log.debug("Running...")
         # log.debug(locals())
 
         # print(section)
 
-        if role == Qt.DisplayRole:
+        if role == Qt.ItemDataRole.DisplayRole:
             aaa = self._data.columns[section]
             # print(aaa)
             return aaa
 
     def flags(self, index):
         return (
-            Qt.ItemIsEnabled
-            | Qt.ItemIsSelectable
-            | Qt.ItemIsEditable
-            | Qt.ItemIsDragEnabled
-            | Qt.ItemIsDropEnabled
+            Qt.ItemFlag.ItemIsEnabled
+            | Qt.ItemFlag.ItemIsSelectable
+            | Qt.ItemFlag.ItemIsEditable
+            | Qt.ItemFlag.ItemIsDragEnabled
+            | Qt.ItemFlag.ItemIsDropEnabled
         )
 
     # # ----------------------------------------------------------

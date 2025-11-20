@@ -2,7 +2,7 @@ import logging
 import threading
 from datetime import datetime
 from typing import Any, List, Tuple
-from business.model.timeframe import TimeFrame
+from finance_app.business.model.timeframe import TimeFrame
 import pandas as pd
 import pystore
 import time

@@ -1,18 +1,18 @@
 import logging
 from typing import List
 import pandas as pd
-from business.model.asset import AssetType
-from business.modules.stocks_watchlist_bl import StocksWatchlistBL
-from PyQt5 import uic
-from PyQt5.QtCore import pyqtSignal
-from ui.base.base_page import BasePage
-from ui.services.realtime_data_service import RealtimeDataService
-from ui.state.realtime_data import RealtimeDataItem
-from ui.windows.main.pages.watchlists.stocks.table.table import StockTable
+from finance_app.business.model.asset import AssetType
+from finance_app.business.modules.stocks_watchlist_bl import StocksWatchlistBL
+from PyQt6 import uic
+from PyQt6.QtCore import pyqtSignal
+from finance_app.ui.base.base_page import BasePage
+from finance_app.ui.services.realtime_data_service import RealtimeDataService
+from finance_app.ui.state.realtime_data import RealtimeDataItem
+from finance_app.ui.windows.main.pages.watchlists.stocks.table.table import StockTable
 from typing import Dict
 from rx.core.typing import Disposable
-from helpers import constructKey
-from ui.windows.asset_detail.stocks.stock_detail_window import (
+from finance_app.helpers import constructKey
+from finance_app.ui.windows.asset_detail.stocks.stock_detail_window import (
     StockDetailWindow,
 )
 

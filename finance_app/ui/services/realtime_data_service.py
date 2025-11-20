@@ -1,7 +1,7 @@
-from ui.state.realtime_data import RealtimeDataItem
-from business.model.contract_details import IBContractDetails
-from business.model.asset import Asset, AssetType
-from business.modules.asset_bl import AssetBL
+from finance_app.ui.state.realtime_data import RealtimeDataItem
+from finance_app.business.model.contract_details import IBContractDetails
+from finance_app.business.model.asset import Asset, AssetType
+from finance_app.business.modules.asset_bl import AssetBL
 import logging
 import random
 import threading
@@ -11,15 +11,15 @@ import pandas as pd
 from rx import Observable, of
 from rx import operators as ops
 
-from business.modules.stocks_watchlist_bl import StocksWatchlistBL
-from business.model.contracts import (
+from finance_app.business.modules.stocks_watchlist_bl import StocksWatchlistBL
+from finance_app.business.model.contracts import (
     IBStockContract,
     IBContract,
 )
-from ui.state.main import State
-from ui.state.realtime_data import RealtimeDataItemStatus
-from business.model.factory.contract_factory import ContractFactory
-from helpers import constructKey
+from finance_app.ui.state.main import State
+from finance_app.ui.state.realtime_data import RealtimeDataItemStatus
+from finance_app.business.model.factory.contract_factory import ContractFactory
+from finance_app.helpers import constructKey
 
 # create logger
 log = logging.getLogger("CellarLogger")

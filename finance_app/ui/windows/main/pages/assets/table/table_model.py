@@ -1,7 +1,7 @@
-from business.model.contract_details import IBContractDetails
-from PyQt5 import uic
-from PyQt5.QtCore import QAbstractTableModel, QModelIndex, Qt, pyqtSlot
-from PyQt5.QtGui import QColor, QFont, QIcon
+from finance_app.business.model.contract_details import IBContractDetails
+from PyQt6 import uic
+from PyQt6.QtCore import QAbstractTableModel, QModelIndex, Qt, pyqtSlot
+from PyQt6.QtGui import QColor, QFont, QIcon
 
 from typing import DefaultDict, List, Tuple
 import numpy as np
@@ -11,9 +11,9 @@ import logging
 
 import time
 
-from helpers import getColorByYieldValue
+from finance_app.helpers import getColorByYieldValue
 
-from business.model.asset import Asset
+from finance_app.business.model.asset import Asset
 
 # create logger
 log = logging.getLogger("CellarLogger")
@@ -95,7 +95,7 @@ class AssetTableModel(QAbstractTableModel):
             print("index invalid - return None")
             return None
 
-        if role == Qt.DisplayRole:
+        if role == Qt.ItemDataRole.DisplayRole:
             # print("--")
             # print("index")
             # print(index)
@@ -111,7 +111,7 @@ class AssetTableModel(QAbstractTableModel):
                 value = self._data.iloc[index.row(), index.column()]
                 return str(value)
 
-        if role == Qt.DecorationRole:
+        if role == Qt.ItemDataRole.DecorationRole:
             columnIndex = index.column()
 
             # "delete" column
@@ -149,8 +149,8 @@ class AssetTableModel(QAbstractTableModel):
         # print(self._data)
         # print("--------------------------------------------")
         # section is the index of the column/row.
-        if role == Qt.DisplayRole:
-            if orientation == Qt.Horizontal:
+        if role == Qt.ItemDataRole.DisplayRole:
+            if orientation == Qt.Orientation.Horizontal:
                 return str(self._data.columns[section])
 
     def sort(self, Ncol, order):

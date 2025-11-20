@@ -2,12 +2,12 @@ import logging
 import threading
 from datetime import datetime
 from typing import Any, List, Tuple
-from business.model.timeframe import TimeFrame
+from finance_app.business.model.timeframe import TimeFrame
 import pandas as pd
 import pystore
 import time
-from business.model.asset import AssetType
-from utils import files
+from finance_app.business.model.asset import AssetType
+from finance_app.utils import files
 import sys
 import os
 

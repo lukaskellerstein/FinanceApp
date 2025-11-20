@@ -1,12 +1,12 @@
-from business.model.contract_details import IBContractDetails
+from finance_app.business.model.contract_details import IBContractDetails
 import logging
 from typing import Tuple, List
 
 import pandas as pd
-from PyQt5.QtWidgets import QHeaderView, QTableView
-from PyQt5.QtGui import QStandardItemModel, QStandardItem
-from PyQt5.QtCore import Qt
-from business.model.asset import Asset
+from PyQt6.QtWidgets import QHeaderView, QTableView
+from PyQt6.QtGui import QStandardItemModel, QStandardItem
+from PyQt6.QtCore import Qt
+from finance_app.business.model.asset import Asset
 
 # create logger
 log = logging.getLogger("CellarLogger")
@@ -16,8 +16,8 @@ class CDTable(QTableView):
     def __init__(self, asset: Asset):
         super(QTableView, self).__init__()
         self.setSortingEnabled(True)
-        self.setSelectionMode(QTableView.SingleSelection)
-        self.setSelectionBehavior(QTableView.SelectRows)
+        self.setSelectionMode(QTableView.SelectionMode.SingleSelection)
+        self.setSelectionBehavior(QTableView.SelectionBehavior.SelectRows)
 
         self.tableModel = QStandardItemModel()
         self.setData(asset.contractDetails)
@@ -25,7 +25,7 @@ class CDTable(QTableView):
         self.setModel(self.tableModel)
 
         header = self.horizontalHeader()
-        header.setSectionResizeMode(QHeaderView.ResizeToContents)
+        header.setSectionResizeMode(QHeaderView.ResizeMode.ResizeToContents)
         header.setStretchLastSection(False)
 
     def setData(self, data: List[IBContractDetails]):
@@ -54,5 +54,5 @@ class CDTable(QTableView):
 
                 self.tableModel.appendRow(resultRow)
 
-            self.tableModel.sort(2, Qt.DescendingOrder)
+            self.tableModel.sort(2, Qt.SortOrder.DescendingOrder)
 

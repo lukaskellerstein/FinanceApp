@@ -1,20 +1,20 @@
-from business.modules.asset_bl import AssetBL
+from finance_app.business.modules.asset_bl import AssetBL
 import logging
 from typing import Any
 
-from PyQt5 import uic
+from PyQt6 import uic
 
 from typing import List
-from business.model.asset import Asset, AssetType
-from ui.base.base_page import BasePage
-from business.model.contract_details import IBContractDetails
-from ui.windows.asset_detail.shared.pages.contract_details.table import CDTable
-from ui.components.contract_details_table.table import (
+from finance_app.business.model.asset import Asset, AssetType
+from finance_app.ui.base.base_page import BasePage
+from finance_app.business.model.contract_details import IBContractDetails
+from finance_app.ui.windows.asset_detail.shared.pages.contract_details.table import CDTable
+from finance_app.ui.components.contract_details_table.table import (
     AssetContractDetailsTable,
 )
 from rx import operators as ops
-from PyQt5.QtCore import pyqtSignal, pyqtSlot
-from business.model.factory.contract_factory import ContractFactory, SecType
+from PyQt6.QtCore import pyqtSignal, pyqtSlot
+from finance_app.business.model.factory.contract_factory import ContractFactory, SecType
 
 # create logger
 log = logging.getLogger("CellarLogger")

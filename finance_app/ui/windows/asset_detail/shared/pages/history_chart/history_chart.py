@@ -6,15 +6,15 @@ from typing import Any, Tuple
 import pandas as pd
 import numpy as np
 from dateutil.relativedelta import relativedelta
-from PyQt5 import uic
-from PyQt5.QtCore import Qt, pyqtSlot
+from PyQt6 import uic
+from PyQt6.QtCore import Qt, pyqtSlot
 
-from business.model.asset import Asset
-from business.model.timeframe import Duration, TimeFrame
-from business.modules.asset_bl import AssetBL
-from ui.base.base_page import BasePage
-from ui.components.candlestick_chart.chart import MyCandlestickChart
-from ui.windows.asset_detail.shared.pages.history_chart.helpers import (
+from finance_app.business.model.asset import Asset
+from finance_app.business.model.timeframe import Duration, TimeFrame
+from finance_app.business.modules.asset_bl import AssetBL
+from finance_app.ui.base.base_page import BasePage
+from finance_app.ui.components.candlestick_chart.chart import MyCandlestickChart
+from finance_app.ui.windows.asset_detail.shared.pages.history_chart.helpers import (
     fillGapsInDays,
     plotMonths,
     plotQuarters,
@@ -56,7 +56,7 @@ class HistoryChartPage(BasePage):
             self.setStyleSheet(fh.read())
 
         # apply styles
-        self.setAttribute(Qt.WA_StyledBackground, True)
+        self.setAttribute(Qt.WidgetAttribute.WA_StyledBackground, True)
 
         # INPUT data
         self.asset: Asset = kwargs["asset"]
@@ -169,42 +169,42 @@ class HistoryChartPage(BasePage):
     # --------------------------------------------------------
     @pyqtSlot(int)
     def usHolidaysCheckboxChanged(self, state: int):
-        if state == Qt.Checked:
+        if state == Qt.CheckState.Checked:
             plotUSHolidays(self.data, self.candlestickChart.candlestickPlot)
         else:
             self.__reDrawChart()
 
     @pyqtSlot(int)
     def weeksCheckboxChanged(self, state: int):
-        if state == Qt.Checked:
+        if state == Qt.CheckState.Checked:
             plotWeeks(self.data, self.candlestickChart.candlestickPlot)
         else:
             self.__reDrawChart()
 
     @pyqtSlot(int)
     def monthsCheckboxChanged(self, state: int):
-        if state == Qt.Checked:
+        if state == Qt.CheckState.Checked:
             plotMonths(self.data, self.candlestickChart.candlestickPlot)
         else:
             self.__reDrawChart()
 
     @pyqtSlot(int)
     def seasonsCheckboxChanged(self, state: int):
-        if state == Qt.Checked:
+        if state == Qt.CheckState.Checked:
             plotSeasons(self.data, self.candlestickChart.candlestickPlot)
         else:
             self.__reDrawChart()
 
     @pyqtSlot(int)
     def quartersCheckboxChanged(self, state: int):
-        if state == Qt.Checked:
+        if state == Qt.CheckState.Checked:
             plotQuarters(self.data, self.candlestickChart.candlestickPlot)
         else:
             self.__reDrawChart()
 
     @pyqtSlot(int)
     def yearsCheckboxChanged(self, state: int):
-        if state == Qt.Checked:
+        if state == Qt.CheckState.Checked:
             plotYears(self.data, self.candlestickChart.candlestickPlot)
         else:
             self.__reDrawChart()

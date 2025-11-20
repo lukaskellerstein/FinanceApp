@@ -2,9 +2,9 @@ from __future__ import (
     annotations,
 )  # allow return same type as class ..... -> State
 
-from business.model.contract_details import IBContractDetails
+from finance_app.business.model.contract_details import IBContractDetails
 from typing import List, Union
-from db.model.base import DBObject
+from finance_app.db.model.base import DBObject
 from enum import Enum
 from datetime import date, datetime
 

@@ -1,24 +1,24 @@
 import logging
 from typing import Any, Dict, List, Tuple
-from ui.windows.asset_detail.futures.future_detail_window import (
+from finance_app.ui.windows.asset_detail.futures.future_detail_window import (
     FutureDetailWindow,
 )
 
 import pandas as pd
-from business.model.asset import AssetType
-from business.modules.asset_bl import AssetBL
-from business.modules.futures_watchlist_bl import FuturesWatchlistBL
-from PyQt5 import uic
-from PyQt5.QtCore import pyqtSignal
-from ui.base.base_page import BasePage
-from ui.services.realtime_data_service import RealtimeDataService
-from ui.state.realtime_data import RealtimeDataItem
-from ui.windows.main.pages.watchlists.futures.table.tree import FuturesTree
-from ui.windows.main.pages.watchlists.futures.table.tree_model import (
+from finance_app.business.model.asset import AssetType
+from finance_app.business.modules.asset_bl import AssetBL
+from finance_app.business.modules.futures_watchlist_bl import FuturesWatchlistBL
+from PyQt6 import uic
+from PyQt6.QtCore import pyqtSignal
+from finance_app.ui.base.base_page import BasePage
+from finance_app.ui.services.realtime_data_service import RealtimeDataService
+from finance_app.ui.state.realtime_data import RealtimeDataItem
+from finance_app.ui.windows.main.pages.watchlists.futures.table.tree import FuturesTree
+from finance_app.ui.windows.main.pages.watchlists.futures.table.tree_model import (
     FuturesTreeNode,
 )
 from rx.core.typing import Disposable
-from helpers import constructKey
+from finance_app.helpers import constructKey
 
 # create logger
 log = logging.getLogger("CellarLogger")

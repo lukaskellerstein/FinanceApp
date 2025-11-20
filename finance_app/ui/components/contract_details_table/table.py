@@ -1,9 +1,9 @@
-from business.model.asset import AssetType
+from finance_app.business.model.asset import AssetType
 import logging
 
-from PyQt5.QtWidgets import QHeaderView, QTableView
+from PyQt6.QtWidgets import QHeaderView, QTableView
 
-from ui.components.contract_details_table.table_model_factory import (
+from finance_app.ui.components.contract_details_table.table_model_factory import (
     ContractDetailsTableModelFactory,
 )
 
@@ -22,7 +22,7 @@ class AssetContractDetailsTable(QTableView):
         self.setModel(self.tableModel)
 
         header = self.horizontalHeader()
-        header.setSectionResizeMode(QHeaderView.ResizeToContents)
+        header.setSectionResizeMode(QHeaderView.ResizeMode.ResizeToContents)
         header.setStretchLastSection(False)
 
         self.setSortingEnabled(True)

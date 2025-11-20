@@ -2,9 +2,9 @@ import logging
 from typing import Tuple
 
 import pandas as pd
-from PyQt5.QtWidgets import QHeaderView, QTableView
-from PyQt5.QtGui import QStandardItemModel, QStandardItem
-from PyQt5.QtCore import Qt
+from PyQt6.QtWidgets import QHeaderView, QTableView
+from PyQt6.QtGui import QStandardItemModel, QStandardItem
+from PyQt6.QtCore import Qt
 
 # create logger
 log = logging.getLogger("CellarLogger")
@@ -14,8 +14,8 @@ class HistoricalDataTable(QTableView):
     def __init__(self, data: pd.DataFrame):
         super(QTableView, self).__init__()
         self.setSortingEnabled(True)
-        self.setSelectionMode(QTableView.SingleSelection)
-        self.setSelectionBehavior(QTableView.SelectRows)
+        self.setSelectionMode(QTableView.SelectionMode.SingleSelection)
+        self.setSelectionBehavior(QTableView.SelectionBehavior.SelectRows)
 
         self.tableModel = QStandardItemModel()
         self.setData(data)
@@ -23,7 +23,7 @@ class HistoricalDataTable(QTableView):
         self.setModel(self.tableModel)
 
         header = self.horizontalHeader()
-        header.setSectionResizeMode(QHeaderView.ResizeToContents)
+        header.setSectionResizeMode(QHeaderView.ResizeMode.ResizeToContents)
         header.setStretchLastSection(False)
 
     def setData(self, data: pd.DataFrame):
@@ -48,4 +48,4 @@ class HistoricalDataTable(QTableView):
 
                 self.tableModel.appendRow(resultRow)
 
-            self.tableModel.sort(0, Qt.DescendingOrder)
+            self.tableModel.sort(0, Qt.SortOrder.DescendingOrder)  # PyQt6: column, order enum

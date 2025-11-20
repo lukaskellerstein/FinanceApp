@@ -1,12 +1,12 @@
 import pandas as pd
 import pyqtgraph as pg
-from business.model.timeframe import TimeFrame
-from PyQt5.QtGui import QColor
+from finance_app.business.model.timeframe import TimeFrame
+from PyQt6.QtGui import QColor
 import numpy as np
 
 from typing import Callable, Any
 from holidays import US
-from trading_calendars import get_calendar
+from exchange_calendars import get_calendar
 
 
 def fillGapsInDays(data: pd.DataFrame, timeframe: TimeFrame) -> pd.DataFrame:
@@ -18,8 +18,9 @@ def fillGapsInDays(data: pd.DataFrame, timeframe: TimeFrame) -> pd.DataFrame:
 
 def __getRectangleObject(
     color: str, opacity: float, x: int, y: float, width: float, height: float
-) -> pg.QtGui.QGraphicsRectItem:
-    bar = pg.QtGui.QGraphicsRectItem(x, y, width, height)
+):
+    from PyQt6.QtWidgets import QGraphicsRectItem
+    bar = QGraphicsRectItem(x, y, width, height)
 
     bar.setPen(pg.mkPen(None))
     bar.setOpacity(opacity)
@@ -170,7 +171,8 @@ def plotUSHolidays(data: pd.DataFrame, plot: pg.PlotItem):
             plot.addItem(label)
 
             # BAR ----------------------------------
-            bar = pg.QtGui.QGraphicsRectItem(
+            from PyQt6.QtWidgets import QGraphicsRectItem
+            bar = QGraphicsRectItem(
                 row["id"] + ww - w,
                 row["Low"],
                 w * 2,

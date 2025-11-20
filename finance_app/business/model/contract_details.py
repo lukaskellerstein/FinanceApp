@@ -2,8 +2,8 @@ import logging
 import traceback
 from typing import Any, Dict
 
-from business.model.contracts import IBContract, IBStockContract
-from db.model.base import DBObject
+from finance_app.business.model.contracts import IBContract, IBStockContract
+from finance_app.db.model.base import DBObject
 from ibapi.contract import ContractDetails
 
 # create logger

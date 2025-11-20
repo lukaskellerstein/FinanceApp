@@ -1,9 +1,9 @@
 import logging
 
 
-from PyQt5.QtCore import QModelIndex, Qt, QPoint
-from PyQt5.QtWidgets import QStyledItemDelegate, QStyleOptionViewItem
-from PyQt5.QtGui import (
+from PyQt6.QtCore import QModelIndex, Qt, QPoint
+from PyQt6.QtWidgets import QStyledItemDelegate, QStyleOptionViewItem
+from PyQt6.QtGui import (
     QPainter,
     QBrush,
     QColor,
@@ -11,7 +11,7 @@ from PyQt5.QtGui import (
     QImage,
 )
 
-from helpers import getColorByYieldValue
+from finance_app.helpers import getColorByYieldValue
 
 
 from typing import Any
@@ -23,7 +23,7 @@ log = logging.getLogger("CellarLogger")
 def drawText(
     painter: QPainter, options: QStyleOptionViewItem, value: QModelIndex
 ) -> Any:
-    return painter.drawText(options.rect, Qt.AlignHCenter, value)
+    return painter.drawText(options.rect, Qt.AlignmentFlag.AlignHCenter, value)
 
 
 class MyRenderDelegate(QStyledItemDelegate):
@@ -140,7 +140,7 @@ class MyRenderDelegate(QStyledItemDelegate):
                 height: int = options.rect.height()
 
                 image2: QImage = image.scaled(
-                    width, height, Qt.KeepAspectRatio
+                    width, height, Qt.AspectRatioMode.KeepAspectRatio
                 )
 
                 # // Position our pixmap

@@ -1,19 +1,19 @@
 import logging
-from PyQt5 import uic
-from PyQt5.QtCore import pyqtSignal
+from PyQt6 import uic
+from PyQt6.QtCore import pyqtSignal
 from rx import Observable, merge
 from rx import operators as ops
 
 from typing import Any, Tuple, Dict
 
-from business.model.contracts import IBOptionContract
-from ui.windows.main.pages.watchlists.options.options_service import (
+from finance_app.business.model.contracts import IBOptionContract
+from finance_app.ui.windows.main.pages.watchlists.options.options_service import (
     OptionsWatchlistService,
 )
-from ui.windows.main.pages.watchlists.options.table.tree import OptionsTree
-from ui.state.main import State
+from finance_app.ui.windows.main.pages.watchlists.options.table.tree import OptionsTree
+from finance_app.ui.state.main import State
 
-from ui.base.base_page import BasePage
+from finance_app.ui.base.base_page import BasePage
 
 # create logger
 log = logging.getLogger("CellarLogger")

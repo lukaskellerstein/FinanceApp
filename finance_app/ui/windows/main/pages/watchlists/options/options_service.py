@@ -8,13 +8,13 @@ from rx import of
 from rx import operators as ops
 from rx.core.typing import Observable, Subject
 
-from business.modules.options_watchlist_bl import OptionsWatchlistBL
-from business.model.contracts import (
+from finance_app.business.modules.options_watchlist_bl import OptionsWatchlistBL
+from finance_app.business.model.contracts import (
     IBOptionContract,
     IBStockContract,
     IBContract,
 )
-from ui.state.main import State
+from finance_app.ui.state.main import State
 
 # create logger
 log = logging.getLogger("CellarLogger")

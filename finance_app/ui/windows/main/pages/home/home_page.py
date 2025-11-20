@@ -1,10 +1,10 @@
 import logging
 from typing import Any, Dict, Tuple
 
-from PyQt5 import uic
-from PyQt5.QtCore import Qt
+from PyQt6 import uic
+from PyQt6.QtCore import Qt
 
-from ui.base.base_page import BasePage
+from finance_app.ui.base.base_page import BasePage
 
 # create logger
 log = logging.getLogger("CellarLogger")
@@ -23,7 +23,7 @@ class HomePage(BasePage):
             self.setStyleSheet(fh.read())
 
         # apply styles
-        self.setAttribute(Qt.WA_StyledBackground, True)
+        self.setAttribute(Qt.WidgetAttribute.WA_StyledBackground, True)
 
         # load styles
         # with open(

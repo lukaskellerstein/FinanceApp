@@ -3,8 +3,8 @@ from typing import List, Tuple
 
 import pandas as pd
 
-from business.model.contract_details import IBContractDetails
-from ui.components.contract_details_table.base_table_model import (
+from finance_app.business.model.contract_details import IBContractDetails
+from finance_app.ui.components.contract_details_table.base_table_model import (
     BaseContractDetailsTableModel,
 )
 

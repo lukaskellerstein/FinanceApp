@@ -1,5 +1,5 @@
 from __future__ import annotations
-from business.model.contract_details import (
+from finance_app.business.model.contract_details import (
     IBContractDetails,
 )  # allow return same type as class ..... -> FuturesTreeNode
 
@@ -9,7 +9,7 @@ from typing import Any, Dict, List, Union
 
 import numpy as np
 import pandas as pd
-from PyQt5.QtCore import (
+from PyQt6.QtCore import (
     QAbstractItemModel,
     QModelIndex,
     Qt,
@@ -189,7 +189,7 @@ class FuturesTreeModel(QAbstractItemModel):
         # header
         self.header_data = defaultdict()
         for index, value in enumerate(headerData):
-            self.setHeaderData(index, Qt.Horizontal, value)
+            self.setHeaderData(index, Qt.Orientation.Horizontal, value)
 
     # ----------------------------------------------------------
     # Custom methods
@@ -285,7 +285,7 @@ class FuturesTreeModel(QAbstractItemModel):
             # log.error("index data are empty")
             return None
 
-        if role == Qt.DisplayRole:
+        if role == Qt.ItemDataRole.DisplayRole:
             columnIndex: int = index.column()
             if columnIndex <= 1:
                 return str(
@@ -391,12 +391,12 @@ class FuturesTreeModel(QAbstractItemModel):
         section: int,
         orientation: Qt.Orientation,
         value: QVariant,
-        role=Qt.DisplayRole,
+        role=Qt.ItemDataRole.DisplayRole,
     ) -> bool:
         # log.debug("Running...")
         # log.debug(locals())
 
-        if orientation == Qt.Horizontal:
+        if orientation == Qt.Orientation.Horizontal:
 
             # print("Setting value: " + value)
             self.header_data[section] = value
@@ -412,12 +412,12 @@ class FuturesTreeModel(QAbstractItemModel):
             return aaa
 
     def headerData(
-        self, section: int, orientation: Qt.Orientation, role=Qt.DisplayRole
+        self, section: int, orientation: Qt.Orientation, role=Qt.ItemDataRole.DisplayRole
     ) -> object:
         # log.debug("Running...")
         # log.debug(locals())
 
-        if role == Qt.DisplayRole:
+        if role == Qt.ItemDataRole.DisplayRole:
             aaa = self.header_data[section]
             # print(aaa)
             return aaa
@@ -430,11 +430,11 @@ class FuturesTreeModel(QAbstractItemModel):
 
     def flags(self, index):
         return (
-            Qt.ItemIsEnabled
-            | Qt.ItemIsSelectable
-            | Qt.ItemIsEditable
-            | Qt.ItemIsDragEnabled
-            | Qt.ItemIsDropEnabled
+            Qt.ItemFlag.ItemIsEnabled
+            | Qt.ItemFlag.ItemIsSelectable
+            | Qt.ItemFlag.ItemIsEditable
+            | Qt.ItemFlag.ItemIsDragEnabled
+            | Qt.ItemFlag.ItemIsDropEnabled
         )
 
     # # ----------------------------------------------------------

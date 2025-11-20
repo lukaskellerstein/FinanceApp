@@ -1,7 +1,7 @@
-from PyQt5 import uic
-from PyQt5.QtCore import Qt, pyqtSignal, pyqtSlot
-from PyQt5.QtWidgets import QWidget
-from PyQt5.QtGui import QPainter, QPaintEvent
+from PyQt6 import uic
+from PyQt6.QtCore import Qt, pyqtSignal, pyqtSlot
+from PyQt6.QtWidgets import QWidget
+from PyQt6.QtGui import QPainter, QPaintEvent
 
 
 class SearchInput(QWidget):
@@ -21,7 +21,7 @@ class SearchInput(QWidget):
             self.setStyleSheet(fh.read())
 
         # apply styles
-        self.setAttribute(Qt.WA_StyledBackground, True)
+        self.setAttribute(Qt.WidgetAttribute.WA_StyledBackground, True)
 
         self.input.textChanged.connect(self.textChanged)
         self.input.editingFinished.connect(self.textChangeFinished)

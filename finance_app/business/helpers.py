@@ -4,7 +4,7 @@ from typing import Any, List, Tuple
 
 import pandas as pd
 
-from db.model.base import DBObject
+from finance_app.db.model.base import DBObject
 from ibapi.contract import Contract, ContractDetails
 
 

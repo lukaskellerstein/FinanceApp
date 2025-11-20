@@ -2,7 +2,7 @@ import logging
 from typing import List, Tuple
 
 import pandas as pd
-from PyQt5.QtCore import QAbstractTableModel, Qt
+from PyQt6.QtCore import QAbstractTableModel, Qt
 
 
 # create logger
@@ -24,7 +24,7 @@ class BaseContractDetailsTableModel(QAbstractTableModel):
             print("index invalid - return None")
             return None
 
-        if role == Qt.DisplayRole:
+        if role == Qt.ItemDataRole.DisplayRole:
             value = self._data.iloc[index.row(), index.column()]
             return str(value)
 
@@ -36,8 +36,8 @@ class BaseContractDetailsTableModel(QAbstractTableModel):
 
     def headerData(self, section, orientation, role):
         # section is the index of the column/row.
-        if role == Qt.DisplayRole:
-            if orientation == Qt.Horizontal:
+        if role == Qt.ItemDataRole.DisplayRole:
+            if orientation == Qt.Orientation.Horizontal:
                 return str(self._data.columns[section])
 
     def sort(self, Ncol, order):

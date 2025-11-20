@@ -1,5 +1,5 @@
-from business.modules.asset_bl import AssetBL
-from db.services.mongo_asset_service import MongoAssetService
+from finance_app.business.modules.asset_bl import AssetBL
+from finance_app.db.services.mongo_asset_service import MongoAssetService
 import logging
 import threading
 
@@ -9,20 +9,20 @@ from rx import of
 from rx import operators as ops
 from rx.core.typing import Observable
 
-from business.model.contracts import (
+from finance_app.business.model.contracts import (
     IBContract,
     IBOptionContract,
 )
-from business.services.ibclient.my_ib_client import MyIBClient
+from finance_app.business.services.ibclient.my_ib_client import MyIBClient
 
 # from db.services.mongo_service import MongoService
 
 import pandas as pd
-from business.model.factory.contract_factory import ContractFactory
-from business.model.factory.contract_detail_factory import (
+from finance_app.business.model.factory.contract_factory import ContractFactory
+from finance_app.business.model.factory.contract_detail_factory import (
     ContractDetailsFactory,
 )
-from business.model.asset import AssetType
+from finance_app.business.model.asset import AssetType
 
 # create logger
 log = logging.getLogger("CellarLogger")

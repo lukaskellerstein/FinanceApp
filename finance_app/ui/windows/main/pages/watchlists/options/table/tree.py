@@ -1,7 +1,7 @@
-from PyQt5.QtCore import pyqtSignal
-from PyQt5.QtWidgets import QTreeView, QHeaderView
+from PyQt6.QtCore import pyqtSignal
+from PyQt6.QtWidgets import QTreeView, QHeaderView
 
-from ui.windows.main.pages.watchlists.options.table.tree_model import (
+from finance_app.ui.windows.main.pages.watchlists.options.table.tree_model import (
     OptionsTreeModel,
 )
 
@@ -37,9 +37,9 @@ class OptionsTree(QTreeView):
         self.setModel(self.tree_model)
 
         header = self.header()
-        header.setSectionResizeMode(QHeaderView.ResizeToContents)
+        header.setSectionResizeMode(QHeaderView.ResizeMode.ResizeToContents)
         header.setStretchLastSection(False)
-        # header.setSectionResizeMode(5, QHeaderView.Stretch)
+        # header.setSectionResizeMode(5, QHeaderView.ResizeMode.Stretch)
 
         self.clicked.connect(self.myclick)
 

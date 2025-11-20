@@ -2,13 +2,13 @@ import logging
 import threading
 from typing import Any, Dict
 
-from PyQt5 import uic
-from PyQt5.QtCore import Qt, pyqtSlot
+from PyQt6 import uic
+from PyQt6.QtCore import Qt, pyqtSlot
 
-from ui.base.base_page import BasePage
-from ui.services.realtime_data_service import RealtimeDataService
-from ui.state.realtime_data import RealtimeDataItem
-from business.model.asset import AssetType
+from finance_app.ui.base.base_page import BasePage
+from finance_app.ui.services.realtime_data_service import RealtimeDataService
+from finance_app.ui.state.realtime_data import RealtimeDataItem
+from finance_app.business.model.asset import AssetType
 from rx.core.typing import Disposable
 
 # create logger
@@ -34,7 +34,7 @@ class RealtimeDataDebugPage(BasePage):
             self.setStyleSheet(fh.read())
 
         # apply styles
-        self.setAttribute(Qt.WA_StyledBackground, True)
+        self.setAttribute(Qt.WidgetAttribute.WA_StyledBackground, True)
 
         self.addWindow = None
         self.addButton.clicked.connect(self.add)

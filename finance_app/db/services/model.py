@@ -1,5 +1,5 @@
 
-from business.model.contracts import IBContract
+from finance_app.business.model.contracts import IBContract
 from typing import Any
 
 class LlContractDetails(object):

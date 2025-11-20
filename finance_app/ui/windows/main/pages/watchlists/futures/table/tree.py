@@ -1,11 +1,11 @@
 import logging
-from PyQt5.QtCore import pyqtSignal, QModelIndex
-from PyQt5.QtWidgets import QTreeView, QHeaderView
+from PyQt6.QtCore import pyqtSignal, QModelIndex
+from PyQt6.QtWidgets import QTreeView, QHeaderView
 
-from ui.windows.main.pages.watchlists.futures.table.item_delegate import (
+from finance_app.ui.windows.main.pages.watchlists.futures.table.item_delegate import (
     MyRenderDelegate,
 )
-from ui.windows.main.pages.watchlists.futures.table.tree_model_new import (
+from finance_app.ui.windows.main.pages.watchlists.futures.table.tree_model_new import (
     FuturesTreeModel,
 )
 
@@ -55,9 +55,9 @@ class FuturesTree(QTreeView):
         self.setModel(self.tree_model)
 
         header = self.header()
-        header.setSectionResizeMode(QHeaderView.ResizeToContents)
+        header.setSectionResizeMode(QHeaderView.ResizeMode.ResizeToContents)
         header.setStretchLastSection(False)
-        # header.setSectionResizeMode(5, QHeaderView.Stretch)
+        # header.setSectionResizeMode(5, QHeaderView.ResizeMode.Stretch)
 
         # self.setItemDelegate(MyRenderDelegate(self))
         self.collapseAll()

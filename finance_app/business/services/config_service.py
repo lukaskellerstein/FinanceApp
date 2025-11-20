@@ -1,7 +1,7 @@
 import configparser
 from enum import Enum
 import os
-from utils.files import get_full_path
+from finance_app.utils.files import get_full_path
 
 
 class Environment(Enum):

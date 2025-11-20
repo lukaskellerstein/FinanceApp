@@ -7,7 +7,7 @@ from typing import Dict, Union, Any
 from enum import Enum
 from ibapi.contract import Contract
 
-from business.model.contracts import (
+from finance_app.business.model.contracts import (
     IBFutureContract,
     IBStockContract,
     IBContract,

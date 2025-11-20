@@ -8,15 +8,15 @@ from typing import Any, List, Tuple
 from rx import operators as ops
 from rx.subject.behaviorsubject import BehaviorSubject
 
-from business.model.contracts import (
+from finance_app.business.model.contracts import (
     IBContract,
     IBFutureContract,
     IBStockContract,
 )
-from business.model.timeframe import TimeFrame
-from business.services.ibclient.my_ib_client import MyIBClient
-from db.services.pystore_hist_service import PyStoreHistService
-from helpers import logThreads
+from finance_app.business.model.timeframe import TimeFrame
+from finance_app.business.services.ibclient.my_ib_client import MyIBClient
+from finance_app.db.services.pystore_hist_service import PyStoreHistService
+from finance_app.helpers import logThreads
 
 # create logger
 log = logging.getLogger("CellarLogger")

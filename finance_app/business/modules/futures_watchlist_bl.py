@@ -1,16 +1,16 @@
 import logging
 from typing import Any, List, Union
 
-from business.model.asset import AssetType
-from business.model.contracts import IBContract
-from business.model.factory.contract_detail_factory import (
+from finance_app.business.model.asset import AssetType
+from finance_app.business.model.contracts import IBContract
+from finance_app.business.model.factory.contract_detail_factory import (
     ContractDetailsFactory,
 )
-from business.model.factory.contract_factory import ContractFactory
-from business.services.ibclient.my_ib_client import MyIBClient
-from db.services.file_watchlist_service import FileWatchlistService
-from business.model.asset import Asset
-from business.modules.asset_bl import AssetBL
+from finance_app.business.model.factory.contract_factory import ContractFactory
+from finance_app.business.services.ibclient.my_ib_client import MyIBClient
+from finance_app.db.services.file_watchlist_service import FileWatchlistService
+from finance_app.business.model.asset import Asset
+from finance_app.business.modules.asset_bl import AssetBL
 
 # create logger
 log = logging.getLogger("CellarLogger")

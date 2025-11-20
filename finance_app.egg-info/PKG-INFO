@@ -1,11 +1,25 @@
-Metadata-Version: 1.2
+Metadata-Version: 2.4
 Name: finance-app
 Version: 0.1.0
-Summary: UNKNOWN
-Home-page: UNKNOWN
-Author: Lukas Kellerstein
-Author-email: lukas.kellerstein@gmail.com
-License: UNKNOWN
-Description: UNKNOWN
-Platform: UNKNOWN
-Requires-Python: >=3.7,<4.0
+Author-email: Lukas Kellerstein <lukas.kellerstein@gmail.com>
+Requires-Python: <3.13,>=3.10
+Requires-Dist: pyqt5>=5.15.11
+Requires-Dist: pyqtgraph>=0.13.7
+Requires-Dist: numpy>=2.0.0
+Requires-Dist: pandas>=2.2.0
+Requires-Dist: matplotlib>=3.10.0
+Requires-Dist: rx>=3.2.0
+Requires-Dist: pymongo>=4.15.0
+Requires-Dist: pylint>=4.0.0
+Requires-Dist: QuantLib>=1.40
+Requires-Dist: pystore>=0.1.22
+Requires-Dist: dask[dataframe]>=2025.1.0
+Requires-Dist: exchange-calendars>=4.11.0
+Requires-Dist: holidays>=0.85
+Requires-Dist: ibapi>=9.81.1.post1
+Requires-Dist: pyarrow>=18.0.0
+Provides-Extra: dev
+Requires-Dist: pytest>=8.0.0; extra == "dev"
+Requires-Dist: flake8>=7.0.0; extra == "dev"
+Requires-Dist: black>=25.0.0; extra == "dev"
+Requires-Dist: rope>=1.13.0; extra == "dev"

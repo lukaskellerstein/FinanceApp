@@ -1,11 +1,11 @@
-from business.model.contract_details import IBContractDetails
+from finance_app.business.model.contract_details import IBContractDetails
 import logging
 from typing import Dict, Union, Any
 
 from ibapi.contract import ContractDetails
 
-from business.model.contract_details import IBContractDetails
-from business.model.factory.contract_factory import ContractFactory
+from finance_app.business.model.contract_details import IBContractDetails
+from finance_app.business.model.factory.contract_factory import ContractFactory
 
 # create logger
 log = logging.getLogger("CellarLogger")

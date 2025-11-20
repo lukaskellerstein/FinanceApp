@@ -1,7 +1,7 @@
 import pandas as pd
 import pyqtgraph as pg
-from PyQt5.QtGui import QColor
-from ui.windows.asset_detail.shared.pages.history_chart.helpers import (
+from PyQt6.QtGui import QColor
+from finance_app.ui.windows.asset_detail.shared.pages.history_chart.helpers import (
     plotStatistic,
     __plotTimeRange,
     __plotTimeStatistics,
@@ -35,7 +35,8 @@ def plotWeekendBar(row, low, high, plot, width1, width2):
     # bar = pg.QtGui.QGraphicsRectItem(
     #     row["id"] + width2 - width1, low, width1 * 2, high - low,
     # )
-    bar = pg.QtGui.QGraphicsRectItem(
+    from PyQt6.QtWidgets import QGraphicsRectItem
+    bar = QGraphicsRectItem(
         row["id"] + width2 - width1,
         row["Low"],
         width1 * 2,

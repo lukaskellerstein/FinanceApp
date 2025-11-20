@@ -4,7 +4,7 @@ import pyqtgraph as pg
 from typing import Tuple
 
 import pandas as pd
-from PyQt5 import QtGui
+from PyQt6 import QtGui
 
 # create logger
 log = logging.getLogger("CellarLogger")

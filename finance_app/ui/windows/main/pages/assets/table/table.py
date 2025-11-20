@@ -2,10 +2,10 @@ import logging
 from typing import Tuple
 
 import pandas as pd
-from PyQt5.QtCore import QModelIndex, pyqtSignal
-from PyQt5.QtWidgets import QHeaderView, QTableView
+from PyQt6.QtCore import QModelIndex, pyqtSignal
+from PyQt6.QtWidgets import QHeaderView, QTableView
 
-from ui.windows.main.pages.assets.table.table_model import AssetTableModel
+from finance_app.ui.windows.main.pages.assets.table.table_model import AssetTableModel
 
 # create logger
 log = logging.getLogger("CellarLogger")
@@ -22,12 +22,12 @@ class AssetTable(QTableView):
         self.setModel(self.tableModel)
 
         header = self.horizontalHeader()
-        header.setSectionResizeMode(QHeaderView.ResizeToContents)
+        header.setSectionResizeMode(QHeaderView.ResizeMode.ResizeToContents)
         header.setStretchLastSection(False)
 
         self.setSortingEnabled(True)
-        self.setSelectionMode(QTableView.SingleSelection)
-        self.setSelectionBehavior(QTableView.SelectRows)
+        self.setSelectionMode(QTableView.SelectionMode.SingleSelection)
+        self.setSelectionBehavior(QTableView.SelectionBehavior.SelectRows)
 
         self.clicked.connect(self.myclick)
         self.doubleClicked.connect(self.mydoubleclick)

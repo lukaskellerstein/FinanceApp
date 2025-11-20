@@ -4,21 +4,21 @@ from typing import Tuple
 import numpy as np
 import pandas as pd
 import pyqtgraph as pg
-from PyQt5.QtCore import pyqtSignal
-from PyQt5.QtGui import QColor
+from PyQt6.QtCore import pyqtSignal
+from PyQt6.QtGui import QColor
 
-from business.model.timeframe import TimeFrame
-from ui.components.multi_candlestick_chart.candlestick_plot import (
+from finance_app.business.model.timeframe import TimeFrame
+from finance_app.ui.components.multi_candlestick_chart.candlestick_plot import (
     CandlestickPlot,
 )
-from ui.components.candlestick_chart.overview_plot import OverviewTimePlot
-from ui.components.multi_candlestick_chart.candlestick_plot import (
+from finance_app.ui.components.candlestick_chart.overview_plot import OverviewTimePlot
+from finance_app.ui.components.multi_candlestick_chart.candlestick_plot import (
     CandlestickPlot,
 )
-from ui.components.multi_candlestick_chart.candlestick_x import CandlesticXAxis
+from finance_app.ui.components.multi_candlestick_chart.candlestick_x import CandlesticXAxis
 
-from ui.components.multi_candlestick_chart.helpers import printOHLCInfo
-from ui.components.multi_candlestick_chart.volume_plot import VolumePlot
+from finance_app.ui.components.multi_candlestick_chart.helpers import printOHLCInfo
+from finance_app.ui.components.multi_candlestick_chart.volume_plot import VolumePlot
 
 # create logger
 log = logging.getLogger("CellarLogger")

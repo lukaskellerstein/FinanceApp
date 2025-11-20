@@ -1,18 +1,18 @@
-from business.model.timeframe import TimeFrame
-from business.services.ibclient.my_ib_client import MyIBClient
+from finance_app.business.model.timeframe import TimeFrame
+from finance_app.business.services.ibclient.my_ib_client import MyIBClient
 import logging
 from threading import Thread
 from typing import Any, Dict, List, Tuple
-from db.services.pystore_hist_service import PyStoreHistService
+from finance_app.db.services.pystore_hist_service import PyStoreHistService
 import time
 from rx import operators as ops
 from rx.subject.behaviorsubject import BehaviorSubject
-from helpers import logThreads
+from finance_app.helpers import logThreads
 from datetime import datetime
 
-from business.model.contracts import IBContract
+from finance_app.business.model.contracts import IBContract
 
-from business.tasks.download_one_task import DownloadOneDateTask
+from finance_app.business.tasks.download_one_task import DownloadOneDateTask
 
 # create logger
 log = logging.getLogger("CellarLogger")

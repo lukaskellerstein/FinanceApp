@@ -1,9 +1,9 @@
 import logging
 
-from PyQt5.QtCore import pyqtSignal
-from PyQt5.QtWidgets import QHeaderView, QTableView
+from PyQt6.QtCore import pyqtSignal
+from PyQt6.QtWidgets import QHeaderView, QTableView
 
-from ui.windows.main.pages.watchlists.stocks.table.table_model import (
+from finance_app.ui.windows.main.pages.watchlists.stocks.table.table_model import (
     StockTableModel,
 )
 
@@ -25,9 +25,9 @@ class StockTable(QTableView):
         self.setModel(self.tableModel)
 
         header = self.horizontalHeader()
-        header.setSectionResizeMode(QHeaderView.ResizeToContents)
+        header.setSectionResizeMode(QHeaderView.ResizeMode.ResizeToContents)
         header.setStretchLastSection(False)
-        # header.setSectionResizeMode(5, QHeaderView.Stretch)
+        # header.setSectionResizeMode(5, QHeaderView.ResizeMode.Stretch)
 
         # verHeader = self.verticalHeader()
         # verHeader.setSectionsMovable(True)
@@ -35,8 +35,8 @@ class StockTable(QTableView):
         # verHeader.setDragDropMode(self.InternalMove)
 
         self.setSortingEnabled(True)
-        self.setSelectionMode(QTableView.SingleSelection)
-        self.setSelectionBehavior(QTableView.SelectRows)
+        self.setSelectionMode(QTableView.SelectionMode.SingleSelection)
+        self.setSelectionBehavior(QTableView.SelectionBehavior.SelectRows)
 
         # self.setEditTriggers(QtWidgets.QAbstractItemView.NoEditTriggers)
         self.clicked.connect(self.myclick)

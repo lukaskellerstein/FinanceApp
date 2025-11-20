@@ -1,28 +1,28 @@
-from business.model.timeframe import TimeFrame
+from finance_app.business.model.timeframe import TimeFrame
 import logging
 import threading
 from datetime import datetime
 from typing import Any, List, Tuple
 
 import pandas as pd
-from PyQt5 import uic
-from PyQt5.QtCore import QModelIndex, Qt, pyqtSlot
+from PyQt6 import uic
+from PyQt6.QtCore import QModelIndex, Qt, pyqtSlot
 
-from business.model.asset import Asset, AssetType
-from business.modules.asset_bl import AssetBL
-from ui.base.base_page import BasePage
-from ui.components.search_input.search_input import SearchInput
-from ui.windows.add_new_asset.add_asset_window import AssetAddWindow
-from ui.windows.asset_detail.futures.future_detail_window import (
+from finance_app.business.model.asset import Asset, AssetType
+from finance_app.business.modules.asset_bl import AssetBL
+from finance_app.ui.base.base_page import BasePage
+from finance_app.ui.components.search_input.search_input import SearchInput
+from finance_app.ui.windows.add_new_asset.add_asset_window import AssetAddWindow
+from finance_app.ui.windows.asset_detail.futures.future_detail_window import (
     FutureDetailWindow,
 )
-from ui.windows.asset_detail.shared.asset_detail_window import (
+from finance_app.ui.windows.asset_detail.shared.asset_detail_window import (
     AssetDetailWindow,
 )
-from ui.windows.asset_detail.stocks.stock_detail_window import (
+from finance_app.ui.windows.asset_detail.stocks.stock_detail_window import (
     StockDetailWindow,
 )
-from ui.windows.main.pages.assets.table.table import AssetTable
+from finance_app.ui.windows.main.pages.assets.table.table import AssetTable
 
 # create logger
 log = logging.getLogger("CellarLogger")
@@ -49,7 +49,7 @@ class AssetPage(BasePage):
             self.setStyleSheet(fh.read())
 
         # apply styles
-        self.setAttribute(Qt.WA_StyledBackground, True)
+        self.setAttribute(Qt.WidgetAttribute.WA_StyledBackground, True)
 
         self.addWindow = None
         self.addButton.clicked.connect(self.openAddWindowHandler)

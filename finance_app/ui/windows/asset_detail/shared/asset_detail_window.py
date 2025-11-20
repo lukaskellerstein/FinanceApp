@@ -1,26 +1,26 @@
 import logging
 import time
 from typing import Any, Callable, Type
-from ui.windows.asset_detail.shared.pages.contract_details.contract_details import (
+from finance_app.ui.windows.asset_detail.shared.pages.contract_details.contract_details import (
     ContractDetailsPage,
 )
 
 import rx.operators as ops
-from PyQt5 import uic
-from PyQt5.QtCore import Qt, pyqtSignal, pyqtSlot
-from PyQt5.QtWidgets import QMainWindow
+from PyQt6 import uic
+from PyQt6.QtCore import Qt, pyqtSignal, pyqtSlot
+from PyQt6.QtWidgets import QMainWindow
 
-from business.model.asset import Asset, AssetType
-from business.model.contracts import IBStockContract
-from business.modules.asset_bl import AssetBL
-from ui.base.base_page import BasePage
-from ui.windows.asset_detail.shared.pages.basic_info.basic_info import (
+from finance_app.business.model.asset import Asset, AssetType
+from finance_app.business.model.contracts import IBStockContract
+from finance_app.business.modules.asset_bl import AssetBL
+from finance_app.ui.base.base_page import BasePage
+from finance_app.ui.windows.asset_detail.shared.pages.basic_info.basic_info import (
     BasicInfoPage,
 )
-from ui.windows.asset_detail.shared.pages.history_chart.history_chart import (
+from finance_app.ui.windows.asset_detail.shared.pages.history_chart.history_chart import (
     HistoryChartPage,
 )
-from ui.windows.asset_detail.shared.pages.history_table.history_table import (
+from finance_app.ui.windows.asset_detail.shared.pages.history_table.history_table import (
     HistoryTablePage,
 )
 
@@ -50,7 +50,7 @@ class AssetDetailWindow(QMainWindow):
             self.setStyleSheet(fh.read())
 
         # apply styles
-        self.setAttribute(Qt.WA_StyledBackground, True)
+        self.setAttribute(Qt.WidgetAttribute.WA_StyledBackground, True)
 
         self.asset = asset
 

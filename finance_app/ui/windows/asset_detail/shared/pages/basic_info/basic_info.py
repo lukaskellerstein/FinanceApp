@@ -1,12 +1,12 @@
-from business.modules.asset_bl import AssetBL
+from finance_app.business.modules.asset_bl import AssetBL
 from ibapi.contract import Contract
 import logging
 from typing import Any
 
-from PyQt5 import uic
-from PyQt5.QtCore import Qt, pyqtSignal
-from ui.base.base_page import BasePage
-from business.model.asset import Asset
+from PyQt6 import uic
+from PyQt6.QtCore import Qt, pyqtSignal
+from finance_app.ui.base.base_page import BasePage
+from finance_app.business.model.asset import Asset
 
 # create logger
 log = logging.getLogger("CellarLogger")
@@ -33,7 +33,7 @@ class BasicInfoPage(BasePage):
             self.setStyleSheet(fh.read())
 
         # apply styles
-        self.setAttribute(Qt.WA_StyledBackground, True)
+        self.setAttribute(Qt.WidgetAttribute.WA_StyledBackground, True)
 
         # INPUT data
         self.asset = kwargs["data"]

@@ -1,10 +1,10 @@
-from PyQt5.QtCore import QAbstractTableModel
+from PyQt6.QtCore import QAbstractTableModel
 from typing import List
-from business.model.contract_details import IBContractDetails
-from ui.components.contract_details_table.stock_table_model import (
+from finance_app.business.model.contract_details import IBContractDetails
+from finance_app.ui.components.contract_details_table.stock_table_model import (
     StockContractDetailsTableModel,
 )
-from ui.components.contract_details_table.future_table_model import (
+from finance_app.ui.components.contract_details_table.future_table_model import (
     FutureContractDetailsTableModel,
 )
 

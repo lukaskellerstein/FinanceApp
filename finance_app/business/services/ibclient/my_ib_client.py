@@ -7,25 +7,25 @@ from typing import Any, List, Set, Tuple
 from rx import Observable
 from rx.core.typing import Observable
 
-from business.model.contract_details import IBContractDetails
-from business.model.contracts import (
+from finance_app.business.model.contract_details import IBContractDetails
+from finance_app.business.model.contracts import (
     IBContract,
     IBFutureContract,
     IBStockContract,
 )
-from business.services.ibclient.state import State
-from helpers import try_parsing_date
+from finance_app.business.services.ibclient.state import State
+from finance_app.helpers import try_parsing_date
 from ibapi.client import EClient
 from ibapi.common import TickAttrib
 from ibapi.contract import ContractDetails
 from ibapi.ticktype import TickType, TickTypeEnum
 from ibapi.wrapper import BarData, EWrapper
-from business.model.factory.contract_factory import ContractFactory
-from business.model.factory.contract_detail_factory import (
+from finance_app.business.model.factory.contract_factory import ContractFactory
+from finance_app.business.model.factory.contract_detail_factory import (
     ContractDetailsFactory,
 )
 
-from business.services.config_service import AppConfig
+from finance_app.business.services.config_service import AppConfig
 
 # from typings import ObservableType
 

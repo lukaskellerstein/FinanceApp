@@ -2,10 +2,10 @@ import logging
 import threading
 from typing import Any
 
-from PyQt5 import uic
-from PyQt5.QtCore import Qt, pyqtSlot
+from PyQt6 import uic
+from PyQt6.QtCore import Qt, pyqtSlot
 
-from ui.base.base_page import BasePage
+from finance_app.ui.base.base_page import BasePage
 
 # create logger
 log = logging.getLogger("CellarLogger")
@@ -26,7 +26,7 @@ class ThreadsDebugPage(BasePage):
             self.setStyleSheet(fh.read())
 
         # apply styles
-        self.setAttribute(Qt.WA_StyledBackground, True)
+        self.setAttribute(Qt.WidgetAttribute.WA_StyledBackground, True)
 
         self.addWindow = None
         self.logButton.clicked.connect(self.log)

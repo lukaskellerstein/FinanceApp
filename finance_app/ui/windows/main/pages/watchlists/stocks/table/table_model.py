@@ -1,6 +1,6 @@
-from PyQt5 import uic
-from PyQt5.QtCore import QAbstractTableModel, QModelIndex, Qt, pyqtSlot
-from PyQt5.QtGui import QColor, QFont, QIcon
+from PyQt6 import uic
+from PyQt6.QtCore import QAbstractTableModel, QModelIndex, Qt, pyqtSlot
+from PyQt6.QtGui import QColor, QFont, QIcon
 
 
 import numpy as np
@@ -10,7 +10,7 @@ import logging
 
 import time
 
-from helpers import getColorByYieldValue
+from finance_app.helpers import getColorByYieldValue
 
 # create logger
 log = logging.getLogger("CellarLogger")
@@ -132,7 +132,7 @@ class StockTableModel(QAbstractTableModel):
         # print("----dfB----")
         # print(dfB)
 
-        df2 = dfA.append(df_insert, ignore_index=False).append(dfB)
+        df2 = pd.concat([dfA, df_insert, dfB], ignore_index=False)
         # print("-------DF2---------")
         # print(df2)
         # print("--------------------")
@@ -223,7 +223,7 @@ class StockTableModel(QAbstractTableModel):
             print("index invalid - return None")
             return None
 
-        if role == Qt.DisplayRole:
+        if role == Qt.ItemDataRole.DisplayRole:
             # print("--")
             # print("index")
             # print(index)
@@ -267,19 +267,19 @@ class StockTableModel(QAbstractTableModel):
                 else:
                     return str(value)
 
-        if role == Qt.TextAlignmentRole:
+        if role == Qt.ItemDataRole.TextAlignmentRole:
             columnIndex = index.column()
 
             if columnIndex == 3:  # Last
-                return Qt.AlignVCenter + Qt.AlignHCenter
+                return Qt.AlignmentFlag.AlignVCenter + Qt.AlignmentFlag.AlignHCenter
 
-        if role == Qt.FontRole:
+        if role == Qt.ItemDataRole.FontRole:
             columnIndex = index.column()
 
             if columnIndex == 3:  # Last
                 return QFont("Bold")
 
-        if role == Qt.BackgroundRole:
+        if role == Qt.ItemDataRole.BackgroundRole:
             indexColumnsCount = self.__indexColumnsCount()
             columnIndex = index.column()
 
@@ -302,13 +302,13 @@ class StockTableModel(QAbstractTableModel):
                 # else:
                 #     return QColor("red")
 
-        if role == Qt.ForegroundRole:
+        if role == Qt.ItemDataRole.ForegroundRole:
             columnIndex = index.column()
 
             if columnIndex == 3:  # Last
                 return QColor("white")
 
-        if role == Qt.DecorationRole:
+        if role == Qt.ItemDataRole.DecorationRole:
             columnIndex = index.column()
 
             # "delete" column
@@ -346,8 +346,8 @@ class StockTableModel(QAbstractTableModel):
         # print(self._data)
         # print("--------------------------------------------")
         # section is the index of the column/row.
-        if role == Qt.DisplayRole:
-            if orientation == Qt.Horizontal:
+        if role == Qt.ItemDataRole.DisplayRole:
+            if orientation == Qt.Orientation.Horizontal:
 
                 indexColumnsCount = self.__indexColumnsCount()
 
@@ -364,11 +364,11 @@ class StockTableModel(QAbstractTableModel):
 
     def flags(self, index):
         return (
-            Qt.ItemIsEnabled
-            | Qt.ItemIsSelectable
-            | Qt.ItemIsEditable
-            | Qt.ItemIsDragEnabled
-            | Qt.ItemIsDropEnabled
+            Qt.ItemFlag.ItemIsEnabled
+            | Qt.ItemFlag.ItemIsSelectable
+            | Qt.ItemFlag.ItemIsEditable
+            | Qt.ItemFlag.ItemIsDragEnabled
+            | Qt.ItemFlag.ItemIsDropEnabled
         )
 
     def sort(self, Ncol, order):

@@ -1,31 +1,31 @@
-from ui.windows.main.pages.debug.realtime_data.realtime_data import (
+from finance_app.ui.windows.main.pages.debug.realtime_data.realtime_data import (
     RealtimeDataDebugPage,
 )
-from ui.windows.main.pages.options.manual_calc.manual_calc import (
+from finance_app.ui.windows.main.pages.options.manual_calc.manual_calc import (
     ManualCalcPage,
 )
-from ui.windows.main.pages.debug.threads.threads import ThreadsDebugPage
-from business.model.asset import AssetType
+from finance_app.ui.windows.main.pages.debug.threads.threads import ThreadsDebugPage
+from finance_app.business.model.asset import AssetType
 import logging
 import logging.config
 import sys
 from typing import Any, Callable, Dict, Tuple, Type
 
-from PyQt5 import uic
-from PyQt5.QtWidgets import QApplication, QMainWindow
+from PyQt6 import uic
+from PyQt6.QtWidgets import QApplication, QMainWindow
 
-import helpers as helpers
-import resources  # RESOURCES FOR APP
-from ui.base.base_page import BasePage
-from ui.windows.main.pages.assets.asset_page import AssetPage
-from ui.windows.main.pages.home.home_page import HomePage
-from ui.windows.main.pages.watchlists.futures.futures_page import (
+import finance_app.helpers as helpers
+import finance_app.resources as resources  # RESOURCES FOR APP
+from finance_app.ui.base.base_page import BasePage
+from finance_app.ui.windows.main.pages.assets.asset_page import AssetPage
+from finance_app.ui.windows.main.pages.home.home_page import HomePage
+from finance_app.ui.windows.main.pages.watchlists.futures.futures_page import (
     FuturesWatchlistPage,
 )
-from ui.windows.main.pages.watchlists.options.options_page import (
+from finance_app.ui.windows.main.pages.watchlists.options.options_page import (
     OptionsWatchlistPage,
 )
-from ui.windows.main.pages.watchlists.stocks.stocks_page import (
+from finance_app.ui.windows.main.pages.watchlists.stocks.stocks_page import (
     StocksWatchlistPage,
 )
 

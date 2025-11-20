@@ -1,4 +1,4 @@
-from business.model.factory.asset_factory import AssetFactory
+from finance_app.business.model.factory.asset_factory import AssetFactory
 import logging
 import threading
 from datetime import datetime, timedelta
@@ -8,17 +8,17 @@ from rx import operators as ops
 from rx.core.typing import Observable
 from rx.subject.behaviorsubject import BehaviorSubject
 
-from business.helpers import getTimeBlocks
-from business.model.asset import Asset, AssetType
-from business.model.contract_details import IBContractDetails
-from business.model.contracts import IBContract
-from business.model.timeframe import TimeFrame
-from business.services.ibclient.my_ib_client import MyIBClient
-from business.tasks.download_hist_data_task import DownloadHistDataTask
-from db.services.mongo_asset_service import MongoAssetService
-from db.services.pystore_hist_service import PyStoreHistService
-from business.model.factory.contract_factory import ContractFactory
-from business.model.factory.contract_detail_factory import (
+from finance_app.business.helpers import getTimeBlocks
+from finance_app.business.model.asset import Asset, AssetType
+from finance_app.business.model.contract_details import IBContractDetails
+from finance_app.business.model.contracts import IBContract
+from finance_app.business.model.timeframe import TimeFrame
+from finance_app.business.services.ibclient.my_ib_client import MyIBClient
+from finance_app.business.tasks.download_hist_data_task import DownloadHistDataTask
+from finance_app.db.services.mongo_asset_service import MongoAssetService
+from finance_app.db.services.pystore_hist_service import PyStoreHistService
+from finance_app.business.model.factory.contract_factory import ContractFactory
+from finance_app.business.model.factory.contract_detail_factory import (
     ContractDetailsFactory,
 )
 

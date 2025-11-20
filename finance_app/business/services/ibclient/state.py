@@ -13,7 +13,7 @@ import pandas as pd
 from rx.core.typing import Observable, Subject
 from rx.subject import BehaviorSubject
 
-from business.model.contracts import IBContract
+from finance_app.business.model.contracts import IBContract
 
 # from typings import ObservableType, PandasDataFrameType, PandasSerieType
 from typing import List, Any
@@ -76,7 +76,7 @@ class State(object):
         ]
 
         # remove isExist from global DataFrame
-        self.__data = self.__data.append(isExist).drop_duplicates(keep=False)
+        self.__data = pd.concat([self.__data, isExist]).drop_duplicates(keep=False)
 
     def registerOnlyNewObservable(self) -> Tuple[int, Observable]:
         self.reqId += 1
@@ -118,7 +118,7 @@ class State(object):
                 )
                 row_df: pd.DataFrame = pd.DataFrame([a_row], columns=dfColumns)
 
-                self.__data = self.__data.append(row_df, ignore_index=True)
+                self.__data = pd.concat([self.__data, row_df], ignore_index=True)
                 # log.debug(self.__data)
 
                 return (False, reqId, newObs)

@@ -6,7 +6,7 @@ import numpy as np
 import pandas as pd
 import pyqtgraph as pg
 
-from business.model.timeframe import TimeFrame
+from finance_app.business.model.timeframe import TimeFrame
 
 # create logger
 log = logging.getLogger("CellarLogger")

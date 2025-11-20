@@ -1,7 +1,7 @@
 import logging
 
 from ibapi.contract import Contract
-from db.model.base import DBObject
+from finance_app.db.model.base import DBObject
 import traceback
 
 # create logger

@@ -8,7 +8,7 @@ import numpy as np
 import pandas as pd
 import pyqtgraph as pg
 from pyqtgraph import QtCore, QtGui
-from PyQt5.QtGui import QColor
+from PyQt6.QtGui import QColor
 from datetime import datetime, timedelta
 
 from typing import Tuple, List, Any, Dict

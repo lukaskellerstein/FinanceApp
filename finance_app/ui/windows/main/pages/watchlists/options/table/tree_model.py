@@ -5,7 +5,7 @@ from collections import defaultdict
 
 import numpy as np
 import pandas as pd
-from PyQt5.QtCore import QAbstractItemModel, QModelIndex, Qt, pyqtSlot
+from PyQt6.QtCore import QAbstractItemModel, QModelIndex, Qt, pyqtSlot
 
 # create logger
 log = logging.getLogger("CellarLogger")
@@ -115,7 +115,7 @@ class OptionsTreeModel(QAbstractItemModel):
         # header
         self.header_data = defaultdict()
         for index, value in enumerate(headerData):
-            self.setHeaderData(index, Qt.Horizontal, value)
+            self.setHeaderData(index, Qt.Orientation.Horizontal, value)
 
     # ----------------------------------------------------------
     # Custom methods
@@ -198,7 +198,7 @@ class OptionsTreeModel(QAbstractItemModel):
             print("index invalid - return None")
             return None
 
-        if role == Qt.DisplayRole:
+        if role == Qt.ItemDataRole.DisplayRole:
             columnIndex = index.column()
             if columnIndex <= 1:
                 return index.internalPointer()._data.index.values[0][
@@ -300,12 +300,12 @@ class OptionsTreeModel(QAbstractItemModel):
     # ----------------------------------------------------------
 
     def setHeaderData(
-        self, section, orientation, value, role=Qt.DisplayRole
+        self, section, orientation, value, role=Qt.ItemDataRole.DisplayRole
     ) -> bool:
         # log.debug("Running...")
         # log.debug(locals())
 
-        if orientation == Qt.Horizontal:
+        if orientation == Qt.Orientation.Horizontal:
 
             # print("Setting value: " + value)
             self.header_data[section] = value
@@ -320,11 +320,11 @@ class OptionsTreeModel(QAbstractItemModel):
             # print(aaa)
             return aaa
 
-    def headerData(self, section, orientation, role=Qt.DisplayRole) -> object:
+    def headerData(self, section, orientation, role=Qt.ItemDataRole.DisplayRole) -> object:
         # log.debug("Running...")
         # log.debug(locals())
 
-        if role == Qt.DisplayRole:
+        if role == Qt.ItemDataRole.DisplayRole:
             aaa = self.header_data[section]
             # print(aaa)
             return aaa

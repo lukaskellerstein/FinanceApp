@@ -4,10 +4,10 @@ from typing import Dict, List
 
 import pandas as pd
 
-from business.helpers import getTimeBlocks
-from business.model.asset import Asset
-from business.model.timeframe import TimeFrame
-from business.modules.asset_bl import AssetBL
+from finance_app.business.helpers import getTimeBlocks
+from finance_app.business.model.asset import Asset
+from finance_app.business.model.timeframe import TimeFrame
+from finance_app.business.modules.asset_bl import AssetBL
 
 # create logger
 log = logging.getLogger("CellarLogger")

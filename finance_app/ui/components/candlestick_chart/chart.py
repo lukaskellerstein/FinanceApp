@@ -5,14 +5,14 @@ from typing import Tuple
 import pandas as pd
 import pyqtgraph as pg
 from holidays import US
-from PyQt5.QtCore import pyqtSignal
-from PyQt5.QtGui import QColor
+from PyQt6.QtCore import pyqtSignal
+from PyQt6.QtGui import QColor
 
-from business.model.timeframe import TimeFrame
-from ui.components.candlestick_chart.candlestick_plot import CandlestickPlot
-from ui.components.candlestick_chart.candlestick_x import CandlesticXAxis
-from ui.components.candlestick_chart.overview_plot import OverviewTimePlot
-from ui.components.candlestick_chart.volume_plot import VolumePlot
+from finance_app.business.model.timeframe import TimeFrame
+from finance_app.ui.components.candlestick_chart.candlestick_plot import CandlestickPlot
+from finance_app.ui.components.candlestick_chart.candlestick_x import CandlesticXAxis
+from finance_app.ui.components.candlestick_chart.overview_plot import OverviewTimePlot
+from finance_app.ui.components.candlestick_chart.volume_plot import VolumePlot
 
 # create logger
 log = logging.getLogger("CellarLogger")

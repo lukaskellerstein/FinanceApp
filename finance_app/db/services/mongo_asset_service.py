@@ -4,7 +4,7 @@ from typing import Any, List, Dict
 import pandas as pd
 import pymongo
 
-from business.model.asset import Asset, AssetType
+from finance_app.business.model.asset import Asset, AssetType
 
 
 # create logger

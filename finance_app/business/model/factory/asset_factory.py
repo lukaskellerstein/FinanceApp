@@ -7,11 +7,11 @@ from typing import Dict, List, Any
 from enum import Enum
 from ibapi.contract import Contract
 
-from business.model.asset import Asset, AssetType
-from business.model.factory.contract_detail_factory import (
+from finance_app.business.model.asset import Asset, AssetType
+from finance_app.business.model.factory.contract_detail_factory import (
     ContractDetailsFactory,
 )
-from business.model.contract_details import IBContractDetails
+from finance_app.business.model.contract_details import IBContractDetails
 
 # create logger
 log = logging.getLogger("CellarLogger")
