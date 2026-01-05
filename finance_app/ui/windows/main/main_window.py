@@ -28,6 +28,9 @@ from finance_app.ui.windows.main.pages.watchlists.options.options_page import (
 from finance_app.ui.windows.main.pages.watchlists.stocks.stocks_page import (
     StocksWatchlistPage,
 )
+from finance_app.ui.windows.main.pages.options_chain.options_chain_page import (
+    OptionsChainPage,
+)
 
 # set logging from config file
 logging.config.fileConfig("logging.conf")
@@ -73,6 +76,9 @@ class MainWindow(QMainWindow):
         )
         self.actionManual_Calc.triggered.connect(
             self.setCurrentPage(ManualCalcPage)
+        )
+        self.actionOptionsChain.triggered.connect(
+            self.setCurrentPage(OptionsChainPage)
         )
 
         # Stacket Widget

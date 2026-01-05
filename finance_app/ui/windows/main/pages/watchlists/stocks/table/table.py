@@ -1,7 +1,7 @@
 import logging
 
 from PyQt6.QtCore import pyqtSignal
-from PyQt6.QtWidgets import QHeaderView, QTableView
+from PyQt6.QtWidgets import QAbstractItemView, QHeaderView, QTableView
 
 from finance_app.ui.windows.main.pages.watchlists.stocks.table.table_model import (
     StockTableModel,
@@ -45,8 +45,8 @@ class StockTable(QTableView):
         self.setDragEnabled(True)
         self.setDropIndicatorShown(True)
         self.setAcceptDrops(True)
-        self.setDragDropMode(QTableView.DragDrop)
-        # self.setDragDropMode(self.InternalMove)
+        self.setDragDropMode(QAbstractItemView.DragDropMode.DragDrop)
+        # self.setDragDropMode(QAbstractItemView.DragDropMode.InternalMove)
         self.setDragDropOverwriteMode(False)
 
     def myclick(self, index):

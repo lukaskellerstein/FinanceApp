@@ -158,8 +158,10 @@ class AssetTableModel(QAbstractTableModel):
         """
         try:
             self.layoutAboutToBeChanged.emit()
+            # Convert Qt.SortOrder to boolean: AscendingOrder = True, DescendingOrder = False
+            ascending = order == Qt.SortOrder.AscendingOrder
             self._data = self._data.sort_values(
-                self._data.columns[Ncol], ascending=order
+                self._data.columns[Ncol], ascending=ascending
             )
             self.layoutChanged.emit()
         except Exception as e:

@@ -89,6 +89,7 @@
      <string>Options</string>
     </property>
     <addaction name="actionManual_Calc"/>
+    <addaction name="actionOptionsChain"/>
    </widget>
    <addaction name="menuHome"/>
    <addaction name="menuAssets"/>
@@ -140,6 +141,11 @@
   <action name="actionRealtimeData">
    <property name="text">
     <string>Realtime data</string>
+   </property>
+  </action>
+  <action name="actionOptionsChain">
+   <property name="text">
+    <string>Options Chain</string>
    </property>
   </action>
  </widget>
