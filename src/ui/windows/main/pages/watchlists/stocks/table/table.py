@@ -21,6 +21,7 @@ class StockTable(QTableView):
 
     def __init__(self):
         super(QTableView, self).__init__()
+        self.setObjectName("stocks_watchlist_table")
         self.tableModel = StockTableModel([])
         self.setModel(self.tableModel)
 

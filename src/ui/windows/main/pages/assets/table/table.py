@@ -18,6 +18,7 @@ class AssetTable(QTableView):
 
     def __init__(self):
         super(QTableView, self).__init__()
+        self.setObjectName("asset_table")
         self.tableModel = AssetTableModel([])
         self.setModel(self.tableModel)
 

@@ -33,6 +33,7 @@ class HistoryTablePage(BasePage):
 
     def __init__(self, **kwargs: Any):
         super().__init__()
+        self.setObjectName("history_table_page")
         log.info("Running ...")
 
         # load template

@@ -14,6 +14,7 @@ class HomePage(BasePage):
     def __init__(self, *args: Tuple[str, Any], **kwargs: Dict[str, Any]):
         super().__init__(*args, **kwargs)
         log.info("Running ...")
+        self.setObjectName("home_page")
 
         # load template
         uic.loadUi("src/ui/windows/main/pages/home/home_page.ui", self)

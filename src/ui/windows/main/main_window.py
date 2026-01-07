@@ -37,6 +37,7 @@ class MainWindow(QMainWindow):
     def __init__(self, *args: Tuple[str, Any], **kwargs: Dict[str, Any]):
         super().__init__()
         log.info("Running ...")
+        self.setObjectName("main_window")
 
         uic.loadUi("src/ui/windows/main/main_window.ui", self)
 

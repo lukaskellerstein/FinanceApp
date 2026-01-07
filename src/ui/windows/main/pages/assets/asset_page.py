@@ -40,6 +40,7 @@ class AssetPage(BasePage):
     def __init__(self, **kwargs: Any):
         super().__init__()
         log.info("Running ...")
+        self.setObjectName("asset_page")
 
         # load template
         uic.loadUi("src/ui/windows/main/pages/assets/asset_page.ui", self)
@@ -100,14 +101,15 @@ class AssetPage(BasePage):
 
         self.subscriptions.append(subscriptionTemp)
 
-    @pyqtSlot(int)
-    def __updateProgress(self, value: int):
+    @pyqtSlot(object)
+    def __updateProgress(self, value):
         self.lock.acquire()
-        print(f"Progress: {value} %")
+        progress = int(value)  # Convert float to int for QProgressBar
+        print(f"Progress: {progress} %")
         try:
-            self.progressBar.setValue(value)
+            self.progressBar.setValue(progress)
 
-            if value == 100:
+            if progress >= 100:
                 self.progressBar.hide()
                 self.fillTable()
 

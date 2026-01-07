@@ -31,6 +31,7 @@ class StocksWatchlistPage(BasePage):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         log.info("Running ...")
+        self.setObjectName("stocks_watchlist_page")
 
         self.bl = StocksWatchlistBL()
         self.realtimeService = RealtimeDataService()

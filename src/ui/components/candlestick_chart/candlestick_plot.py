@@ -74,8 +74,8 @@ class CandlestickPlot(pg.PlotItem):
 
             if self.bbb.shape[0] > 0:
 
-                # enhanced painted dataDF
-                self.painted = self.painted.append(self.bbb)
+                # enhanced painted dataDF (use pd.concat instead of deprecated append)
+                self.painted = pd.concat([self.painted, self.bbb])
 
                 # DRAW ALL
                 self.plot.generatePicture(self.painted)

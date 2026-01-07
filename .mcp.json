@@ -1,0 +1,13 @@
+{
+  "mcpServers": {
+    "finance-app-control": {
+      "command": "python3",
+      "args": ["mcp_server/pyqt_mcp.py"],
+      "env": {
+        "PYQT_APP_PATH": "main.py",
+        "PYQT_CONTROL_HOST": "localhost",
+        "PYQT_CONTROL_PORT": "19999"
+      }
+    }
+  }
+}

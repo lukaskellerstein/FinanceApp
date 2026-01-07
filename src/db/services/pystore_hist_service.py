@@ -24,7 +24,9 @@ class PyStoreHistService(object):
             data,
             columns=["Datetime", "Open", "High", "Low", "Close", "Volume"],
         )
-        my_df["Datetime"] = pd.to_datetime(my_df["Datetime"])
+        # Convert to datetime with UTC timezone to match existing PyStore data format
+        # Existing data is stored as datetime64[us, UTC], so new data must match
+        my_df["Datetime"] = pd.to_datetime(my_df["Datetime"], utc=True)
         my_df.set_index(["Datetime"], inplace=True)
         return my_df
 
@@ -44,6 +46,13 @@ class PyStoreHistService(object):
                 t = timeframe.value.strip()
 
                 collection = self.store.collection(t)
+
+                # Clean up any leftover temporary items from failed appends
+                temp_item_name = f"__{symbol}"
+                if temp_item_name in collection.list_items():
+                    log.warning(f"Cleaning up leftover temp item: {temp_item_name}")
+                    collection.delete_item(temp_item_name)
+
                 if symbol in collection.list_items():
                     item = collection.item(symbol)
                     collection.append(

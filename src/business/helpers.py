@@ -25,11 +25,13 @@ def getTimeBlocks(
         d = start
         step = timedelta(days=blockInDays)
 
-        while d <= end:
+        while d < end:
             tempStart = d
             d += step
-            # print(f"from: {tempStart.strftime('%Y%m%d')}, to: {d.strftime('%Y%m%d')}")
-            result.append((tempStart, d))
+            # Ensure the block end date doesn't exceed the requested end date
+            blockEnd = min(d, end)
+            # print(f"from: {tempStart.strftime('%Y%m%d')}, to: {blockEnd.strftime('%Y%m%d')}")
+            result.append((tempStart, blockEnd))
 
         return result
 

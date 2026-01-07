@@ -21,6 +21,7 @@ class FuturesTree(QTreeView):
 
     def __init__(self):
         super(QTreeView, self).__init__()
+        self.setObjectName("futures_watchlist_tree")
 
         # load styles
         with open(

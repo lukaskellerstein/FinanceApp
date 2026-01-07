@@ -317,10 +317,17 @@ class MyIBClient(EWrapper, EClient):
         # No security definition - option contract not found (common for illiquid strikes)
         elif errorCode == 200:
             log.warning(f"No security definition for reqId: {reqId}{contract_info} - {errorString}")
+        # Warning messages about timezone (data will still come)
+        elif errorCode in [2174, 2176]:
+            log.warning(f"reqId: {reqId}{contract_info}, code: {errorCode}, text: {errorString}")
         else:
             log.error(f"reqId: {reqId}{contract_info}, errorCode: {errorCode}, errorText: {errorString}")
 
-        if reqId != -1:
+        # Only emit empty object for fatal errors that should terminate the request
+        # Do NOT emit for informational/warning messages (2104, 2106, 2108, 2158, 2119, 2157, 2174, 2176)
+        # and permission/subscription warnings (10167, 10168, 354, 200)
+        non_fatal_error_codes = [2104, 2106, 2108, 2158, 2119, 2157, 2174, 2176, 10167, 10168, 354, 200]
+        if reqId != -1 and errorCode not in non_fatal_error_codes:
             obs: Observable[Any] = self.state.getObservable(reqId)
             if obs is not None:
                 obs.on_next({})

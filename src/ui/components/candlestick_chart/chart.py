@@ -73,9 +73,6 @@ class MyCandlestickChart(pg.GraphicsLayoutWidget):
 
         # CHART 2 ----------------------------
 
-        volumeYAxis = pg.AxisItem(orientation="left")
-        volumeYAxis.setScale(0.00001)
-
         volumeXAxis = CandlesticXAxis(
             data=self.timeSeriesData, orientation="bottom",
         )
@@ -84,7 +81,7 @@ class MyCandlestickChart(pg.GraphicsLayoutWidget):
             self.data.index,
             self.data["Volume"],
             self.currentRange,
-            axisItems={"bottom": volumeXAxis, "left": volumeYAxis},
+            axisItems={"bottom": volumeXAxis},
         )
 
         self.volumePlot.sigRangeChanged.connect(self.__updateVolumeRegion)
@@ -114,6 +111,12 @@ class MyCandlestickChart(pg.GraphicsLayoutWidget):
         )
 
         self.addItem(self.overviewPlot, row=4, col=0, colspan=2)
+
+        # Set the initial region based on the passed range parameter
+        if self.currentRange != (0, 0):
+            self.overviewPlot.timeRegion.setRegion(self.currentRange)
+            # Trigger the update to sync all chart components
+            self.__updateOverviewTimeRegion(self.overviewPlot.timeRegion)
 
         end = time.time()
         log.info(f"plot takes: {end - start} sec.")
@@ -190,21 +193,16 @@ class MyCandlestickChart(pg.GraphicsLayoutWidget):
             # udpate X axis of Volume
             self.volumePlot.setXRange(minVal, maxVal, padding=0)
 
-            # udpate Y axis of Volume
-            # if minVal < 0:
-            #     minVal = 0
-            # elif minVal > self.data.shape[0] - 1:
-            #     minVal = self.data.shape[0] - 1
-
-            # if maxVal < 0:
-            #     maxVal = 0
-            # elif maxVal > self.data.shape[0] - 1:
-            #     maxVal = self.data.shape[0] - 1
-
-            # tempDf = self.data.iloc[minVal:maxVal]
-            # self.volumePlot.setYRange(
-            #     tempDf["Volume"].min(), tempDf["Volume"].max(), padding=0
-            # )
+            # udpate Y axis of Volume based on visible data
+            volMinIdx = max(0, minVal)
+            volMaxIdx = min(self.data.shape[0] - 1, maxVal)
+            if volMinIdx < volMaxIdx:
+                tempDf = self.data.iloc[volMinIdx:volMaxIdx]
+                if not tempDf.empty and "Volume" in tempDf.columns:
+                    volMin = tempDf["Volume"].min()
+                    volMax = tempDf["Volume"].max()
+                    if volMin < volMax:
+                        self.volumePlot.setYRange(0, volMax, padding=0.1)
 
             # mi = tempDf["Low"].min()
             # ma = tempDf["High"].max()

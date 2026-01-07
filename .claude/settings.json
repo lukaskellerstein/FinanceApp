@@ -19,7 +19,8 @@
       "BashOutput",
       "KillShell",
       "Skill",
-      "mcp__plugin_finance-plugin"
+      "mcp__plugin_finance-plugin",
+      "mcp__finance-app-control"
     ],
     "deny": ["Bash(rm -rf /)", "Bash(rm -rf ~)"]
   },

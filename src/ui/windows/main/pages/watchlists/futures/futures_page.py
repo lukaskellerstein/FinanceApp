@@ -35,6 +35,7 @@ class FuturesWatchlistPage(BasePage):
     def __init__(self, *args: Tuple[str, Any], **kwargs: Dict[str, Any]):
         super().__init__(*args, **kwargs)
         log.info("Running ...")
+        self.setObjectName("futures_watchlist_page")
 
         self.bl = FuturesWatchlistBL()
         self.realtimeService = RealtimeDataService()
