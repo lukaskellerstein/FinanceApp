@@ -1,8 +1,9 @@
 from src.business.model.factory.asset_factory import AssetFactory
 import logging
 import threading
+import time
 from datetime import datetime, timedelta, timezone
-from typing import Any, Dict, List, Union
+from typing import Any, Dict, List, Optional, Union
 
 from rx import operators as ops
 from rx.core.typing import Observable
@@ -144,6 +145,20 @@ class AssetBL(object):
         contractsAndTimeBlocks = []
 
         for asset in assets:
+            # Clear existing data first - Download means fresh download
+            try:
+                if AssetType.from_str(asset.type) == AssetType.STOCK:
+                    log.info(f"Clearing existing data for {asset.symbol} before download")
+                    self.__histDataDbService.removeAll(asset.symbol, timeframe)
+                elif AssetType.from_str(asset.type) == AssetType.FUTURE:
+                    # For futures, clear all contract data
+                    for cd in asset.contractDetails:
+                        localSymbol = f"{cd.contract.localSymbol}-{cd.contract.lastTradeDateOrContractMonth}"
+                        log.info(f"Clearing existing data for {localSymbol} before download")
+                        self.__histDataDbService.removeAll(localSymbol, timeframe)
+            except Exception as e:
+                log.warning(f"Error clearing data for {asset.symbol}: {e}")
+
             if AssetType.from_str(asset.type) == AssetType.STOCK:
                 contractsAndTimeBlocks.extend(
                     self.__downloadStock(asset, maxBlockSize)
@@ -208,6 +223,80 @@ class AssetBL(object):
     # HELPER METHODS
     # ----------------------------------------------------------
     # ----------------------------------------------------------
+
+    def __checkForSplits(
+        self, contract: IBContract, symbol: str, sinceDate: datetime, timeframe: TimeFrame
+    ) -> bool:
+        """
+        Check if any stock splits occurred since the given date.
+        If splits detected, clears the historical data for re-download.
+        Returns True if splits were detected and data was cleared.
+        """
+        log.info(f"Checking for splits for {symbol} since {sinceDate}")
+
+        splits_result = []
+        check_complete = threading.Event()
+
+        def on_splits(splits: List[Dict]):
+            nonlocal splits_result
+            splits_result = splits
+            check_complete.set()
+
+        def on_error(e):
+            log.warning(f"Error getting split history for {symbol}: {e}")
+            check_complete.set()
+
+        def on_complete():
+            check_complete.set()
+
+        try:
+            subscription = self.__ibClient.getSplitHistory(contract).subscribe(
+                on_next=on_splits,
+                on_error=on_error,
+                on_completed=on_complete,
+            )
+
+            # Wait for split check to complete (max 10 seconds)
+            check_complete.wait(timeout=10)
+            subscription.dispose()
+
+        except Exception as e:
+            log.warning(f"Exception checking splits for {symbol}: {e}")
+            return False
+
+        if not splits_result:
+            log.info(f"No split history found for {symbol}")
+            return False
+
+        # Check if any split occurred after sinceDate
+        # Make sinceDate timezone-aware if it isn't
+        if sinceDate.tzinfo is None:
+            sinceDate = sinceDate.replace(tzinfo=timezone.utc)
+
+        splits_since = [
+            s for s in splits_result
+            if s["date"].replace(tzinfo=timezone.utc) > sinceDate
+        ]
+
+        if splits_since:
+            log.warning(
+                f"SPLIT DETECTED for {symbol}! "
+                f"Found {len(splits_since)} split(s) since {sinceDate}: "
+                f"{[(s['date'], s['ratio']) for s in splits_since]}"
+            )
+            log.info(f"Clearing historical data for {symbol} to re-download with adjusted prices")
+
+            # Clear the existing data
+            try:
+                self.__histDataDbService.removeAll(symbol, timeframe)
+                log.info(f"Successfully cleared data for {symbol}")
+            except Exception as e:
+                log.error(f"Error clearing data for {symbol}: {e}")
+
+            return True
+
+        log.info(f"No splits detected for {symbol} since {sinceDate}")
+        return False
 
     def __updateFutures(
         self, asset: Asset, timeframe: TimeFrame, maxBlockSize: int
@@ -317,11 +406,34 @@ class AssetBL(object):
 
         if symbolData is not None:
 
-            # WE HAVE SOME DATA IN DB -> UPDATE
+            # WE HAVE SOME DATA IN DB -> CHECK FOR SPLITS FIRST
             lastDateTime = symbolData.tail(1).index[0]
 
-            if now > lastDateTime:
+            # Check for stock splits since our last data point
+            split_detected = self.__checkForSplits(
+                contract, asset.symbol, lastDateTime, timeframe
+            )
 
+            if split_detected:
+                # Split was detected and data was cleared
+                # Do a full download from the beginning
+                log.info(f"Re-downloading all data for {asset.symbol} due to split")
+                timeBlocks = getTimeBlocks(
+                    datetime.strptime("19860101", "%Y%m%d").replace(tzinfo=timezone.utc),
+                    now,
+                    maxBlockSize,
+                )
+
+                for timeBlock in timeBlocks:
+                    result.append(
+                        {
+                            "contract": contract,
+                            "from": timeBlock[0],
+                            "to": timeBlock[1],
+                        }
+                    )
+            elif now > lastDateTime:
+                # No split, just update from last date
                 timeBlocks = getTimeBlocks(lastDateTime, now, maxBlockSize,)
 
                 for timeBlock in timeBlocks:

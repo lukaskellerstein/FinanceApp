@@ -78,11 +78,18 @@ class DownloadOneDateTask(Thread):
         self.subscriptions.append(subscriptionTemp)
 
         # ----------------------
-        # wait until END
+        # wait until END (with timeout)
         # ----------------------
+        timeout_seconds = 60  # 60 second timeout for each request
+        elapsed = 0
         while self._running:
-            # log.info(f"{self.uid}.... waiting...0.2 sec.")
             time.sleep(0.2)
+            elapsed += 0.2
+            if elapsed >= timeout_seconds:
+                log.warning(f"{self.uid}.... Timeout waiting for historical data response - skipping this time block")
+                self.progress.on_next(1)  # Count this as processed
+                self.terminate()
+                break
 
         # ----------------------
         # END of Thread

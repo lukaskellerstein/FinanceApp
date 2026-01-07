@@ -96,5 +96,12 @@ class PyStoreHistService(object):
 
     def removeAll(self, symbol, timeframe: TimeFrame):
         t = timeframe.value.strip()
-        collection = self.store.collection(t)
-        collection.delete_item(symbol)
+        try:
+            collection = self.store.collection(t)
+            if symbol in collection.list_items():
+                collection.delete_item(symbol)
+                log.info(f"Removed historical data for {symbol}")
+            else:
+                log.info(f"No existing data to remove for {symbol}")
+        except Exception as e:
+            log.warning(f"Error removing data for {symbol}: {e}")

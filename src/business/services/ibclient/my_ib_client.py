@@ -1,11 +1,13 @@
 import logging
 import random
 import time
+import xml.etree.ElementTree as ET
 from datetime import datetime
-from typing import Any, List, Set, Tuple
+from typing import Any, Dict, List, Optional, Set, Tuple
 
 from rx import Observable
 from rx.core.typing import Observable
+from rx import operators as ops
 
 from src.business.model.contract_details import IBContractDetails
 from src.business.model.contracts import (
@@ -314,23 +316,38 @@ class MyIBClient(EWrapper, EClient):
         # No trading permissions or no market data subscription - expected for some options
         elif errorCode in [10167, 10168, 354]:
             log.warning(f"reqId: {reqId}{contract_info}, code: {errorCode}, text: {errorString}")
-        # No security definition - option contract not found (common for illiquid strikes)
+        # No security definition - contract not found
         elif errorCode == 200:
             log.warning(f"No security definition for reqId: {reqId}{contract_info} - {errorString}")
         # Warning messages about timezone (data will still come)
         elif errorCode in [2174, 2176]:
             log.warning(f"reqId: {reqId}{contract_info}, code: {errorCode}, text: {errorString}")
+        # Historical data errors - no data available for requested period
+        elif errorCode in [162, 165, 166, 366]:
+            log.warning(f"Historical data not available for reqId: {reqId}{contract_info}, code: {errorCode}, text: {errorString}")
         else:
             log.error(f"reqId: {reqId}{contract_info}, errorCode: {errorCode}, errorText: {errorString}")
 
-        # Only emit empty object for fatal errors that should terminate the request
-        # Do NOT emit for informational/warning messages (2104, 2106, 2108, 2158, 2119, 2157, 2174, 2176)
-        # and permission/subscription warnings (10167, 10168, 354, 200)
-        non_fatal_error_codes = [2104, 2106, 2108, 2158, 2119, 2157, 2174, 2176, 10167, 10168, 354, 200]
-        if reqId != -1 and errorCode not in non_fatal_error_codes:
+        # Informational messages that don't affect the request - don't emit anything
+        info_only_codes = [2104, 2106, 2108, 2158, 2119, 2157, 2174, 2176]
+
+        # "No data available" type errors - emit empty list so request can complete gracefully
+        # These indicate the request was processed but no data exists for the period
+        no_data_error_codes = [162, 165, 166, 200, 366]
+
+        # Permission/subscription warnings for options - don't emit, let other data come through
+        option_warning_codes = [10167, 10168, 354]
+
+        if reqId != -1:
             obs: Observable[Any] = self.state.getObservable(reqId)
             if obs is not None:
-                obs.on_next({})
+                if errorCode in no_data_error_codes:
+                    # Emit empty list to signal "no data" and allow task to continue
+                    log.info(f"Emitting empty list for reqId: {reqId} due to no data (error {errorCode})")
+                    obs.on_next([])
+                elif errorCode not in info_only_codes and errorCode not in option_warning_codes:
+                    # Other errors - emit empty dict to signal error
+                    obs.on_next({})
 
     # --------------------------------------------------------------------
     # --------------------------------------------------------------------
@@ -346,6 +363,114 @@ class MyIBClient(EWrapper, EClient):
         self.reqFundamentalData(reqId, contract, "CalendarReport", [])
 
         return obs
+
+    def getSplitHistory(self, contract: IBContract) -> Observable[List[Dict[str, Any]]]:
+        """
+        Get stock split history from IB's CalendarReport.
+        Returns Observable of list of splits: [{"date": datetime, "ratio": float, "description": str}, ...]
+        """
+        log.debug(f"STARTS - getSplitHistory - UID: {str(self.uid)}")
+
+        (reqId, obs) = self.state.registerOnlyNewObservable()
+
+        self.reqFundamentalData(reqId, contract, "CalendarReport", [])
+
+        def parse_split_data(xml_data: str) -> List[Dict[str, Any]]:
+            """Parse CalendarReport XML to extract split information"""
+            splits = []
+            if not xml_data or not isinstance(xml_data, str):
+                return splits
+
+            try:
+                root = ET.fromstring(xml_data)
+
+                # Look for split events in the CalendarReport
+                # IB CalendarReport structure: <CalendarReport><SplitInfo>...</SplitInfo></CalendarReport>
+                for split_info in root.findall(".//SplitInfo"):
+                    for split in split_info.findall(".//Split"):
+                        try:
+                            date_str = split.get("Date") or split.findtext("Date")
+                            ratio_str = split.get("Ratio") or split.findtext("Ratio")
+                            desc = split.get("Description") or split.findtext("Description") or ""
+
+                            if date_str and ratio_str:
+                                # Parse date (format: YYYY-MM-DD or MM/DD/YYYY)
+                                split_date = None
+                                for fmt in ["%Y-%m-%d", "%m/%d/%Y", "%d/%m/%Y"]:
+                                    try:
+                                        split_date = datetime.strptime(date_str, fmt)
+                                        break
+                                    except ValueError:
+                                        continue
+
+                                if split_date:
+                                    # Parse ratio (e.g., "4:1" or "4" or "0.25")
+                                    ratio = 1.0
+                                    if ":" in ratio_str:
+                                        parts = ratio_str.split(":")
+                                        ratio = float(parts[0]) / float(parts[1])
+                                    else:
+                                        ratio = float(ratio_str)
+
+                                    splits.append({
+                                        "date": split_date,
+                                        "ratio": ratio,
+                                        "description": desc,
+                                    })
+                                    log.info(f"Found split: {split_date} ratio {ratio} - {desc}")
+                        except (ValueError, TypeError) as e:
+                            log.warning(f"Error parsing split entry: {e}")
+                            continue
+
+                # Also check for StockSplit elements (alternative format)
+                for stock_split in root.findall(".//StockSplit"):
+                    try:
+                        date_str = stock_split.get("ExDate") or stock_split.findtext("ExDate")
+                        ratio_str = stock_split.get("SplitRatio") or stock_split.findtext("SplitRatio")
+
+                        if date_str and ratio_str:
+                            split_date = None
+                            for fmt in ["%Y-%m-%d", "%m/%d/%Y", "%Y%m%d"]:
+                                try:
+                                    split_date = datetime.strptime(date_str, fmt)
+                                    break
+                                except ValueError:
+                                    continue
+
+                            if split_date:
+                                ratio = 1.0
+                                if ":" in str(ratio_str):
+                                    parts = str(ratio_str).split(":")
+                                    ratio = float(parts[0]) / float(parts[1])
+                                elif "-" in str(ratio_str):
+                                    parts = str(ratio_str).split("-")
+                                    ratio = float(parts[0]) / float(parts[1])
+                                else:
+                                    ratio = float(ratio_str)
+
+                                splits.append({
+                                    "date": split_date,
+                                    "ratio": ratio,
+                                    "description": f"Stock split {ratio_str}",
+                                })
+                                log.info(f"Found stock split: {split_date} ratio {ratio}")
+                    except (ValueError, TypeError) as e:
+                        log.warning(f"Error parsing stock split entry: {e}")
+                        continue
+
+            except ET.ParseError as e:
+                log.warning(f"Error parsing CalendarReport XML: {e}")
+            except Exception as e:
+                log.warning(f"Unexpected error parsing split data: {e}")
+
+            # Sort by date descending (most recent first)
+            splits.sort(key=lambda x: x["date"], reverse=True)
+            return splits
+
+        return obs.pipe(
+            ops.map(parse_split_data),
+            ops.take(1),
+        )
 
     def getHistoricalData(
         self,
