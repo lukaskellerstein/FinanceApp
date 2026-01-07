@@ -1,26 +1,6 @@
-# Prerequisites
+# Run
 
-## MongoDB
-
-Create a volume for mongo:
-```bash
-docker volume create mongodb_data
-```
-
-Start MongoDB using Docker:
-```bash
-docker run -d -p 27017:27017 -v mongodb_data:/data/db --name finance-app-mongodb mongo:latest 
-```
-
-Stop MongoDB:
-```bash
-docker stop finance-app-mongodb
-```
-
-Remove MongoDB container:
-```bash
-docker rm finance-app-mongodb
-```
+`uv run main.py`
 
 # Status
 
