@@ -104,7 +104,8 @@ class AssetAddWindow(QWidget):
     def __fillTable(self, data: List[Union[IBContractDetails, List]]):
         self.clearTableBox()
 
-        if len(data) == 0 or type(data[0]) is list:
+        # Check for empty data, list (error format), or dict (error from IB API)
+        if len(data) == 0 or type(data[0]) is list or type(data[0]) is dict:
             if hasattr(self, "table"):
                 self.table.setVisible(False)
 
@@ -119,12 +120,25 @@ class AssetAddWindow(QWidget):
         self.saveButton.setVisible(True)
 
     def __addToAsset(self, data: List[IBContractDetails]):
-        [self.asset.contractDetails.append(item) for item in data]
+        # Only add valid IBContractDetails, skip error dicts
+        for item in data:
+            if not isinstance(item, dict):
+                self.asset.contractDetails.append(item)
 
     # endregion
 
     @pyqtSlot()
     def saveToDb(self):
+        # Validate that we have contract details before saving
+        if not self.asset.contractDetails or len(self.asset.contractDetails) == 0:
+            from PyQt6.QtWidgets import QMessageBox
+            QMessageBox.warning(
+                self,
+                "Cannot Save",
+                "No valid contract details found. Please search for a valid symbol first."
+            )
+            return
+
         note: str = self.noteInput.text()
         self.asset.shortDescription = note
 

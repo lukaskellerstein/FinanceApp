@@ -64,17 +64,22 @@ class PyStoreHistService(object):
 
         t = timeframe.value.strip()
 
-        collection = self.store.collection(t)
-
         df = None
-        if symbol in collection.list_items():
-            item = collection.item(symbol)
-            # data = item.data  # <-- Dask dataframe (see dask.pydata.org)
-            # log.info(item)
-            # log.info(data)
-            # metadata = item.metadata
-            # log.info(metadata)
-            df = item.to_pandas()
+        try:
+            collection = self.store.collection(t)
+
+            if symbol in collection.list_items():
+                item = collection.item(symbol)
+                # data = item.data  # <-- Dask dataframe (see dask.pydata.org)
+                # log.info(item)
+                # log.info(data)
+                # metadata = item.metadata
+                # log.info(metadata)
+                df = item.to_pandas()
+        except FileNotFoundError as e:
+            log.warning(f"Historical data directory not found for timeframe {t}: {e}")
+        except Exception as e:
+            log.error(f"Error loading historical data for {symbol}: {e}")
 
         end = time.time()
         log.info(f"takes {end - start} sec.")

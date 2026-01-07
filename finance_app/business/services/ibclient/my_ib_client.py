@@ -168,28 +168,23 @@ class MyIBClient(EWrapper, EClient):
         expirations: Set[str],
         strikes: Set[float],
     ):
-        # log.debug(f"OptionData. Ticker Id: {reqId}")
-
-        # print("--------------securityDefinitionOptionParameter------------")
-        # print(exchange)
-        # print(underlyingConId)
-        # print(tradingClass)
-        # print(multiplier)
-        # print(expirations)
-        # print(strikes)
-        # print("-----------------------------------------------------------")
+        log.info(f"OptionChain data received. reqId: {reqId}, exchange: {exchange}, expirations: {len(expirations)}, strikes: {len(strikes)}")
 
         obs: Observable[Any] = self.state.getObservable(reqId)
 
-        # print(obs)
+        if obs is not None:
+            obs.on_next(
+                {
+                    "exchange": exchange,
+                    "expirations": list(expirations),
+                    "strikes": list(strikes),
+                }
+            )
+        else:
+            log.error(f"Observable not found for reqId: {reqId}")
 
-        obs.on_next(
-            {
-                "exchange": exchange,
-                "expirations": list(expirations),
-                "strikes": list(strikes),
-            }
-        )
+    def securityDefinitionOptionParameterEnd(self, reqId: int):
+        log.info(f"OptionChain data complete. reqId: {reqId}")
 
     def tickPrice(
         self, reqId: int, tickType: TickType, price: float, attrib: TickAttrib
@@ -227,14 +222,13 @@ class MyIBClient(EWrapper, EClient):
 
         (obs, symbol, localSymbol) = self.state.getObservableAndContract(reqId)
 
-        # log.info(
-        #     {
-        #         "ticker": symbol,
-        #         "localSymbol": localSymbol,
-        #         "type": TickTypeEnum.to_str(tickType).lower(),
-        #         "price": value,
-        #     }
-        # )
+        # If no contract info found, try to get observable directly
+        # (this happens for options which use registerOnlyNewObservable)
+        if obs is None:
+            obs = self.state.getObservable(reqId)
+            if obs is None:
+                log.debug(f"No observable found for reqId: {reqId}")
+                return
 
         obs.on_next(
             {
@@ -251,6 +245,7 @@ class MyIBClient(EWrapper, EClient):
         self,
         reqId: int,
         tickType: TickType,
+        tickAttrib: int,  # New parameter in updated IB API
         impliedVol: float,
         delta: float,
         optPrice: float,
@@ -260,25 +255,31 @@ class MyIBClient(EWrapper, EClient):
         theta: float,
         undPrice: float,
     ):
-        log.info("Running...")
-        log.info(reqId)
-        log.debug(locals())
+        # Get contract info if available
+        contract_info = ""
+        if hasattr(self, '_optionReqIdMap') and reqId in self._optionReqIdMap:
+            contract_info = f" [{self._optionReqIdMap[reqId]}]"
+
+        log.debug(f"tickOptionComputation - reqId: {reqId}{contract_info}, tickType: {TickTypeEnum.to_str(tickType)}, optPrice: {optPrice}, delta: {delta}")
 
         obs: Observable[Any] = self.state.getObservable(reqId)
 
-        obs.on_next(
-            {
-                "tickType": TickTypeEnum.to_str(tickType),
-                "impliedVolatility": impliedVol,
-                "optPrice": optPrice,
-                "undPrice": undPrice,
-                "pvDividend": pvDividend,
-                "delta": delta,
-                "gamma": gamma,
-                "vega": vega,
-                "theta": theta,
-            }
-        )
+        if obs is not None:
+            obs.on_next(
+                {
+                    "tickType": TickTypeEnum.to_str(tickType),
+                    "impliedVolatility": impliedVol,
+                    "optPrice": optPrice,
+                    "undPrice": undPrice,
+                    "pvDividend": pvDividend,
+                    "delta": delta,
+                    "gamma": gamma,
+                    "vega": vega,
+                    "theta": theta,
+                }
+            )
+        else:
+            log.warning(f"No observable found for reqId: {reqId}")
 
         # (obs, symbol, localSymbol) = self.state.getObservableAndContract(reqId)
 
@@ -299,9 +300,25 @@ class MyIBClient(EWrapper, EClient):
         # )
 
     def error(self, reqId: int, errorCode: int, errorString: str):
-        log.error(
-            f"reqId: {reqId}, errorCode: {errorCode}, errorText: {errorString}"
-        )
+        # Get contract info if available
+        contract_info = ""
+        if hasattr(self, '_optionReqIdMap') and reqId in self._optionReqIdMap:
+            contract_info = f" [{self._optionReqIdMap[reqId]}]"
+
+        # Informational messages (not real errors)
+        if errorCode in [2104, 2106, 2108, 2158]:
+            log.info(f"reqId: {reqId}{contract_info}, code: {errorCode}, text: {errorString}")
+        # Market data farm connection messages
+        elif errorCode in [2119, 2157]:
+            log.info(f"reqId: {reqId}{contract_info}, code: {errorCode}, text: {errorString}")
+        # No trading permissions or no market data subscription - expected for some options
+        elif errorCode in [10167, 10168, 354]:
+            log.warning(f"reqId: {reqId}{contract_info}, code: {errorCode}, text: {errorString}")
+        # No security definition - option contract not found (common for illiquid strikes)
+        elif errorCode == 200:
+            log.warning(f"No security definition for reqId: {reqId}{contract_info} - {errorString}")
+        else:
+            log.error(f"reqId: {reqId}{contract_info}, errorCode: {errorCode}, errorText: {errorString}")
 
         if reqId != -1:
             obs: Observable[Any] = self.state.getObservable(reqId)
@@ -422,10 +439,11 @@ class MyIBClient(EWrapper, EClient):
     # ----------------------------------------------------
 
     def getOptionChain(self, contract: IBContract) -> Observable[Any]:
-        log.debug(f"STARTS - getOptionChain - UID: {str(self.uid)}")
+        log.info(f"STARTS - getOptionChain - UID: {str(self.uid)}, symbol: {contract.symbol}, conId: {contract.conId}")
 
         (reqId, obs) = self.state.registerOnlyNewObservable()
 
+        log.info(f"Calling reqSecDefOptParams - reqId: {reqId}, symbol: {contract.symbol}, secType: {contract.secType}, conId: {contract.conId}")
         self.reqSecDefOptParams(
             reqId, contract.symbol, "", contract.secType, contract.conId,
         )
@@ -467,23 +485,21 @@ class MyIBClient(EWrapper, EClient):
     def startRealtimeOptions(self, contract: IBContract) -> Observable[Any]:
         log.debug(f"STARTS - startRealtimeOptions - UID: {str(self.uid)}")
 
-        (isExist, reqId, obs) = self.state.observableForContract(
-            contract, "tickOptionPriceEvent"
+        # Always create a new observable for each option contract
+        # (don't reuse by symbol since each option has different strike/expiration/right)
+        (reqId, obs) = self.state.registerOnlyNewObservable()
+
+        log.info(
+            f"startRealtimeOptions for {contract.symbol} {contract.lastTradeDateOrContractMonth} "
+            f"strike={contract.strike} right={contract.right} : reqId={reqId}"
         )
 
-        # print(isExist)
-        # print(reqId)
-        # print(obs)
-        # self.state.log()
-        log.debug("______________")
-        log.debug(
-            f"startRealtime for {contract.symbol}-{contract.localSymbol} : reqId={reqId}"
-        )
-        log.debug("______________")
+        # Store the contract info for debugging
+        self._optionReqIdMap = getattr(self, '_optionReqIdMap', {})
+        self._optionReqIdMap[reqId] = f"{contract.symbol} {contract.lastTradeDateOrContractMonth} strike={contract.strike} right={contract.right}"
 
-        if isExist == False:
-            self.reqMarketDataType(1)
-            self.reqMktData(reqId, contract, "", False, False, [])
+        self.reqMarketDataType(1)
+        self.reqMktData(reqId, contract, "", False, False, [])
 
         return obs
 

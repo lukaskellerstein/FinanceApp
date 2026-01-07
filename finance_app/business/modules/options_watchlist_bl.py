@@ -1,5 +1,4 @@
 from finance_app.business.modules.asset_bl import AssetBL
-from finance_app.db.services.mongo_asset_service import MongoAssetService
 import logging
 import threading
 
@@ -12,7 +11,9 @@ from rx.core.typing import Observable
 from finance_app.business.model.contracts import (
     IBContract,
     IBOptionContract,
+    IBStockContract,
 )
+from finance_app.business.model.asset import AssetType
 from finance_app.business.services.ibclient.my_ib_client import MyIBClient
 
 # from db.services.mongo_service import MongoService
@@ -57,34 +58,21 @@ class OptionsWatchlistBL(object):
         log.debug("Running...")
         log.debug(locals())
 
-        # contractDetailDict = self.dbService.getStockContractDetail(
-        #     symbol, symbol
-        # )
+        # Create a stock contract for the symbol
+        contract = IBStockContract()
+        contract.symbol = symbol
 
-        # contractDetail = self.contractDetailsFactory.createIBContractDetails(
-        #     contractDetailDict
-        # )
+        # Try to get contract details from DB first
+        asset = self.assetBl.get(AssetType.STOCK, symbol)
+        if asset is not None and asset.contractDetails:
+            # Use the contract from DB which has conId
+            contract = asset.contractDetails[0].contract
+            log.info(f"Using contract from DB for {symbol}, conId: {contract.conId}")
 
-        # if contractDetail is not None:
-
-        #     contractFull = self.contractFactory.createIBContract(
-        #         contractDetail.contract
-        #     )
-        #     return self.ibClient.getOptionChain(contractFull).pipe(
-        #         ops.filter(lambda x: x is not None),  # filter empty
-        #         ops.filter(
-        #             lambda x: self.__filterExchange(x, contractFull.exchange)
-        #         ),
-        #     )
-        # else:
-        #     print("-----------------------------------------------")
-        #     print("-----------------------------------------------")
-        #     print("-----------------------------------------------")
-        #     print("????????")
-        #     print("-----------------------------------------------")
-        #     print("-----------------------------------------------")
-        #     print("-----------------------------------------------")
-        #     return of(None)
+        return self.ibClient.getOptionChain(contract).pipe(
+            ops.filter(lambda x: x is not None),
+            ops.filter(lambda x: x != {}),
+        )
 
     # region "getOptionChain" operators
 

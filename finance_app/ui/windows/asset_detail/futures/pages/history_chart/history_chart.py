@@ -209,6 +209,10 @@ class FutureHistoryChartPage(BasePage):
         if self.dataDF is not None:
             range = self.getDuration(value)
             self.candlestickChart.overviewPlot.timeRegion.setRegion(range)
+            # Manually emit signal since setRegion() doesn't trigger sigRegionChangeFinished
+            self.candlestickChart.overviewPlot.timeRegion.sigRegionChangeFinished.emit(
+                self.candlestickChart.overviewPlot.timeRegion
+            )
 
         end = time.time()
         log.info(f"durationComboBoxChanged data takes: {end - start} sec.")

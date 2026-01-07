@@ -95,8 +95,8 @@ class DownloadHistDataTask(Thread):
 
                     areAllDead = True
                     for t in self.currentThreads:
-                        # print(f"{t} - {t.isAlive()}")
-                        if t.isAlive() is True:
+                        # print(f"{t} - {t.is_alive()}")
+                        if t.is_alive() is True:
                             areAllDead = False
 
                     if areAllDead is True:

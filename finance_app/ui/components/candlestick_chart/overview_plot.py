@@ -30,7 +30,7 @@ class OverviewTimePlot(pg.PlotItem):
             x,
             y,
             name="Overview plot",
-            pen=pg.mkPen(color=QColor("blue"), style=Qt.SolidLine),
+            pen=pg.mkPen(color=QColor("blue"), style=Qt.PenStyle.SolidLine),
         )
 
         # region

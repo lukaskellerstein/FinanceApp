@@ -1,7 +1,7 @@
 from finance_app.business.model.factory.asset_factory import AssetFactory
 import logging
 import threading
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from typing import Any, Dict, List, Union
 
 from rx import operators as ops
@@ -15,7 +15,7 @@ from finance_app.business.model.contracts import IBContract
 from finance_app.business.model.timeframe import TimeFrame
 from finance_app.business.services.ibclient.my_ib_client import MyIBClient
 from finance_app.business.tasks.download_hist_data_task import DownloadHistDataTask
-from finance_app.db.services.mongo_asset_service import MongoAssetService
+from finance_app.db.services.json_asset_service import JsonAssetService
 from finance_app.db.services.pystore_hist_service import PyStoreHistService
 from finance_app.business.model.factory.contract_factory import ContractFactory
 from finance_app.business.model.factory.contract_detail_factory import (
@@ -47,7 +47,7 @@ class AssetBL(object):
         self.__currentThread = None
 
         # DB
-        self.__assetDbService = MongoAssetService()
+        self.__assetDbService = JsonAssetService()
         self.__histDataDbService = PyStoreHistService()
 
         # Business object factory
@@ -218,8 +218,8 @@ class AssetBL(object):
 
             lastTradeDateTime = datetime.strptime(
                 cd.contract.lastTradeDateOrContractMonth, "%Y%m%d"
-            )
-            now = datetime.now()
+            ).replace(tzinfo=timezone.utc)
+            now = datetime.now(timezone.utc)
 
             if lastTradeDateTime > now:
 
@@ -251,7 +251,7 @@ class AssetBL(object):
 
                     # OTHERWISE DOWNLOAD FULL
                     timeBlocks = getTimeBlocks(
-                        datetime.strptime("19860101", "%Y%m%d"),
+                        datetime.strptime("19860101", "%Y%m%d").replace(tzinfo=timezone.utc),
                         now,
                         maxBlockSize,
                     )
@@ -279,11 +279,11 @@ class AssetBL(object):
 
             lastTradeDateTime = datetime.strptime(
                 cd.contract.lastTradeDateOrContractMonth, "%Y%m%d"
-            )
-            now = datetime.now()
+            ).replace(tzinfo=timezone.utc)
+            now = datetime.now(timezone.utc)
 
             if (
-                lastTradeDateTime > datetime.strptime("19860101", "%Y%m%d")
+                lastTradeDateTime > datetime.strptime("19860101", "%Y%m%d").replace(tzinfo=timezone.utc)
                 and lastTradeDateTime < now
             ):
                 result.append(
@@ -313,7 +313,7 @@ class AssetBL(object):
         contract = asset.contractDetails[0].contract
         symbolData = self.getHistoricalDataFromDB(asset.symbol, timeframe)
 
-        now = datetime.now()
+        now = datetime.now(timezone.utc)
 
         if symbolData is not None:
 
@@ -337,7 +337,7 @@ class AssetBL(object):
 
             # OTHERWISE DOWNLOAD FULL
             timeBlocks = getTimeBlocks(
-                datetime.strptime("19860101", "%Y%m%d"), now, maxBlockSize,
+                datetime.strptime("19860101", "%Y%m%d").replace(tzinfo=timezone.utc), now, maxBlockSize,
             )
 
             for timeBlock in timeBlocks:
@@ -357,8 +357,8 @@ class AssetBL(object):
         contract = asset.contractDetails[0].contract
 
         timeBlocks = getTimeBlocks(
-            datetime.strptime("19860101", "%Y%m%d"),
-            datetime.now(),
+            datetime.strptime("19860101", "%Y%m%d").replace(tzinfo=timezone.utc),
+            datetime.now(timezone.utc),
             maxBlockSize,
         )
 
@@ -385,10 +385,6 @@ class AssetBL(object):
 
         if self.__currentThread is not None:
             self.__currentThread.terminate()
-
-        # Close DB
-        self.__assetDbService.client.close()
-        self.__assetDbService.db.logout()
 
         # Close IB
         self.__ibClient.connectionClosed()  # close the EWrapper

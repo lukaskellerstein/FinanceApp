@@ -181,16 +181,17 @@ class StockTableModel(QAbstractTableModel):
                     else:
                         self._data.loc[aticker, "change"] = 0
 
-                # VAR 1. -----------------------------------
-                # bbb = QModelIndex()
-                # bbb.row = self._data.index.get_loc(aticker)
-                # bbb.column = self._data.columns.get_loc(atype)
-                # self.dataChanged.emit(bbb, bbb)  # <---
+                # Emit dataChanged for the specific cell that was updated
+                row = self._data.index.get_loc(aticker)
+                col = self._data.columns.get_loc(atype) + self.__indexColumnsCount()
+                index = self.createIndex(row, col)
+                self.dataChanged.emit(index, index)
 
-                bbb = QModelIndex()
-                bbb.row = 1
-                bbb.column = 1
-                self.dataChanged.emit(bbb, bbb)
+                # Also emit for the "change" column if close or last was updated
+                if atype == "close" or atype == "last":
+                    change_col = self._data.columns.get_loc("change") + self.__indexColumnsCount()
+                    change_index = self.createIndex(row, change_col)
+                    self.dataChanged.emit(change_index, change_index)
 
                 # VAR 2. ----------------------------------
 
@@ -307,6 +308,8 @@ class StockTableModel(QAbstractTableModel):
 
             if columnIndex == 3:  # Last
                 return QColor("white")
+            elif columnIndex == 10:  # change
+                return QColor("black")
 
         if role == Qt.ItemDataRole.DecorationRole:
             columnIndex = index.column()

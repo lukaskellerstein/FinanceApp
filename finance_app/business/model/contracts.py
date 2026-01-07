@@ -29,6 +29,7 @@ class IBFutureContract(IBContract):
         super().__init__()
 
         self.secType = "FUT"
+        self.currency = "USD"
         self.includeExpired = True
 
 

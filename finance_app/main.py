@@ -1,8 +1,10 @@
 import logging
 import logging.config
+import signal
 import sys
 import os
 
+from PyQt6.QtCore import QTimer
 from PyQt6.QtWidgets import QApplication
 
 from finance_app.ui.windows.main.main_window import MainWindow
@@ -22,6 +24,13 @@ if __name__ == "__main__":
         app = QApplication(sys.argv)
         app.setStartDragDistance(1)  # pixels
         app.setStartDragTime(1)  # ms
+
+        # Allow Ctrl+C to properly terminate the application
+        signal.signal(signal.SIGINT, lambda *args: app.quit())
+        # Timer lets Python process signals while Qt event loop runs
+        timer = QTimer()
+        timer.timeout.connect(lambda: None)
+        timer.start(100)
 
         window = MainWindow()
         window.show()

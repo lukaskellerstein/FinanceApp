@@ -1,6 +1,6 @@
 import logging
 import time
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import Any, Tuple
 
 import pandas as pd
@@ -101,7 +101,7 @@ class HistoryChartPage(BasePage):
         end = time.time()
         log.info(f"enhance data takes: {end - start} sec.")
 
-        if self.data is not None:
+        if self.data is not None and not self.data.empty:
             self.data["id"] = np.arange(self.data.shape[0])
 
             # CANDLESTICK
@@ -116,6 +116,12 @@ class HistoryChartPage(BasePage):
             # plotWeekends(self.data, self.candlestickChart.candlestickPlot)
             # end = time.time()
             # log.info(f"plotWeekends data takes: {end - start} sec.")
+        else:
+            # Show message when no data available
+            from PyQt6.QtWidgets import QLabel
+            noDataLabel = QLabel("No historical data available. Download data first.")
+            noDataLabel.setStyleSheet("color: gray; font-size: 14px; padding: 20px;")
+            self.chartBox.addWidget(noDataLabel)
 
         self.durationComboBox.setCurrentText(self.duration)
         # ---------------------------------------------------------
@@ -160,6 +166,10 @@ class HistoryChartPage(BasePage):
         if self.data is not None:
             range = self.getDuration(value)
             self.candlestickChart.overviewPlot.timeRegion.setRegion(range)
+            # Manually emit signal since setRegion() doesn't trigger sigRegionChangeFinished
+            self.candlestickChart.overviewPlot.timeRegion.sigRegionChangeFinished.emit(
+                self.candlestickChart.overviewPlot.timeRegion
+            )
 
         end = time.time()
         log.info(f"durationComboBoxChanged data takes: {end - start} sec.")
@@ -245,8 +255,9 @@ class HistoryChartPage(BasePage):
         self.currentRange = range
 
     def getDuration(self, duration: Duration):
-        minVal = datetime.now()
-        maxVal = datetime.now()
+        # Use timezone-aware datetime to match the data index (datetime64[us, UTC])
+        maxVal = datetime.now(timezone.utc)
+        minVal = maxVal
         if duration == Duration.years20.value:
             minVal = maxVal - relativedelta(years=20)
         elif duration == Duration.years10.value:
@@ -262,12 +273,12 @@ class HistoryChartPage(BasePage):
         elif duration == Duration.week1.value:
             minVal = maxVal - relativedelta(weeks=1)
         elif duration == Duration.all.value:
-            minVal = datetime.min
+            minVal = None
 
         minIndex = 0
         maxIndex = self.data.shape[0]
 
-        if minVal != datetime.min:
+        if minVal is not None:
             tempDf = self.data[self.data.index > minVal]
             if tempDf.shape[0] > 0:
                 minIndex = self.data.index.get_loc(tempDf.index[0])

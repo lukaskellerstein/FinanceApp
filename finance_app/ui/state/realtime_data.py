@@ -156,6 +156,13 @@ class RealtimeDataState(object):
             )
             return x
 
+    def getOrCreate(self, symbol: str, localSymbol: str) -> RealtimeDataItem:
+        """Get existing RealtimeDataItem or create a new one if it doesn't exist."""
+        x = self.get(symbol, localSymbol)
+        if x is None:
+            return self.__add(symbol, localSymbol)
+        return x
+
     def stop(self, symbol: str, localSymbol: str) -> None:
         rdi = self.get(symbol, localSymbol)
         rdi.stop()

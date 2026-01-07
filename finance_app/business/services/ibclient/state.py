@@ -170,16 +170,8 @@ class State(object):
             )
 
         else:
-            print("-----------------------------------------------")
-            print("-----------------------------------------------")
-            print("-----------------------------------------------")
-            print("ERROR - OBSERVABLE DOESN'T EXIST - 2")
-            print("-----------------------------------------------")
-            print("-----------------------------------------------")
-            print("-----------------------------------------------")
-            log.debug(reqId)
-            log.debug(obs)
-            log.debug(self.__data)
+            # Observable exists but no contract info (e.g., options use registerOnlyNewObservable)
+            log.debug(f"No contract info for reqId: {reqId}")
             return (None, "", "")
 
     # -----------------------------------------------------------------
