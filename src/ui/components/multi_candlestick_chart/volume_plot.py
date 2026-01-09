@@ -32,11 +32,11 @@ class VolumePlot(pg.PlotItem):
         # ].copy()
 
         # DRAW ALL CONTRACT MONTHS - VOLUME
-        data.groupby("LocalSymbol").apply(
-            lambda x: self.drawContractMonthVolume(x)
-        )
+        # Use iteration over groups instead of apply to avoid pandas deprecation warning
+        for local_symbol, group_data in data.groupby("LocalSymbol"):
+            self.drawContractMonthVolume(group_data)
 
-    def drawContractMonthVolume(self, row):
-        x = row["id"].to_list()
-        y = row["Volume"].to_list()
+    def drawContractMonthVolume(self, group_data):
+        x = group_data["id"].to_list()
+        y = group_data["Volume"].to_list()
         self.addItem(pg.BarGraphItem(x=x, height=y, width=0.5))

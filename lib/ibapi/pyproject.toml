@@ -1,0 +1,13 @@
+[project]
+name = "ibapi"
+version = "10.19.0"
+description = "Interactive Brokers API"
+dependencies = ["protobuf"]
+
+[build-system]
+requires = ["setuptools"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools]
+packages = ["ibapi"]
+package-dir = {"ibapi" = "."}

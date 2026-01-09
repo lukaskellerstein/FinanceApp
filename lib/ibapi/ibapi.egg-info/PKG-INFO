@@ -1,0 +1,5 @@
+Metadata-Version: 2.4
+Name: ibapi
+Version: 10.19.0
+Summary: Interactive Brokers API
+Requires-Dist: protobuf

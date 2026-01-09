@@ -2,13 +2,14 @@ import logging
 import time
 from typing import Tuple
 
+import numpy as np
 import pandas as pd
 import pyqtgraph as pg
 from holidays import US
 from PyQt6.QtCore import pyqtSignal
 from PyQt6.QtGui import QColor
 
-from src.business.model.timeframe import TimeFrame
+from src.domain.entities.timeframe import TimeFrame
 from src.ui.components.candlestick_chart.candlestick_plot import CandlestickPlot
 from src.ui.components.candlestick_chart.candlestick_x import CandlesticXAxis
 from src.ui.components.candlestick_chart.overview_plot import OverviewTimePlot
@@ -46,6 +47,11 @@ class MyCandlestickChart(pg.GraphicsLayoutWidget):
         self.labelOHLC.setText("")
         self.addItem(self.labelOHLC, row=0, col=1)
 
+        # Statistics label (Return, Daily Return, Variance, StdDev)
+        self.labelStats = pg.LabelItem(justify="left")
+        self.labelStats.setText("")
+        self.addItem(self.labelStats, row=1, col=0, colspan=2)
+
         self.currentRange = range
 
         # CHART 1 ----------------------------
@@ -63,7 +69,7 @@ class MyCandlestickChart(pg.GraphicsLayoutWidget):
             self.__updateCandlestickRegion
         )
 
-        self.addItem(self.candlestickPlot, row=1, col=0, colspan=2, rowspan=2)
+        self.addItem(self.candlestickPlot, row=2, col=0, colspan=2, rowspan=2)
 
         self.proxy = pg.SignalProxy(
             self.candlestickPlot.scene().sigMouseMoved,
@@ -86,7 +92,7 @@ class MyCandlestickChart(pg.GraphicsLayoutWidget):
 
         self.volumePlot.sigRangeChanged.connect(self.__updateVolumeRegion)
 
-        self.addItem(self.volumePlot, row=3, col=0, colspan=2)
+        self.addItem(self.volumePlot, row=4, col=0, colspan=2)
 
         self.proxy2 = pg.SignalProxy(
             self.volumePlot.scene().sigMouseMoved,
@@ -110,13 +116,16 @@ class MyCandlestickChart(pg.GraphicsLayoutWidget):
             self.__updateOverviewTimeRegion
         )
 
-        self.addItem(self.overviewPlot, row=4, col=0, colspan=2)
+        self.addItem(self.overviewPlot, row=5, col=0, colspan=2)
 
         # Set the initial region based on the passed range parameter
         if self.currentRange != (0, 0):
             self.overviewPlot.timeRegion.setRegion(self.currentRange)
             # Trigger the update to sync all chart components
             self.__updateOverviewTimeRegion(self.overviewPlot.timeRegion)
+        else:
+            # Calculate initial stats for all data
+            self._updateStats(0, len(self.data))
 
         end = time.time()
         log.info(f"plot takes: {end - start} sec.")
@@ -159,6 +168,56 @@ class MyCandlestickChart(pg.GraphicsLayoutWidget):
             self.candlestickPlot.vLine.setPos(mousePoint.x())
             self.volumePlot.vLine.setPos(mousePoint.x())
 
+    def _updateStats(self, minIdx: int, maxIdx: int) -> None:
+        """Calculate and update statistics for the visible range."""
+        if minIdx >= maxIdx or minIdx < 0:
+            self.labelStats.setText("")
+            return
+
+        # Get data for visible range
+        tempDf = self.data.iloc[minIdx:maxIdx]
+        if tempDf.empty or len(tempDf) < 2:
+            self.labelStats.setText("")
+            return
+
+        try:
+            # Get closing prices
+            closes = tempDf["Close"].dropna()
+            if len(closes) < 2:
+                self.labelStats.setText("")
+                return
+
+            # Total Return: (end - start) / start * 100
+            start_price = closes.iloc[0]
+            end_price = closes.iloc[-1]
+            total_return = ((end_price - start_price) / start_price) * 100 if start_price != 0 else 0
+
+            # Daily Returns
+            daily_returns = closes.pct_change().dropna()
+
+            if len(daily_returns) > 0:
+                # Daily Return (average)
+                daily_return = daily_returns.mean() * 100
+
+                # Daily Variance
+                daily_variance = daily_returns.var() * 100
+
+                # Daily Standard Deviation
+                daily_std_dev = daily_returns.std() * 100
+
+                self.labelStats.setText(
+                    f"Return: {total_return:+.2f}%  |  "
+                    f"Daily Return: {daily_return:+.4f}%  |  "
+                    f"Daily Variance: {daily_variance:.4f}%  |  "
+                    f"Daily StdDev: {daily_std_dev:.4f}%"
+                )
+            else:
+                self.labelStats.setText(f"Return: {total_return:+.2f}%")
+
+        except Exception as e:
+            log.warning(f"Error calculating stats: {e}")
+            self.labelStats.setText("")
+
     def __updateCandlestickRegion(self, window, viewRange):
         xRange = viewRange[0]
         # yRange = viewRange[1]
@@ -186,6 +245,9 @@ class MyCandlestickChart(pg.GraphicsLayoutWidget):
             self.on_range_update.emit(self.lastRange)
 
             log.info(f"run update Range: {minVal}, {maxVal}")
+
+            # Update statistics for visible range
+            self._updateStats(minVal, maxVal)
 
             # udpate X axis of CANDLESTICK
             self.candlestickPlot.updateRange((minVal, maxVal))

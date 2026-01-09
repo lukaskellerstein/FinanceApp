@@ -7,7 +7,7 @@ import pyqtgraph as pg
 from PyQt6.QtCore import pyqtSignal
 from PyQt6.QtGui import QColor
 
-from src.business.model.timeframe import TimeFrame
+from src.domain.entities.timeframe import TimeFrame
 from src.ui.components.multi_candlestick_chart.candlestick_plot import (
     CandlestickPlot,
 )
@@ -94,7 +94,8 @@ class MyMultiCandlestickChart(pg.GraphicsLayoutWidget):
         # CHART 3 ----------------------------
 
         x = datesDF["id"].to_list()
-        y = self.data.groupby("Datetime").mean()["Close"].ffill().to_list()
+        # Only calculate mean on numeric columns to avoid TypeError with string columns
+        y = self.data.groupby("Datetime")["Close"].mean().ffill().to_list()
 
         overviewXAxis = CandlesticXAxis(data=datesDF, orientation="bottom",)
 
@@ -130,6 +131,54 @@ class MyMultiCandlestickChart(pg.GraphicsLayoutWidget):
             # print(value)
 
             currentBar = self.data.loc[self.data["id"] == index]
+            highlighted_group = None  # Track which contract to highlight expiration line for
+
+            # If no data at this position (e.g., hovering in future area beyond data)
+            if currentBar.shape[0] == 0:
+                max_id = self.data["id"].max()
+                if index > max_id:
+                    # Find which contract's expiration is closest to (but after) the mouse position
+                    exp_positions = self.candlestickPlot.expiration_positions
+
+                    # Find the contract whose expiration is AFTER the mouse position (closest one)
+                    closest_group = None
+                    closest_pos = float('inf')
+
+                    for group_name, pos_val in exp_positions.items():
+                        if pos_val > index:  # Expiration is after mouse position
+                            if pos_val < closest_pos:
+                                closest_pos = pos_val
+                                closest_group = group_name
+
+                    # If no future expiration found, use the one with largest position
+                    if closest_group is None:
+                        for group_name, pos_val in exp_positions.items():
+                            if pos_val > closest_pos or closest_pos == float('inf'):
+                                closest_pos = pos_val
+                                closest_group = group_name
+
+                    if closest_group:
+                        # Extract LocalSymbol from group_name (format: "ESZ4-20241220")
+                        parts = closest_group.split('-')
+                        local_symbol = parts[0]
+                        last_trade_date = parts[1] if len(parts) > 1 else ""
+
+                        # Get the LAST available data for this specific contract
+                        contract_data = self.data.loc[
+                            (self.data["LocalSymbol"] == local_symbol) &
+                            (self.data["LastTradeDate"] == last_trade_date)
+                        ]
+                        if contract_data.shape[0] > 0:
+                            # Get the last row (highest id) for this contract
+                            last_id = contract_data["id"].max()
+                            currentBar = contract_data.loc[contract_data["id"] == last_id]
+                        else:
+                            # Fallback to any data at max_id
+                            currentBar = self.data.loc[self.data["id"] == max_id]
+                        highlighted_group = closest_group
+                    else:
+                        # Fallback to all data at max_id
+                        currentBar = self.data.loc[self.data["id"] == max_id]
             currentBar = currentBar.sort_values(by=["LastTradeDate"])
             # print(currentBar)
 
@@ -159,6 +208,10 @@ class MyMultiCandlestickChart(pg.GraphicsLayoutWidget):
                     opacity = 0
                     if currentGroupIndex == 1:
                         opacity = 1
+                        # Highlight the expiration line for the first (most prominent) contract
+                        if not highlighted_group:
+                            # Get the full group name for this contract
+                            highlighted_group = f"{vgn}-{currentBar[currentBar['LocalSymbol'] == vgn].iloc[0]['LastTradeDate']}"
                     elif currentGroupIndex == 2:
                         opacity = 0.3
                     elif currentGroupIndex == 3:
@@ -170,6 +223,10 @@ class MyMultiCandlestickChart(pg.GraphicsLayoutWidget):
 
                     self.candlestickPlot.setGroupOpacity(vgnFullName, opacity)
                     currentGroupIndex += 1
+
+                # Highlight the expiration line for the selected contract
+                if highlighted_group:
+                    self.candlestickPlot.setExpirationHighlight(highlighted_group, True)
 
                 for ogn in otherGroups:
 
@@ -187,6 +244,47 @@ class MyMultiCandlestickChart(pg.GraphicsLayoutWidget):
             value = round(mousePoint.y(), 2)
 
             currentBar = self.data.loc[self.data["id"] == index]
+
+            # If no data at this position (e.g., hovering in future area beyond data)
+            if currentBar.shape[0] == 0:
+                max_id = self.data["id"].max()
+                if index > max_id:
+                    # Find which contract's expiration is closest to (but after) the mouse position
+                    exp_positions = self.candlestickPlot.expiration_positions
+
+                    closest_group = None
+                    closest_pos = float('inf')
+
+                    for group_name, pos_val in exp_positions.items():
+                        if pos_val > index:
+                            if pos_val < closest_pos:
+                                closest_pos = pos_val
+                                closest_group = group_name
+
+                    if closest_group is None:
+                        for group_name, pos_val in exp_positions.items():
+                            if pos_val > closest_pos or closest_pos == float('inf'):
+                                closest_pos = pos_val
+                                closest_group = group_name
+
+                    if closest_group:
+                        parts = closest_group.split('-')
+                        local_symbol = parts[0]
+                        last_trade_date = parts[1] if len(parts) > 1 else ""
+
+                        # Get the LAST available data for this specific contract
+                        contract_data = self.data.loc[
+                            (self.data["LocalSymbol"] == local_symbol) &
+                            (self.data["LastTradeDate"] == last_trade_date)
+                        ]
+                        if contract_data.shape[0] > 0:
+                            last_id = contract_data["id"].max()
+                            currentBar = contract_data.loc[contract_data["id"] == last_id]
+                        else:
+                            currentBar = self.data.loc[self.data["id"] == max_id]
+                    else:
+                        currentBar = self.data.loc[self.data["id"] == max_id]
+
             currentBar = currentBar.sort_values(by=["LastTradeDate"])
 
             if currentBar.shape[0] > 0:
@@ -200,13 +298,6 @@ class MyMultiCandlestickChart(pg.GraphicsLayoutWidget):
                     resultXHtml + resultOHLCHtml
                 )
 
-            # if index > 0 and index < self.data.shape[0]:
-            #     row = self.data.iloc[index]
-
-            #     self.labelXY.setText(f"x={row['Datetime']}, y={value}")
-            #     self.labelOHLC.setText(
-            #         f"O={row['Open']}, H={row['High']}, L={row['Low']}, C={row['Close']}, V={row['Volume']:.0f}"
-            #     )
             self.candlestickPlot.vLine.setPos(mousePoint.x())
             self.volumePlot.vLine.setPos(mousePoint.x())
 

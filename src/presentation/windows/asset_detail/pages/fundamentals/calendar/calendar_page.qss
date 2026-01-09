@@ -1,0 +1,104 @@
+/* Calendar page styles */
+
+QScrollArea {
+    border: none;
+    background-color: #f8fafc;
+}
+
+QScrollArea > QWidget > QWidget {
+    background-color: #f8fafc;
+}
+
+/* Section headers */
+QLabel.section-header {
+    font-size: 16px;
+    font-weight: bold;
+    color: #1e293b;
+    padding: 10px 0 5px 0;
+    border-bottom: 2px solid #e2e8f0;
+}
+
+/* Event cards */
+QFrame.event-card {
+    background-color: #ffffff;
+    border: 1px solid #e2e8f0;
+    border-radius: 8px;
+    padding: 12px;
+    margin: 4px 0;
+}
+
+QFrame.event-card-earnings {
+    border-left: 4px solid #3b82f6;
+}
+
+QFrame.event-card-dividend {
+    border-left: 4px solid #22c55e;
+}
+
+QFrame.event-card-split {
+    border-left: 4px solid #f59e0b;
+}
+
+/* Event date */
+QLabel.event-date {
+    font-size: 14px;
+    font-weight: 600;
+    color: #1e293b;
+}
+
+/* Event type badge */
+QLabel.event-type {
+    font-size: 11px;
+    font-weight: 600;
+    padding: 2px 8px;
+    border-radius: 4px;
+}
+
+QLabel.event-type-earnings {
+    background-color: #dbeafe;
+    color: #1d4ed8;
+}
+
+QLabel.event-type-dividend {
+    background-color: #dcfce7;
+    color: #166534;
+}
+
+QLabel.event-type-split {
+    background-color: #fef3c7;
+    color: #92400e;
+}
+
+/* Event details */
+QLabel.event-detail {
+    font-size: 13px;
+    color: #64748b;
+}
+
+/* Loading label */
+QLabel#loadingLabel {
+    font-size: 14px;
+    color: #94a3b8;
+    padding: 40px;
+}
+
+/* No data label */
+QLabel#noDataLabel {
+    font-size: 14px;
+    color: #94a3b8;
+    padding: 40px;
+}
+
+/* Timeline styling */
+QFrame.timeline-marker {
+    background-color: #3b82f6;
+    border-radius: 6px;
+}
+
+/* Month header */
+QLabel.month-header {
+    font-size: 18px;
+    font-weight: bold;
+    color: #0f172a;
+    padding: 15px 0 10px 0;
+}

@@ -1,0 +1,27 @@
+{
+  "symbol": "CL",
+  "asset_type": "future",
+  "contract_details": [
+    {
+      "contract": {
+        "con_id": 212921504,
+        "symbol": "CL",
+        "sec_type": "FUT",
+        "exchange": "NYMEX",
+        "currency": "USD",
+        "local_symbol": "CLM4",
+        "primary_exchange": "",
+        "last_trade_date": "20240521",
+        "multiplier": "1000",
+        "trading_class": "CL"
+      },
+      "market_name": "CL",
+      "min_tick": 0.01,
+      "long_name": "Light Sweet Crude Oil",
+      "contract_month": "202406",
+      "time_zone_id": "",
+      "trading_hours": "",
+      "liquid_hours": ""
+    }
+  ]
+}

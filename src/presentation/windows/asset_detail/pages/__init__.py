@@ -1,0 +1,1 @@
+"""Asset detail pages package."""

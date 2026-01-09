@@ -7,3 +7,6 @@ uv.lock
 
 # Poetry (legacy)
 poetry.lock
+
+
+finance_app.egg-info

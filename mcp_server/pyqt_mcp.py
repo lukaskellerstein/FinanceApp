@@ -26,10 +26,92 @@ mcp = FastMCP("FinanceApp-Control-Server")
 
 # Configuration from environment variables
 DEFAULT_HOST = os.getenv("PYQT_CONTROL_HOST", "localhost")
-DEFAULT_PORT = int(os.getenv("PYQT_CONTROL_PORT", "19999"))
+DEFAULT_PORT = int(os.getenv("PYQT_CONTROL_PORT", "29999"))
 APP_PATH = os.getenv("PYQT_APP_PATH", os.path.join(os.path.dirname(os.path.dirname(__file__)), "main.py"))
 
 _app_process: Optional[subprocess.Popen] = None
+_launched_port: Optional[int] = None  # Track port of launched instance
+
+
+def _get_effective_port(port: int) -> int:
+    """Get the effective port - use launched port if available and default was passed."""
+    global _launched_port
+    if port == DEFAULT_PORT and _launched_port is not None:
+        return _launched_port
+    return port
+
+
+# =============================================================================
+# Workspace Management Helpers (for Regolith/i3wm)
+# =============================================================================
+
+def _get_available_workspace(min_ws: int = 100, max_ws: int = 120) -> Optional[int]:
+    """Find the first available workspace (not currently in use) in the given range."""
+    try:
+        result = subprocess.run(
+            ["i3-msg", "-t", "get_workspaces"],
+            capture_output=True, text=True
+        )
+        if result.returncode == 0:
+            workspaces = json.loads(result.stdout)
+            used = {ws.get("num") for ws in workspaces}
+            for num in range(min_ws, max_ws + 1):
+                if num not in used:
+                    return num
+        return None
+    except Exception:
+        return min_ws  # Fallback
+
+
+def _get_window_con_id(window_title: str) -> Optional[int]:
+    """Get the i3 container ID for a window by its title."""
+    try:
+        result = subprocess.run(
+            ["i3-msg", "-t", "get_tree"],
+            capture_output=True, text=True
+        )
+        if result.returncode != 0:
+            return None
+
+        tree = json.loads(result.stdout)
+
+        def find_con_id(node):
+            title = node.get('window_properties', {}).get('title', '')
+            if title == window_title:
+                return node.get('id')
+            for child in node.get('nodes', []) + node.get('floating_nodes', []):
+                found = find_con_id(child)
+                if found:
+                    return found
+            return None
+
+        return find_con_id(tree)
+    except Exception:
+        return None
+
+
+def _move_container_to_workspace(con_id: int, workspace: int) -> bool:
+    """Move a container by ID to specified workspace (without stealing focus)."""
+    try:
+        result = subprocess.run(
+            ["i3-msg", f"[con_id={con_id}] move container to workspace number {workspace}"],
+            capture_output=True, text=True
+        )
+        return result.returncode == 0
+    except Exception:
+        return False
+
+
+def _is_i3_available() -> bool:
+    """Check if i3-msg is available on the system."""
+    try:
+        result = subprocess.run(
+            ["which", "i3-msg"],
+            capture_output=True, text=True
+        )
+        return result.returncode == 0
+    except Exception:
+        return False
 
 
 def _send_command(
@@ -78,18 +160,18 @@ def launch_app(
     wait_time: float = 3.0
 ) -> Dict[str, Any]:
     """
-    Launch the Finance App application.
+    Launch the Finance App application on a dedicated workspace.
 
     Args:
         app_path: Path to the application's main.py file (uses default if empty)
         host: Control server host (default: localhost)
-        port: Control server port (default: 9999)
+        port: Control server port - if DEFAULT_PORT, auto-assigns based on workspace (10100-10120)
         wait_time: Seconds to wait for app to start (default: 3.0)
 
     Returns:
-        Dict with status and message
+        Dict with status, message, window_title, workspace, and port on success
     """
-    global _app_process
+    global _app_process, _launched_port
 
     if not app_path:
         app_path = APP_PATH
@@ -97,18 +179,57 @@ def launch_app(
     if not app_path or not os.path.exists(app_path):
         return {"status": "error", "message": f"Application not found: {app_path}"}
 
-    # Check if already running
-    if _is_app_running(host, port):
-        return {
-            "status": "success",
-            "message": "Application is already running",
-            "already_running": True
-        }
-
     try:
-        # Use the same Python interpreter
+        # Check if i3wm is available for workspace management
+        use_workspace_management = _is_i3_available()
+
+        target_workspace = None
+        actual_port = port
+        client_id = None
+
+        if use_workspace_management:
+            # Find available workspace in range 100-120
+            target_workspace = _get_available_workspace(100, 120)
+            if target_workspace is None:
+                return {"status": "error", "message": "No available workspace in range 100-120"}
+
+            # Auto-assign port if using default (workspace 100 = port 10100)
+            if port == DEFAULT_PORT:
+                actual_port = 10000 + target_workspace  # e.g., 10100, 10101, ...
+
+            # Use workspace number as client_id to avoid IB connection conflicts
+            client_id = target_workspace
+
+            # Check if already running on this port
+            if _is_app_running(host, actual_port):
+                _launched_port = actual_port  # Track the port
+                return {
+                    "status": "success",
+                    "message": f"Application is already running on port {actual_port}",
+                    "already_running": True,
+                    "port": actual_port
+                }
+        else:
+            # No i3wm - check if already running on the specified port
+            if _is_app_running(host, actual_port):
+                _launched_port = actual_port  # Track the port
+                return {
+                    "status": "success",
+                    "message": "Application is already running",
+                    "already_running": True,
+                    "port": actual_port
+                }
+
+        # Build command with workspace and client-id arguments if applicable
+        cmd = [sys.executable, app_path, "--host", host, "--port", str(actual_port)]
+        if target_workspace is not None:
+            cmd.extend(["--workspace", str(target_workspace)])
+        if client_id is not None:
+            cmd.extend(["--client-id", str(client_id)])
+
+        # Launch app (opens on current workspace initially)
         _app_process = subprocess.Popen(
-            [sys.executable, app_path, "--host", host, "--port", str(port)],
+            cmd,
             stdout=subprocess.PIPE,
             stderr=subprocess.PIPE,
             cwd=os.path.dirname(app_path)
@@ -125,18 +246,36 @@ def launch_app(
                 "message": f"App failed to start: {stderr.decode()}"
             }
 
-        # Verify connection
-        response = _send_command({"type": "get_snapshot"}, host, port)
-        if response.get("status") == "success":
-            result = response.get("result", {})
-            return {
-                "status": "success",
-                "message": f"Application launched on {host}:{port}",
-                "window_title": result.get("window_title"),
-                "widget_count": len(result.get("widgets", []))
-            }
-        else:
+        # Verify connection and get window title
+        response = _send_command({"type": "get_snapshot"}, host, actual_port)
+        if response.get("status") != "success":
             return {"status": "error", "message": "App started but not responding"}
+
+        result = response.get("result", {})
+        window_title = result.get("window_title")
+
+        # Move window to dedicated workspace using con_id (no focus steal)
+        if use_workspace_management and window_title and target_workspace is not None:
+            con_id = _get_window_con_id(window_title)
+            if con_id:
+                _move_container_to_workspace(con_id, target_workspace)
+
+        # Track the launched port for subsequent tool calls
+        _launched_port = actual_port
+
+        response_data = {
+            "status": "success",
+            "message": f"Application launched on {host}:{actual_port}",
+            "window_title": window_title,
+            "widget_count": len(result.get("widgets", [])),
+            "port": actual_port
+        }
+
+        if target_workspace is not None:
+            response_data["message"] = f"Application launched on workspace {target_workspace} (port {actual_port})"
+            response_data["workspace"] = target_workspace
+
+        return response_data
 
     except Exception as e:
         return {"status": "error", "message": str(e)}
@@ -154,10 +293,12 @@ def close_app(host: str = DEFAULT_HOST, port: int = DEFAULT_PORT) -> Dict[str, A
     Returns:
         Dict with status and message
     """
-    global _app_process
+    global _app_process, _launched_port
+
+    effective_port = _get_effective_port(port)
 
     try:
-        _send_command({"type": "close"}, host, port)
+        _send_command({"type": "close"}, host, effective_port)
     except Exception:
         pass  # App might already be closing
 
@@ -169,6 +310,10 @@ def close_app(host: str = DEFAULT_HOST, port: int = DEFAULT_PORT) -> Dict[str, A
             if _app_process.poll() is None:
                 _app_process.kill()
         _app_process = None
+
+    # Clear launched port tracking if closing the launched instance
+    if effective_port == _launched_port:
+        _launched_port = None
 
     return {"status": "success", "message": "Application closed"}
 
@@ -195,7 +340,8 @@ def get_snapshot(host: str = DEFAULT_HOST, port: int = DEFAULT_PORT) -> Dict[str
         Dict with window info, widgets list, and menu actions
     """
     try:
-        response = _send_command({"type": "get_snapshot"}, host, port)
+        effective_port = _get_effective_port(port)
+        response = _send_command({"type": "get_snapshot"}, host, effective_port)
         if response.get("status") == "success":
             return response.get("result", {})
         return {"status": "error", "message": response.get("message")}
@@ -223,9 +369,10 @@ def click(
         Dict with status and message
     """
     try:
+        effective_port = _get_effective_port(port)
         response = _send_command(
             {"type": "click", "object_name": object_name},
-            host, port
+            host, effective_port
         )
         if response.get("status") == "success":
             return {"status": "success", "message": f"Clicked {object_name}"}
@@ -256,9 +403,10 @@ def fill(
         Dict with status and message
     """
     try:
+        effective_port = _get_effective_port(port)
         response = _send_command(
             {"type": "fill", "object_name": object_name, "text": text},
-            host, port
+            host, effective_port
         )
         if response.get("status") == "success":
             return {"status": "success", "message": f"Filled '{text}' into {object_name}"}
@@ -287,9 +435,10 @@ def clear(
         Dict with status and message
     """
     try:
+        effective_port = _get_effective_port(port)
         response = _send_command(
             {"type": "clear", "object_name": object_name},
-            host, port
+            host, effective_port
         )
         if response.get("status") == "success":
             return {"status": "success", "message": f"Cleared {object_name}"}
@@ -319,9 +468,10 @@ def get_text(
         Dict with status and text value
     """
     try:
+        effective_port = _get_effective_port(port)
         response = _send_command(
             {"type": "get_text", "object_name": object_name},
-            host, port
+            host, effective_port
         )
         if response.get("status") == "success":
             return {"status": "success", "text": response.get("result")}
@@ -352,9 +502,10 @@ def set_checkbox(
         Dict with status and message
     """
     try:
+        effective_port = _get_effective_port(port)
         response = _send_command(
             {"type": "set_checkbox", "object_name": object_name, "checked": checked},
-            host, port
+            host, effective_port
         )
         if response.get("status") == "success":
             state = "checked" if checked else "unchecked"
@@ -384,9 +535,10 @@ def get_checkbox_state(
         Dict with status and checked state
     """
     try:
+        effective_port = _get_effective_port(port)
         response = _send_command(
             {"type": "get_checkbox_state", "object_name": object_name},
-            host, port
+            host, effective_port
         )
         if response.get("status") == "success":
             return {"status": "success", "checked": response.get("result")}
@@ -417,9 +569,10 @@ def select_combo(
         Dict with status and message
     """
     try:
+        effective_port = _get_effective_port(port)
         response = _send_command(
             {"type": "select_combo", "object_name": object_name, "value": value},
-            host, port
+            host, effective_port
         )
         if response.get("status") == "success":
             return {"status": "success", "message": f"Selected '{value}' in {object_name}"}
@@ -448,9 +601,10 @@ def get_combo_items(
         Dict with status and list of items
     """
     try:
+        effective_port = _get_effective_port(port)
         response = _send_command(
             {"type": "get_combo_items", "object_name": object_name},
-            host, port
+            host, effective_port
         )
         if response.get("status") == "success":
             return {"status": "success", "items": response.get("result")}
@@ -481,9 +635,10 @@ def select_tab(
         Dict with status and message
     """
     try:
+        effective_port = _get_effective_port(port)
         response = _send_command(
             {"type": "select_tab", "object_name": object_name, "index": index},
-            host, port
+            host, effective_port
         )
         if response.get("status") == "success":
             return {"status": "success", "message": f"Selected tab {index} in {object_name}"}
@@ -512,9 +667,10 @@ def get_table_data(
         Dict with headers, rows, row_count, and column_count
     """
     try:
+        effective_port = _get_effective_port(port)
         response = _send_command(
             {"type": "get_table_data", "object_name": object_name},
-            host, port
+            host, effective_port
         )
         if response.get("status") == "success":
             return {"status": "success", **response.get("result", {})}
@@ -547,6 +703,7 @@ def click_table_cell(
         Dict with status and message
     """
     try:
+        effective_port = _get_effective_port(port)
         response = _send_command(
             {
                 "type": "click_table_cell",
@@ -554,7 +711,7 @@ def click_table_cell(
                 "row": row,
                 "column": column
             },
-            host, port
+            host, effective_port
         )
         if response.get("status") == "success":
             return {
@@ -586,9 +743,10 @@ def trigger_action(
         Dict with status and message
     """
     try:
+        effective_port = _get_effective_port(port)
         response = _send_command(
             {"type": "trigger_action", "object_name": object_name},
-            host, port
+            host, effective_port
         )
         if response.get("status") == "success":
             return {"status": "success", "message": f"Triggered action {object_name}"}
@@ -613,7 +771,8 @@ def get_window_info(
         Dict with window title, size, position, and state
     """
     try:
-        response = _send_command({"type": "get_window_info"}, host, port)
+        effective_port = _get_effective_port(port)
+        response = _send_command({"type": "get_window_info"}, host, effective_port)
         if response.get("status") == "success":
             return {"status": "success", **response.get("result", {})}
         return {"status": "error", "message": response.get("message")}

@@ -1,0 +1,286 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ui version="4.0">
+ <class>MainWindow</class>
+ <widget class="QMainWindow" name="MainWindow">
+  <property name="geometry">
+   <rect>
+    <x>0</x>
+    <y>0</y>
+    <width>1000</width>
+    <height>600</height>
+   </rect>
+  </property>
+  <property name="windowTitle">
+   <string>MainWindow</string>
+  </property>
+  <widget class="QWidget" name="centralwidget">
+   <layout class="QVBoxLayout" name="mainLayout">
+    <property name="spacing">
+     <number>0</number>
+    </property>
+    <property name="leftMargin">
+     <number>0</number>
+    </property>
+    <property name="topMargin">
+     <number>0</number>
+    </property>
+    <property name="rightMargin">
+     <number>0</number>
+    </property>
+    <property name="bottomMargin">
+     <number>0</number>
+    </property>
+    <item>
+     <widget class="QFrame" name="headerBar">
+      <property name="minimumSize">
+       <size>
+        <width>0</width>
+        <height>50</height>
+       </size>
+      </property>
+      <property name="maximumSize">
+       <size>
+        <width>16777215</width>
+        <height>50</height>
+       </size>
+      </property>
+      <layout class="QHBoxLayout" name="headerLayout">
+       <property name="spacing">
+        <number>20</number>
+       </property>
+       <property name="leftMargin">
+        <number>15</number>
+       </property>
+       <property name="topMargin">
+        <number>8</number>
+       </property>
+       <property name="rightMargin">
+        <number>15</number>
+       </property>
+       <property name="bottomMargin">
+        <number>8</number>
+       </property>
+       <item>
+        <widget class="QLabel" name="symbolLabel">
+         <property name="text">
+          <string>NVDA</string>
+         </property>
+        </widget>
+       </item>
+       <item>
+        <widget class="QLabel" name="priceLabel">
+         <property name="text">
+          <string>$0.00</string>
+         </property>
+        </widget>
+       </item>
+       <item>
+        <widget class="QLabel" name="changeLabel">
+         <property name="text">
+          <string>$0.00 (0.00%)</string>
+         </property>
+        </widget>
+       </item>
+       <item>
+        <spacer name="headerSpacer">
+         <property name="orientation">
+          <enum>Qt::Horizontal</enum>
+         </property>
+         <property name="sizeHint" stdset="0">
+          <size>
+           <width>40</width>
+           <height>20</height>
+          </size>
+         </property>
+        </spacer>
+       </item>
+       <item>
+        <widget class="QLabel" name="ivLabel">
+         <property name="text">
+          <string>IV: --</string>
+         </property>
+        </widget>
+       </item>
+       <item>
+        <widget class="QLabel" name="hvLabel">
+         <property name="text">
+          <string>HV: --</string>
+         </property>
+        </widget>
+       </item>
+      </layout>
+     </widget>
+    </item>
+    <item>
+     <widget class="QStackedWidget" name="pageBox">
+      <widget class="QWidget" name="page"/>
+      <widget class="QWidget" name="page_2"/>
+     </widget>
+    </item>
+   </layout>
+  </widget>
+  <widget class="QMenuBar" name="menubar">
+   <property name="geometry">
+    <rect>
+     <x>0</x>
+     <y>0</y>
+     <width>1000</width>
+     <height>22</height>
+    </rect>
+   </property>
+   <widget class="QMenu" name="menuData">
+    <property name="title">
+     <string>Data</string>
+    </property>
+    <addaction name="actionTable"/>
+    <addaction name="actionChart"/>
+   </widget>
+   <widget class="QMenu" name="menuContracts">
+    <property name="title">
+     <string>Contracts</string>
+    </property>
+    <addaction name="actionManageContracts"/>
+   </widget>
+   <widget class="QMenu" name="menuFundamentals">
+    <property name="title">
+     <string>Fundamentals</string>
+    </property>
+    <addaction name="actionInfo"/>
+    <addaction name="actionCalendar"/>
+   </widget>
+   <widget class="QMenu" name="menuYahooFinance">
+    <property name="title">
+     <string>Yahoo Finance</string>
+    </property>
+    <addaction name="actionYFEarnings"/>
+    <addaction name="actionYFDividends"/>
+    <addaction name="actionYFSplits"/>
+    <addaction name="actionYFAllEvents"/>
+   </widget>
+   <widget class="QMenu" name="menuNasdaq">
+    <property name="title">
+     <string>Nasdaq</string>
+    </property>
+    <addaction name="actionNasdaqNews"/>
+    <addaction name="actionNasdaqEarnings"/>
+    <addaction name="actionNasdaqDividends"/>
+   </widget>
+   <widget class="QMenu" name="menuMarketWatch">
+    <property name="title">
+     <string>MarketWatch</string>
+    </property>
+    <widget class="QMenu" name="menuFinancials">
+     <property name="title">
+      <string>Financials</string>
+     </property>
+     <addaction name="actionMWIncome"/>
+     <addaction name="actionMWBalanceSheet"/>
+     <addaction name="actionMWCashFlow"/>
+     <addaction name="actionMWAllReports"/>
+    </widget>
+    <addaction name="actionMWProfile"/>
+    <addaction name="menuFinancials"/>
+    <addaction name="actionMWAnalystEstimates"/>
+   </widget>
+   <addaction name="menuData"/>
+   <addaction name="menuContracts"/>
+   <addaction name="menuFundamentals"/>
+   <addaction name="menuYahooFinance"/>
+   <addaction name="menuNasdaq"/>
+   <addaction name="menuMarketWatch"/>
+  </widget>
+  <widget class="QStatusBar" name="statusbar"/>
+  <action name="actionTable">
+   <property name="text">
+    <string>Table</string>
+   </property>
+  </action>
+  <action name="actionChart">
+   <property name="text">
+    <string>Chart</string>
+   </property>
+  </action>
+  <action name="actionManageContracts">
+   <property name="text">
+    <string>Manage Contracts...</string>
+   </property>
+  </action>
+  <action name="actionInfo">
+   <property name="text">
+    <string>Info</string>
+   </property>
+  </action>
+  <action name="actionCalendar">
+   <property name="text">
+    <string>Calendar</string>
+   </property>
+  </action>
+  <action name="actionYFEarnings">
+   <property name="text">
+    <string>Earnings</string>
+   </property>
+  </action>
+  <action name="actionYFDividends">
+   <property name="text">
+    <string>Dividends</string>
+   </property>
+  </action>
+  <action name="actionYFSplits">
+   <property name="text">
+    <string>Splits</string>
+   </property>
+  </action>
+  <action name="actionYFAllEvents">
+   <property name="text">
+    <string>All Events</string>
+   </property>
+  </action>
+  <action name="actionNasdaqNews">
+   <property name="text">
+    <string>News</string>
+   </property>
+  </action>
+  <action name="actionNasdaqEarnings">
+   <property name="text">
+    <string>Earnings Calendar</string>
+   </property>
+  </action>
+  <action name="actionNasdaqDividends">
+   <property name="text">
+    <string>Dividend History</string>
+   </property>
+  </action>
+  <action name="actionMWProfile">
+   <property name="text">
+    <string>Profile</string>
+   </property>
+  </action>
+  <action name="actionMWIncome">
+   <property name="text">
+    <string>Income</string>
+   </property>
+  </action>
+  <action name="actionMWBalanceSheet">
+   <property name="text">
+    <string>Balance Sheet</string>
+   </property>
+  </action>
+  <action name="actionMWCashFlow">
+   <property name="text">
+    <string>Cash Flow</string>
+   </property>
+  </action>
+  <action name="actionMWAllReports">
+   <property name="text">
+    <string>All Reports</string>
+   </property>
+  </action>
+  <action name="actionMWAnalystEstimates">
+   <property name="text">
+    <string>Analyst Estimates</string>
+   </property>
+  </action>
+ </widget>
+ <resources/>
+ <connections/>
+</ui>

@@ -1,0 +1,20 @@
+{
+  "watchlists": [
+    {
+      "id": "61a79b47-b20b-403f-a332-f68114f3bfd7",
+      "name": "Default",
+      "symbols": [
+        "CL",
+        "GC",
+        "HO",
+        "PL",
+        "ZB",
+        "QI"
+      ],
+      "asset_type": "future",
+      "created_at": "2026-01-08T14:15:37.480001",
+      "is_default": true
+    }
+  ],
+  "active_watchlist_id": "61a79b47-b20b-403f-a332-f68114f3bfd7"
+}

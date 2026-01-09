@@ -1,0 +1,94 @@
+{
+  "watchlists": [
+    {
+      "id": "1db4a0de-7616-4d86-ac37-b13a6f4c58de",
+      "name": "Tech",
+      "symbols": [
+        "AAPL",
+        "AMZN",
+        "BAC",
+        "IBM",
+        "MSFT",
+        "UBER",
+        "RACE",
+        "NVDA",
+        "PLTR"
+      ],
+      "asset_type": "stock",
+      "created_at": "2026-01-08T14:15:37.479657",
+      "is_default": true
+    },
+    {
+      "id": "67c39cf9-221d-4d7b-925d-65fc67502e6f",
+      "name": "China",
+      "symbols": [
+        "BABA",
+        "JD"
+      ],
+      "asset_type": "stock",
+      "created_at": "2026-01-08T21:13:51.020097",
+      "is_default": false
+    },
+    {
+      "id": "40070dcd-17c5-4f00-8835-8851402c72f3",
+      "name": "Meme",
+      "symbols": [
+        "BB"
+      ],
+      "asset_type": "stock",
+      "created_at": "2026-01-08T23:38:46.568763",
+      "is_default": false
+    },
+    {
+      "id": "be13d58f-bbe7-4704-96a7-46341ab68303",
+      "name": "Psych",
+      "symbols": [],
+      "asset_type": "stock",
+      "created_at": "2026-01-09T00:11:41.766313",
+      "is_default": false
+    },
+    {
+      "id": "68f420dd-b244-4a0e-b4fa-bc7eab752a0f",
+      "name": "TestWatchlist",
+      "symbols": [
+        "DIS"
+      ],
+      "asset_type": "stock",
+      "created_at": "2026-01-09T00:13:49.119703",
+      "is_default": false
+    },
+    {
+      "id": "a326d78d-4071-487a-8e55-ca6a7dd99e75",
+      "name": "NTFX",
+      "symbols": [],
+      "asset_type": "stock",
+      "created_at": "2026-01-09T00:16:17.321756",
+      "is_default": false
+    },
+    {
+      "id": "9a546f08-1870-44e2-93f1-22fc8ccc7cde",
+      "name": "FinalTest",
+      "symbols": [],
+      "asset_type": "stock",
+      "created_at": "2026-01-09T00:17:33.465348",
+      "is_default": false
+    },
+    {
+      "id": "28edf68b-7ab3-41c8-8e4e-8bc54d015aaa",
+      "name": "new",
+      "symbols": [],
+      "asset_type": "stock",
+      "created_at": "2026-01-09T00:36:32.242754",
+      "is_default": false
+    },
+    {
+      "id": "1c952e78-d20e-4283-9ee0-a27a2094af2a",
+      "name": "new2",
+      "symbols": [],
+      "asset_type": "stock",
+      "created_at": "2026-01-09T01:17:21.865534",
+      "is_default": false
+    }
+  ],
+  "active_watchlist_id": "1db4a0de-7616-4d86-ac37-b13a6f4c58de"
+}

@@ -24,6 +24,12 @@ class CandlestickPlot(pg.PlotItem):
         pg.PlotItem.__init__(self, **kwargs)
 
         self.plots: Dict[str, Any] = {}
+        # Store expiration lines and their positions for highlighting
+        self.expiration_lines: Dict[str, pg.InfiniteLine] = {}
+        self.expiration_positions: Dict[str, int] = {}  # groupName -> x position
+        self.expiration_original_colors: Dict[str, QColor] = {}  # Store original line colors
+        self.expiration_original_label_opts: Dict[str, dict] = {}  # Store original label options
+        self.highlighted_expiration: str = ""  # Currently highlighted expiration line
         self.data = data.reset_index().copy()
 
         # help data
@@ -90,7 +96,7 @@ class CandlestickPlot(pg.PlotItem):
             if self.bbb.shape[0] > 0:
 
                 # enhanced painted dataDF
-                self.painted = self.painted.append(self.bbb)
+                self.painted = pd.concat([self.painted, self.bbb], ignore_index=False)
                 self.painted = self.painted.sort_values("index")
 
                 # DRAW ALL
@@ -106,33 +112,35 @@ class CandlestickPlot(pg.PlotItem):
     def drawAll(self, data):
 
         self.clear()
+        # Clear expiration tracking when redrawing
+        self.expiration_lines.clear()
+        self.expiration_positions.clear()
+        self.expiration_original_colors.clear()
+        self.expiration_original_label_opts.clear()
+        self.highlighted_expiration = ""
 
-        # DRAW ALL CONTRACT MONTHS - CANDLESTICK
-        data.groupby(["LocalSymbol", "LastTradeDate"]).apply(
-            lambda x: self.drawContractMonthCandlestick(x)
-        )
+        # DRAW ALL CONTRACT MONTHS - CANDLESTICK and EXPIRATIONS
+        # Use iteration over groups instead of apply to avoid pandas deprecation warning
+        # and to ensure grouping columns are available
+        for (local_symbol, last_trade_date), group_data in data.groupby(["LocalSymbol", "LastTradeDate"]):
+            self.drawContractMonthCandlestick(group_data, local_symbol, last_trade_date)
+            self.drawContractMonthExpiration(group_data, local_symbol, last_trade_date)
 
-        # DRAW ALL CONTRACT MONTHS - EXPIRATIONS
-        data.groupby(["LocalSymbol", "LastTradeDate"]).apply(
-            lambda x: self.drawContractMonthExpiration(x)
-        )
-
-    def drawContractMonthCandlestick(self, data):
+    def drawContractMonthCandlestick(self, data, local_symbol: str, last_trade_date: str):
         graphics = CandlestickGraphics(data)
-        self.plots[
-            f"{data.iloc[0]['LocalSymbol']}-{data.iloc[0]['LastTradeDate']}"
-        ] = graphics
+        self.plots[f"{local_symbol}-{last_trade_date}"] = graphics
         self.addItem(graphics)
 
-    def drawContractMonthExpiration(self, data):
+    def drawContractMonthExpiration(self, data, local_symbol: str, last_trade_date: str):
+        from datetime import timezone
 
-        lastDatetime = datetime.strptime(
-            data.tail(1)["LastTradeDate"].iloc[0], "%Y%m%d"
-        )
+        # Parse the date and make it timezone-aware to match the data
+        lastDatetime = datetime.strptime(last_trade_date, "%Y%m%d").replace(tzinfo=timezone.utc)
 
         lastId = data.tail(1)["id"].iloc[0] + 1
 
-        lastLocalSymbol = data.tail(1)["LocalSymbol"].iloc[0]
+        lastLocalSymbol = local_symbol
+        groupName = f"{local_symbol}-{last_trade_date}"
 
         if lastDatetime in self.dataDate.index:
             vLineTemp = pg.InfiniteLine(
@@ -148,11 +156,26 @@ class CandlestickPlot(pg.PlotItem):
             )
             vLineTemp.setPos(lastId)
             self.addItem(vLineTemp)
+            # Store line reference, position, original color and label options
+            self.expiration_lines[groupName] = vLineTemp
+            self.expiration_positions[groupName] = lastId
+            self.expiration_original_colors[groupName] = QColor("#ffeb3b")  # Yellow
+            self.expiration_original_label_opts[groupName] = {
+                "color": QColor("#ffeb3b"),
+                "fill": QColor("#fbc02d"),
+            }
         else:
             lastId = self.dataDate.tail(1)["id"].iloc[0]
             lastDT = self.dataDate.tail(1).index[0]
 
+            # Ensure lastDT is timezone-aware for comparison
+            if hasattr(lastDT, 'tz') and lastDT.tz is None:
+                lastDT = lastDT.replace(tzinfo=timezone.utc)
+            elif isinstance(lastDT, datetime) and lastDT.tzinfo is None:
+                lastDT = lastDT.replace(tzinfo=timezone.utc)
+
             res = (lastDatetime - lastDT).days
+            linePos = lastId + res
 
             vLineTemp = pg.InfiniteLine(
                 angle=90,
@@ -166,12 +189,56 @@ class CandlestickPlot(pg.PlotItem):
                     "movable": True,
                 },
             )
-            vLineTemp.setPos(lastId + res)
+            vLineTemp.setPos(linePos)
             self.addItem(vLineTemp)
+            # Store line reference, position, original color and label options
+            self.expiration_lines[groupName] = vLineTemp
+            self.expiration_positions[groupName] = linePos
+            self.expiration_original_colors[groupName] = QColor("#3949ab")  # Violet
+            self.expiration_original_label_opts[groupName] = {
+                "color": QColor("#3949ab"),
+                "fill": QColor("#9fa8da"),
+            }
 
     def setGroupOpacity(self, groupName: str, opacity: float):
         if groupName in self.plots:
             self.plots[groupName].setOpacity(opacity)
+
+    def setExpirationHighlight(self, groupName: str, highlight: bool):
+        """Highlight or unhighlight an expiration line by making it green and thicker."""
+        green_color = QColor("#00c853")  # Bright green
+        green_fill = QColor("#69f0ae")   # Light green fill
+
+        # Unhighlight the previously highlighted line - restore original colors
+        if self.highlighted_expiration and self.highlighted_expiration in self.expiration_lines:
+            old_line = self.expiration_lines[self.highlighted_expiration]
+            original_color = self.expiration_original_colors.get(
+                self.highlighted_expiration, QColor("#3949ab")
+            )
+            original_label_opts = self.expiration_original_label_opts.get(
+                self.highlighted_expiration, {"color": QColor("#3949ab"), "fill": QColor("#9fa8da")}
+            )
+            # Restore line pen
+            old_line.setPen(pg.mkPen(original_color, width=1))
+            # Restore label colors
+            if old_line.label is not None:
+                old_line.label.setColor(original_label_opts["color"])
+                old_line.label.fill = pg.mkBrush(original_label_opts["fill"])
+                old_line.label.update()
+
+        # Highlight the new line - make it GREEN and thicker
+        if highlight and groupName in self.expiration_lines:
+            line = self.expiration_lines[groupName]
+            # Set line to green and thick
+            line.setPen(pg.mkPen(green_color, width=4))
+            # Set label to green
+            if line.label is not None:
+                line.label.setColor(green_color)
+                line.label.fill = pg.mkBrush(green_fill)
+                line.label.update()
+            self.highlighted_expiration = groupName
+        else:
+            self.highlighted_expiration = ""
 
 
 ## Create a subclass of GraphicsObject.
