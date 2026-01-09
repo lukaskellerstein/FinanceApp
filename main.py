@@ -226,7 +226,7 @@ if __name__ == "__main__":
         # Start control server for MCP testability (unless disabled)
         control_server = None
         if not args.no_server:
-            from src.ui.control_server import CommandHandler, run_control_server
+            from src.infrastructure.control_server import CommandHandler, run_control_server
             command_handler = CommandHandler(window)
             control_server = run_control_server(
                 command_handler,

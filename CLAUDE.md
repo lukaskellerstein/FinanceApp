@@ -45,6 +45,43 @@ The app is automatically launched on **workspaces 100-120** (dedicated for MCP t
 
 For detailed implementation info, see: [docs/testability_via_regolith.md](docs/testability_via_regolith.md)
 
+### Widget Naming for MCP Testability
+
+**Every interactive widget MUST have `setObjectName()` set** - widgets without object names are invisible to MCP and cannot be tested.
+
+**Naming conventions:**
+```python
+# Input fields: {purpose}_input
+self.ticker_input.setObjectName("ticker_input")
+
+# Buttons: {purpose}_button
+self.add_button.setObjectName("add_button")
+
+# Labels: {purpose}_label
+self.status_label.setObjectName("status_label")
+
+# Pages/containers: {name}_page, {name}_tabs
+self.setObjectName("stocks_watchlist_page")
+
+# Tables: {name}_table
+self.table.setObjectName("stocks_assets_table")
+
+# Dynamic widgets (with variable): {type}_{identifier}_{widget}
+view_btn.setObjectName(f"watchlist_view_{symbol.lower()}_button")
+delete_btn.setObjectName(f"delete_{symbol.lower()}_button")
+
+# Menu actions: action_{name}
+home_action.setObjectName("action_home")
+```
+
+**Rules:**
+- Use `snake_case` for all object names
+- Be descriptive: `login_button` not `btn1`
+- For dynamic items, include identifier: `delete_aapl_button`
+- Menu actions must have object names to be triggerable via MCP
+
+For detailed implementation info, see: [docs/testability_via_mcp.md](docs/testability_via_mcp.md)
+
 ---
 
 ## CRITICAL RULES
@@ -65,7 +102,6 @@ For detailed implementation info, see: [docs/testability_via_regolith.md](docs/t
 Each change must be validated through the MCP interface before considering the task complete.
 
 ---
-
 
 ## Core Philosophy
 

@@ -25,7 +25,7 @@ from src.application.bootstrap import get_app
 from src.domain.entities.asset import Asset
 from src.domain.entities.timeframe import TimeFrame, Duration
 from src.presentation.core.base_view import BaseView
-from src.ui.components.multi_candlestick_chart.chart import MyMultiCandlestickChart
+from src.presentation.components.charts.multi_candlestick_chart.chart import MyMultiCandlestickChart
 from src.presentation.windows.asset_detail.pages.history_chart.helpers import (
     fillGapsInDays,
     plotMonths,

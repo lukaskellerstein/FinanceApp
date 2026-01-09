@@ -117,7 +117,7 @@ class ApplicationBootstrap:
             IHistoricalDataRepository,
             factory=lambda c: PyStoreHistoricalRepository(
                 db_config.historical_data_path,
-                "cellarstone_db",
+                "hist_data",
             ),
         )
 

@@ -152,11 +152,17 @@ class FuturesTreeModel(QAbstractItemModel):
             self._item_map[(symbol, "")] = parent_item
 
             # Track contracts with valid expiry dates to find front-month
-            active_contracts: List[Tuple[str, str]] = []  # (local_symbol, expiry_date)
+            # (local_symbol, expiry_date, contract_month)
+            active_contracts: List[Tuple[str, str, str]] = []
 
-            # Add active contracts as children
-            # Use all contract_details, not just latest, to show full hierarchy
-            for cd in asset.contract_details:
+            # Sort contract_details by expiry date (closest first)
+            sorted_contracts = sorted(
+                asset.contract_details,
+                key=lambda cd: cd.contract.last_trade_date or "99999999"
+            )
+
+            # Add contracts as children (sorted by expiry, closest first)
+            for cd in sorted_contracts:
                 contract = cd.contract
                 log.debug(f"  Adding child: {contract.local_symbol}")
                 child_item = FuturesTreeItem(
@@ -176,15 +182,23 @@ class FuturesTreeModel(QAbstractItemModel):
                             contract.last_trade_date, "%Y%m%d"
                         ).replace(tzinfo=timezone.utc)
                         if expiry >= now:
-                            active_contracts.append((contract.local_symbol, contract.last_trade_date))
+                            active_contracts.append((
+                                contract.local_symbol,
+                                contract.last_trade_date,
+                                cd.contract_month or ""
+                            ))
                     except ValueError:
                         pass
 
             # Determine front-month (nearest active contract)
             if active_contracts:
                 active_contracts.sort(key=lambda x: x[1])  # Sort by expiry date
-                self._front_month[symbol] = active_contracts[0][0]
-                log.debug(f"  Front-month for {symbol}: {self._front_month[symbol]}")
+                front_local, front_expiry, front_month = active_contracts[0]
+                self._front_month[symbol] = front_local
+                # Copy front-month's month and expiry to parent for display when collapsed
+                parent_item.contract_month = front_month
+                parent_item.last_trade_date = front_expiry
+                log.debug(f"  Front-month for {symbol}: {front_local}")
 
         self.endResetModel()
         log.debug(f"Loaded {len(self._root_items)} futures into tree model, item_map keys: {list(self._item_map.keys())}")
@@ -213,9 +227,16 @@ class FuturesTreeModel(QAbstractItemModel):
         self._item_map[(symbol, "")] = parent_item
 
         # Track active contracts for front-month determination
-        active_contracts: List[Tuple[str, str]] = []
+        # (local_symbol, expiry_date, contract_month)
+        active_contracts: List[Tuple[str, str, str]] = []
 
-        for cd in asset.contract_details:
+        # Sort contract_details by expiry date (closest first)
+        sorted_contracts = sorted(
+            asset.contract_details,
+            key=lambda cd: cd.contract.last_trade_date or "99999999"
+        )
+
+        for cd in sorted_contracts:
             contract = cd.contract
             child_item = FuturesTreeItem(
                 symbol=symbol,
@@ -234,15 +255,23 @@ class FuturesTreeModel(QAbstractItemModel):
                         contract.last_trade_date, "%Y%m%d"
                     ).replace(tzinfo=timezone.utc)
                     if expiry >= now:
-                        active_contracts.append((contract.local_symbol, contract.last_trade_date))
+                        active_contracts.append((
+                            contract.local_symbol,
+                            contract.last_trade_date,
+                            cd.contract_month or ""
+                        ))
                 except ValueError:
                     pass
 
         # Determine front-month
         if active_contracts:
             active_contracts.sort(key=lambda x: x[1])
-            self._front_month[symbol] = active_contracts[0][0]
-            log.debug(f"Front-month for {symbol}: {self._front_month[symbol]}")
+            front_local, front_expiry, front_month = active_contracts[0]
+            self._front_month[symbol] = front_local
+            # Copy front-month's month and expiry to parent for display when collapsed
+            parent_item.contract_month = front_month
+            parent_item.last_trade_date = front_expiry
+            log.debug(f"Front-month for {symbol}: {front_local}")
 
         self.endInsertRows()
         log.debug(f"Added {symbol} with {parent_item.child_count()} contracts")
@@ -365,6 +394,25 @@ class FuturesTreeModel(QAbstractItemModel):
         """
         item = self.get_item_at_index(index)
         return item.symbol if item else None
+
+    def set_item_expanded(self, index: QModelIndex, expanded: bool) -> None:
+        """
+        Set the expanded state for a parent item.
+
+        When expanded, parent rows hide their data (children show individual data).
+        When collapsed, parent rows show front-month data.
+
+        Args:
+            index: Index of the item
+            expanded: True if expanded, False if collapsed
+        """
+        item = self.get_item_at_index(index)
+        if item and item.is_parent:
+            item.is_expanded = expanded
+            # Emit dataChanged for all data columns to refresh display
+            top_left = self.index(index.row(), self.COL_BID_SIZE, QModelIndex())
+            bottom_right = self.index(index.row(), self.COL_VOLUME, QModelIndex())
+            self.dataChanged.emit(top_left, bottom_right)
 
     # ---------------------------------------------------------
     # Internal helper methods
@@ -511,6 +559,9 @@ class FuturesTreeModel(QAbstractItemModel):
             # Black text for Last column (for prominence on light blue background)
             if col == self.COL_LAST:
                 return QColor("black")
+            # Red text for Delete column (matching stocks watchlist style)
+            if col == self.COL_DELETE and item.is_parent:
+                return QColor("red")
             # Text color based on background luminance for Change column
             if col == self.COL_CHANGE and item.change != 0:
                 bg_color = self._get_change_color(item.change)
@@ -523,6 +574,11 @@ class FuturesTreeModel(QAbstractItemModel):
         elif role == Qt.ItemDataRole.FontRole:
             # Bold font for Last column
             if col == self.COL_LAST:
+                font = QFont()
+                font.setBold(True)
+                return font
+            # Bold font for Delete column (matching stocks watchlist style)
+            if col == self.COL_DELETE and item.is_parent:
                 font = QFont()
                 font.setBold(True)
                 return font
@@ -540,37 +596,68 @@ class FuturesTreeModel(QAbstractItemModel):
     def _get_display_data(self, item: FuturesTreeItem, col: int) -> str:
         """Get display string for a cell."""
         if col == self.COL_VIEW:
-            return "📈"
+            # Only show chart icon for parent rows
+            return "📈" if item.is_parent else ""
         elif col == self.COL_SYMBOL:
             return item.display_symbol
         elif col == self.COL_MONTH:
+            # Hide month for expanded parent rows
+            if item.is_parent and item.is_expanded:
+                return ""
             return item.contract_month
         elif col == self.COL_EXPIRY:
+            # Hide expiry for expanded parent rows
+            if item.is_parent and item.is_expanded:
+                return ""
             return item.last_trade_date
         elif col == self.COL_BID_SIZE:
+            # Hide data for expanded parent rows (children show individual data)
+            if item.is_parent and item.is_expanded:
+                return ""
             return self._format_size(item.bid_size)
         elif col == self.COL_BID:
+            if item.is_parent and item.is_expanded:
+                return ""
             return f"{item.bid:.2f}" if item.bid else "-"
         elif col == self.COL_LAST:
+            if item.is_parent and item.is_expanded:
+                return ""
             return f"{item.last:.2f}" if item.last else "-"
         elif col == self.COL_ASK:
+            if item.is_parent and item.is_expanded:
+                return ""
             return f"{item.ask:.2f}" if item.ask else "-"
         elif col == self.COL_ASK_SIZE:
+            if item.is_parent and item.is_expanded:
+                return ""
             return self._format_size(item.ask_size)
         elif col == self.COL_CHANGE:
+            if item.is_parent and item.is_expanded:
+                return ""
             return f"{item.change:+.2f}%" if item.change else "-"
         elif col == self.COL_OPEN:
+            if item.is_parent and item.is_expanded:
+                return ""
             return f"{item.open:.2f}" if item.open else "-"
         elif col == self.COL_HIGH:
+            if item.is_parent and item.is_expanded:
+                return ""
             return f"{item.high:.2f}" if item.high else "-"
         elif col == self.COL_LOW:
+            if item.is_parent and item.is_expanded:
+                return ""
             return f"{item.low:.2f}" if item.low else "-"
         elif col == self.COL_CLOSE:
+            if item.is_parent and item.is_expanded:
+                return ""
             return f"{item.close:.2f}" if item.close else "-"
         elif col == self.COL_VOLUME:
+            if item.is_parent and item.is_expanded:
+                return ""
             return self._format_volume(item.volume)
         elif col == self.COL_DELETE:
-            return "X"
+            # Only show delete button for parent rows
+            return "X" if item.is_parent else ""
         return ""
 
     def _format_volume(self, volume: int) -> str:

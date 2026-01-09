@@ -35,6 +35,7 @@ class FuturesTreeItem:
     contract_month: str = ""
     last_trade_date: str = ""
     is_parent: bool = True
+    is_expanded: bool = False  # Track if parent item is expanded in tree view
     parent: Optional["FuturesTreeItem"] = None
     children: List["FuturesTreeItem"] = field(default_factory=list)
 
@@ -142,8 +143,14 @@ class FuturesTreeItem:
         Returns:
             List of field names that were changed
         """
+        # Fields that should never be updated on parent items
+        parent_protected_fields = {"local_symbol", "symbol", "contract_month", "last_trade_date"}
+
         changed_fields = []
         for field_name, value in tick_data.items():
+            # Skip protected fields for parent items
+            if self.is_parent and field_name in parent_protected_fields:
+                continue
             if value is not None and self.update_tick(field_name, value):
                 changed_fields.append(field_name)
 

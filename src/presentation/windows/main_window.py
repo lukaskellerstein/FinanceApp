@@ -254,6 +254,9 @@ class StocksWatchlistPage(BaseView):
         # Connect double-click to open detail window
         table.cellDoubleClicked.connect(self._on_watchlist_item_double_clicked)
 
+        # Connect single-click for delete column
+        table.cellClicked.connect(self._on_watchlist_cell_clicked)
+
         return table
 
     def _on_watchlists_loaded(self, watchlists: list) -> None:
@@ -328,17 +331,33 @@ class StocksWatchlistPage(BaseView):
         table.setItem(row, self.COL_OPT_HIST_VOL, QTableWidgetItem("-"))
         table.setItem(row, self.COL_OPT_IMPL_VOL, QTableWidgetItem("-"))
 
-        # Add delete button (last column)
-        delete_btn = QPushButton("X")
-        delete_btn.setMaximumWidth(25)
-        delete_btn.setStyleSheet("color: red; font-weight: bold;")
-        delete_btn.clicked.connect(lambda checked, s=symbol: self._on_delete_symbol(s))
-        table.setCellWidget(row, self.COL_DELETE, delete_btn)
+        # Add delete item (last column) - flat text style matching futures watchlist
+        delete_item = QTableWidgetItem("X")
+        delete_item.setForeground(QColor("red"))
+        font = delete_item.font()
+        font.setBold(True)
+        delete_item.setFont(font)
+        delete_item.setTextAlignment(Qt.AlignmentFlag.AlignCenter)
+        table.setItem(row, self.COL_DELETE, delete_item)
 
     def _on_delete_symbol(self, symbol: str) -> None:
         """Handle delete button click for a symbol."""
         if self._vm:
             self._vm.remove_symbol(symbol)
+
+    def _on_watchlist_cell_clicked(self, row: int, column: int) -> None:
+        """Handle single-click on watchlist cell - check for delete column."""
+        if column != self.COL_DELETE or not self._vm:
+            return
+
+        active_id = self._vm.active_watchlist_id
+        table = self._tables.get(active_id)
+        if not table:
+            return
+
+        symbol_item = table.item(row, self.COL_SYMBOL)
+        if symbol_item:
+            self._on_delete_symbol(symbol_item.text())
 
     def _on_active_watchlist_loaded(self, symbols: list) -> None:
         """Handle symbols loaded for active watchlist."""
@@ -741,14 +760,15 @@ class FuturesWatchlistPage(BaseView):
         tree_view.setSelectionBehavior(QTreeView.SelectionBehavior.SelectRows)
         tree_view.setUniformRowHeights(True)
         tree_view.setAnimated(True)
+        tree_view.setIndentation(20)  # Control expand arrow indentation
 
         # Configure header
         header = tree_view.header()
         header.setStretchLastSection(False)
 
-        # View column - fixed small width
+        # View column - fixed width (needs space for expand arrow + icon)
         header.setSectionResizeMode(model.COL_VIEW, QHeaderView.ResizeMode.Fixed)
-        tree_view.setColumnWidth(model.COL_VIEW, 40)
+        tree_view.setColumnWidth(model.COL_VIEW, 60)
 
         # Symbol column should stretch
         header.setSectionResizeMode(model.COL_SYMBOL, QHeaderView.ResizeMode.Stretch)
@@ -765,6 +785,9 @@ class FuturesWatchlistPage(BaseView):
         tree_view.clicked.connect(self._on_tree_item_clicked)
         # Connect double-click to open detail window
         tree_view.doubleClicked.connect(self._on_tree_item_double_clicked)
+        # Connect expanded/collapsed to hide/show data in parent rows
+        tree_view.expanded.connect(lambda idx: model.set_item_expanded(idx, True))
+        tree_view.collapsed.connect(lambda idx: model.set_item_expanded(idx, False))
 
         return (tree_view, model)
 

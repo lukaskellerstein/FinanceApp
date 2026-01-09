@@ -16,7 +16,7 @@ from src.application.bootstrap import get_app
 from src.domain.entities.asset import Asset
 from src.domain.entities.timeframe import TimeFrame
 from src.presentation.core.base_view import BaseView
-from src.ui.components.historical_data_table.table import HistoricalDataTable
+from src.presentation.components.tables.historical_data_table.table import HistoricalDataTable
 
 log = logging.getLogger("CellarLogger")
 

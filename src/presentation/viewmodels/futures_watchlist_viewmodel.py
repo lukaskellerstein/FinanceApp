@@ -83,7 +83,8 @@ class FuturesWatchlistViewModel(BaseViewModel):
     assets = ObservableProperty[Dict[str, Asset]]({})
 
     # Allowed exchanges for futures
-    ALLOWED_EXCHANGES = ["GLOBEX", "ECBOT", "NYMEX", "NYBOT"]
+    # CME is the actual exchange for E-mini futures (GLOBEX is just the electronic platform)
+    ALLOWED_EXCHANGES = ["CME", "GLOBEX", "ECBOT", "NYMEX", "NYBOT"]
 
     def __init__(
         self,

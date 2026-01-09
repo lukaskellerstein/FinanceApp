@@ -9,4 +9,9 @@ uv.lock
 poetry.lock
 
 
+.playwright-mcp
 finance_app.egg-info
+
+# Qt generated files
+.qt_for_python
+

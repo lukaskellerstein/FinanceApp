@@ -271,17 +271,9 @@ class AssetService(IAssetService):
         contract_details = []
         cd_list = data.get("contractDetails") or data.get("contract_details", [])
 
-        # Debug to file
-        with open("/tmp/asset_debug.txt", "a") as f:
-            f.write(f"Loading asset {data.get('symbol')}: cd_list count = {len(cd_list)}\n")
-
         log.info(f"Loading asset {data.get('symbol')}: cd_list count = {len(cd_list)}")
         for cd_data in cd_list:
             contract_details.append(self._dict_to_contract_details(cd_data))
-
-        # Debug to file
-        with open("/tmp/asset_debug.txt", "a") as f:
-            f.write(f"  Converted contract_details count: {len(contract_details)}\n")
 
         log.info(f"  Converted contract_details count: {len(contract_details)}")
 

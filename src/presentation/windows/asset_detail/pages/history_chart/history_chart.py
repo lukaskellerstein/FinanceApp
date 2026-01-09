@@ -22,7 +22,7 @@ from src.application.bootstrap import get_app
 from src.domain.entities.asset import Asset
 from src.domain.entities.timeframe import TimeFrame, Duration
 from src.presentation.core.base_view import BaseView
-from src.ui.components.candlestick_chart.chart import MyCandlestickChart
+from src.presentation.components.charts.candlestick_chart.chart import MyCandlestickChart
 from src.presentation.windows.asset_detail.pages.history_chart.helpers import (
     fillGapsInDays,
     hasDecadeOfData,

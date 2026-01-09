@@ -1,0 +1,132 @@
+{
+  "symbol": "CL",
+  "asset_type": "future",
+  "contract_details": [
+    {
+      "contract": {
+        "con_id": 296574762,
+        "symbol": "CL",
+        "sec_type": "FUT",
+        "exchange": "NYMEX",
+        "currency": "USD",
+        "local_symbol": "CLM6",
+        "primary_exchange": "",
+        "last_trade_date": "20260519",
+        "multiplier": "1000",
+        "trading_class": "CL"
+      },
+      "market_name": "CL",
+      "min_tick": 0.01,
+      "long_name": "Light Sweet Crude Oil",
+      "contract_month": "202606",
+      "time_zone_id": "US/Eastern",
+      "trading_hours": "20260108:1800-20260109:1700;20260110:CLOSED;20260111:1800-20260112:1700;20260112:1800-20260113:1700;20260113:1800-20260114:1700;20260114:1800-20260115:1700",
+      "liquid_hours": "20260109:0930-20260109:1700;20260110:CLOSED;20260111:CLOSED;20260112:0930-20260112:1700;20260113:0930-20260113:1700;20260114:0930-20260114:1700;20260114:1800-20260115:1700"
+    },
+    {
+      "contract": {
+        "con_id": 304037451,
+        "symbol": "CL",
+        "sec_type": "FUT",
+        "exchange": "NYMEX",
+        "currency": "USD",
+        "local_symbol": "CLK6",
+        "primary_exchange": "",
+        "last_trade_date": "20260421",
+        "multiplier": "1000",
+        "trading_class": "CL"
+      },
+      "market_name": "CL",
+      "min_tick": 0.01,
+      "long_name": "Light Sweet Crude Oil",
+      "contract_month": "202605",
+      "time_zone_id": "US/Eastern",
+      "trading_hours": "20260108:1800-20260109:1700;20260110:CLOSED;20260111:1800-20260112:1700;20260112:1800-20260113:1700;20260113:1800-20260114:1700;20260114:1800-20260115:1700",
+      "liquid_hours": "20260109:0930-20260109:1700;20260110:CLOSED;20260111:CLOSED;20260112:0930-20260112:1700;20260113:0930-20260113:1700;20260114:0930-20260114:1700;20260114:1800-20260115:1700"
+    },
+    {
+      "contract": {
+        "con_id": 304037436,
+        "symbol": "CL",
+        "sec_type": "FUT",
+        "exchange": "NYMEX",
+        "currency": "USD",
+        "local_symbol": "CLJ6",
+        "primary_exchange": "",
+        "last_trade_date": "20260320",
+        "multiplier": "1000",
+        "trading_class": "CL"
+      },
+      "market_name": "CL",
+      "min_tick": 0.01,
+      "long_name": "Light Sweet Crude Oil",
+      "contract_month": "202604",
+      "time_zone_id": "US/Eastern",
+      "trading_hours": "20260108:1800-20260109:1700;20260110:CLOSED;20260111:1800-20260112:1700;20260112:1800-20260113:1700;20260113:1800-20260114:1700;20260114:1800-20260115:1700",
+      "liquid_hours": "20260109:0930-20260109:1700;20260110:CLOSED;20260111:CLOSED;20260112:0930-20260112:1700;20260113:0930-20260113:1700;20260114:0930-20260114:1700;20260114:1800-20260115:1700"
+    },
+    {
+      "contract": {
+        "con_id": 304037427,
+        "symbol": "CL",
+        "sec_type": "FUT",
+        "exchange": "NYMEX",
+        "currency": "USD",
+        "local_symbol": "CLH6",
+        "primary_exchange": "",
+        "last_trade_date": "20260220",
+        "multiplier": "1000",
+        "trading_class": "CL"
+      },
+      "market_name": "CL",
+      "min_tick": 0.01,
+      "long_name": "Light Sweet Crude Oil",
+      "contract_month": "202603",
+      "time_zone_id": "US/Eastern",
+      "trading_hours": "20260108:1800-20260109:1700;20260110:CLOSED;20260111:1800-20260112:1700;20260112:1800-20260113:1700;20260113:1800-20260114:1700;20260114:1800-20260115:1700",
+      "liquid_hours": "20260109:0930-20260109:1700;20260110:CLOSED;20260111:CLOSED;20260112:0930-20260112:1700;20260113:0930-20260113:1700;20260114:0930-20260114:1700;20260114:1800-20260115:1700"
+    },
+    {
+      "contract": {
+        "con_id": 304037410,
+        "symbol": "CL",
+        "sec_type": "FUT",
+        "exchange": "NYMEX",
+        "currency": "USD",
+        "local_symbol": "CLG6",
+        "primary_exchange": "",
+        "last_trade_date": "20260120",
+        "multiplier": "1000",
+        "trading_class": "CL"
+      },
+      "market_name": "CL",
+      "min_tick": 0.01,
+      "long_name": "Light Sweet Crude Oil",
+      "contract_month": "202602",
+      "time_zone_id": "US/Eastern",
+      "trading_hours": "20260108:1800-20260109:1700;20260110:CLOSED;20260111:1800-20260112:1700;20260112:1800-20260113:1700;20260113:1800-20260114:1700;20260114:1800-20260115:1700",
+      "liquid_hours": "20260109:0930-20260109:1700;20260110:CLOSED;20260111:CLOSED;20260112:0930-20260112:1700;20260113:0930-20260113:1700;20260114:0930-20260114:1700;20260114:1800-20260115:1700"
+    },
+    {
+      "contract": {
+        "con_id": 304037461,
+        "symbol": "CL",
+        "sec_type": "FUT",
+        "exchange": "NYMEX",
+        "currency": "USD",
+        "local_symbol": "CLN6",
+        "primary_exchange": "",
+        "last_trade_date": "20260622",
+        "multiplier": "1000",
+        "trading_class": "CL"
+      },
+      "market_name": "CL",
+      "min_tick": 0.01,
+      "long_name": "Light Sweet Crude Oil",
+      "contract_month": "202607",
+      "time_zone_id": "US/Eastern",
+      "trading_hours": "20260108:1800-20260109:1700;20260110:CLOSED;20260111:1800-20260112:1700;20260112:1800-20260113:1700;20260113:1800-20260114:1700;20260114:1800-20260115:1700",
+      "liquid_hours": "20260109:0930-20260109:1700;20260110:CLOSED;20260111:CLOSED;20260112:0930-20260112:1700;20260113:0930-20260113:1700;20260114:0930-20260114:1700;20260114:1800-20260115:1700"
+    }
+  ]
+}

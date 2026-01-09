@@ -585,18 +585,12 @@ class HistoricalDataService(IHistoricalDataService):
             f"{end.strftime('%Y%m%d')} ({duration_days} days)"
         )
 
-        # Debug to file
-        with open("/tmp/download_debug.txt", "a") as f:
-            f.write(f"Download: {symbol} {start.strftime('%Y%m%d')} - {end.strftime('%Y%m%d')} ({duration_days} days)\n")
-
         # Use event to wait for callback
         done_event = threading.Event()
         bars_result: List[BarData] = []
 
         def on_bars(bars: List[BarData]):
             nonlocal bars_result
-            with open("/tmp/download_debug.txt", "a") as f:
-                f.write(f"  Callback received: bars={type(bars)}, len={len(bars) if bars else 'None'}\n")
             if bars:
                 bars_result = bars
             done_event.set()
@@ -611,19 +605,13 @@ class HistoricalDataService(IHistoricalDataService):
         )
 
         # Wait for response (with timeout)
-        result = done_event.wait(timeout=self.DOWNLOAD_TIMEOUT)
-        with open("/tmp/download_debug.txt", "a") as f:
-            f.write(f"  Wait result: {result}, bars_count={len(bars_result)}\n")
+        done_event.wait(timeout=self.DOWNLOAD_TIMEOUT)
 
         if bars_result:
             self._repository.append(symbol, timeframe, bars_result)
             log.info(f"Saved {len(bars_result)} bars for {symbol}")
-            with open("/tmp/download_debug.txt", "a") as f:
-                f.write(f"  Saved {len(bars_result)} bars\n")
         else:
             log.warning(f"No data received for {symbol}")
-            with open("/tmp/download_debug.txt", "a") as f:
-                f.write(f"  No data received\n")
 
     def _get_future_symbol(self, contract: Contract) -> str:
         """Get storage symbol for a future contract."""

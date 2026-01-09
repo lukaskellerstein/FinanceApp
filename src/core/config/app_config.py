@@ -117,11 +117,11 @@ class AppConfig:
     @property
     def database_config(self) -> DatabaseConfig:
         """Get database paths configuration."""
-        base_path = self._get_value("DATABASE", "base_path", "src/db")
+        base_path = self._get_value("DATABASE", "base_path", "db")
         return DatabaseConfig(
             assets_path=os.path.join(base_path, "assets"),
             watchlists_path=os.path.join(base_path, "watchlists"),
-            historical_data_path=os.path.join(base_path, "pystore"),
+            historical_data_path=base_path,
         )
 
     @property

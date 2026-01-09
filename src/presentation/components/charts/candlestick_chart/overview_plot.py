@@ -1,0 +1,33 @@
+import logging
+
+import pyqtgraph as pg
+from PyQt6.QtCore import Qt
+from PyQt6.QtGui import QColor
+
+
+# create logger
+log = logging.getLogger("CellarLogger")
+
+
+class OverviewTimePlot(pg.PlotItem):
+    def __init__(self, x, y, **kwargs):
+        pg.PlotItem.__init__(self, **kwargs)
+        self.setFixedHeight(100)
+
+        # grid
+        self.showGrid(x=True, y=True)
+
+        # plot
+        self.plot(
+            x,
+            y,
+            name="Overview plot",
+            pen=pg.mkPen(color=QColor("blue"), style=Qt.PenStyle.SolidLine),
+        )
+
+        # region
+        self.timeRegion = pg.LinearRegionItem()
+        self.timeRegion.setZValue(10)
+        self.timeRegion.setRegion([len(x) - 1000, len(x)])
+
+        self.addItem(self.timeRegion, ignoreBounds=True)
