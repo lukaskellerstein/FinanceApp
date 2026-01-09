@@ -1,0 +1,38 @@
+{
+  "companyAnnouncements": ["Welcome to Finance app AI"],
+  "permissions": {
+    "allow": [
+      "Bash",
+      "Edit",
+      "Glob",
+      "Grep",
+      "NotebookEdit",
+      "NotebookRead",
+      "Read",
+      "SlashCommand",
+      "Task",
+      "TodoWrite",
+      "WebFetch",
+      "WebSearch",
+      "Write",
+      "Search",
+      "BashOutput",
+      "KillShell",
+      "Skill",
+      "mcp__plugin_finance-plugin",
+      "mcp__finance-app-control"
+    ],
+    "deny": ["Bash(rm -rf /)", "Bash(rm -rf ~)"]
+  },
+  "extraKnownMarketplaces": {
+    "claude-my-marketplace": {
+      "source": {
+        "source": "github",
+        "repo": "lukaskellerstein/claude-my-marketplace"
+      }
+    }
+  },
+  "enabledPlugins": {
+    "finance-plugin@claude-my-marketplace": true
+  }
+}

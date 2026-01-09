@@ -1,0 +1,48 @@
+/* Info page styles */
+
+QScrollArea {
+    border: none;
+    background-color: #f8fafc;
+}
+
+QScrollArea > QWidget > QWidget {
+    background-color: #f8fafc;
+}
+
+/* Section headers */
+QLabel.section-header {
+    font-size: 16px;
+    font-weight: bold;
+    color: #1e293b;
+    padding: 10px 0 5px 0;
+    border-bottom: 2px solid #e2e8f0;
+}
+
+/* Info grid */
+QFrame.info-section {
+    background-color: #ffffff;
+    border: 1px solid #e2e8f0;
+    border-radius: 8px;
+    padding: 15px;
+}
+
+/* Field labels */
+QLabel.field-label {
+    font-size: 12px;
+    color: #64748b;
+    font-weight: 500;
+}
+
+/* Field values */
+QLabel.field-value {
+    font-size: 14px;
+    color: #1e293b;
+    font-weight: 400;
+}
+
+/* No data label */
+QLabel#noDataLabel {
+    font-size: 14px;
+    color: #94a3b8;
+    padding: 40px;
+}

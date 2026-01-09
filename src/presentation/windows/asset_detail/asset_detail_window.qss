@@ -1,0 +1,41 @@
+/* Header bar - dark background */
+QFrame#headerBar {
+    background-color: #1e1e2e;
+    border: none;
+}
+
+/* Symbol label - white, bold */
+QFrame#headerBar QLabel#symbolLabel {
+    color: #ffffff;
+    font-size: 16px;
+    font-weight: bold;
+}
+
+/* Price label - white, large */
+QFrame#headerBar QLabel#priceLabel {
+    color: #ffffff;
+    font-size: 24px;
+    font-weight: bold;
+}
+
+/* Change label - color set dynamically */
+QFrame#headerBar QLabel#changeLabel {
+    font-size: 14px;
+}
+
+/* IV label - gray */
+QFrame#headerBar QLabel#ivLabel {
+    color: #9ca3af;
+    font-size: 14px;
+}
+
+/* HV label - gray */
+QFrame#headerBar QLabel#hvLabel {
+    color: #9ca3af;
+    font-size: 14px;
+}
+
+/* Page background */
+QWidget#page, QWidget#page_2 {
+    background-color: #ffffff;
+}

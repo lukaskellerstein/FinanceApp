@@ -1,1 +1,17 @@
 __pycache__
+
+# uv
+.venv
+uv.lock
+.python-version
+
+# Poetry (legacy)
+poetry.lock
+
+
+.playwright-mcp
+finance_app.egg-info
+
+# Qt generated files
+.qt_for_python
+

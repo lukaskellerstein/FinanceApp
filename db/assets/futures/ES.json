@@ -1,0 +1,174 @@
+{
+  "symbol": "ES",
+  "asset_type": "future",
+  "contract_details": [
+    {
+      "contract": {
+        "con_id": 649180684,
+        "symbol": "ES",
+        "sec_type": "FUT",
+        "exchange": "CME",
+        "currency": "USD",
+        "local_symbol": "ESH7",
+        "primary_exchange": "",
+        "last_trade_date": "20270319",
+        "multiplier": "50",
+        "trading_class": "ES"
+      },
+      "market_name": "ES",
+      "min_tick": 0.25,
+      "long_name": "E-mini S&P 500",
+      "contract_month": "202703",
+      "time_zone_id": "US/Central",
+      "trading_hours": "20260108:1700-20260109:1600;20260110:CLOSED;20260111:1700-20260112:1600;20260112:1700-20260113:1600;20260113:1700-20260114:1600;20260114:1700-20260115:1600",
+      "liquid_hours": "20260109:0830-20260109:1600;20260110:CLOSED;20260111:CLOSED;20260112:0830-20260112:1600;20260113:0830-20260113:1600;20260114:0830-20260114:1600;20260114:1700-20260115:1600"
+    },
+    {
+      "contract": {
+        "con_id": 649180671,
+        "symbol": "ES",
+        "sec_type": "FUT",
+        "exchange": "CME",
+        "currency": "USD",
+        "local_symbol": "ESU6",
+        "primary_exchange": "",
+        "last_trade_date": "20260918",
+        "multiplier": "50",
+        "trading_class": "ES"
+      },
+      "market_name": "ES",
+      "min_tick": 0.25,
+      "long_name": "E-mini S&P 500",
+      "contract_month": "202609",
+      "time_zone_id": "US/Central",
+      "trading_hours": "20260108:1700-20260109:1600;20260110:CLOSED;20260111:1700-20260112:1600;20260112:1700-20260113:1600;20260113:1700-20260114:1600;20260114:1700-20260115:1600",
+      "liquid_hours": "20260109:0830-20260109:1600;20260110:CLOSED;20260111:CLOSED;20260112:0830-20260112:1600;20260113:0830-20260113:1600;20260114:0830-20260114:1600;20260114:1700-20260115:1600"
+    },
+    {
+      "contract": {
+        "con_id": 649180695,
+        "symbol": "ES",
+        "sec_type": "FUT",
+        "exchange": "CME",
+        "currency": "USD",
+        "local_symbol": "ESH6",
+        "primary_exchange": "",
+        "last_trade_date": "20260320",
+        "multiplier": "50",
+        "trading_class": "ES"
+      },
+      "market_name": "ES",
+      "min_tick": 0.25,
+      "long_name": "E-mini S&P 500",
+      "contract_month": "202603",
+      "time_zone_id": "US/Central",
+      "trading_hours": "20260108:1700-20260109:1600;20260110:CLOSED;20260111:1700-20260112:1600;20260112:1700-20260113:1600;20260113:1700-20260114:1600;20260114:1700-20260115:1600",
+      "liquid_hours": "20260109:0830-20260109:1600;20260110:CLOSED;20260111:CLOSED;20260112:0830-20260112:1600;20260113:0830-20260113:1600;20260114:0830-20260114:1600;20260114:1700-20260115:1600"
+    },
+    {
+      "contract": {
+        "con_id": 711280049,
+        "symbol": "ES",
+        "sec_type": "FUT",
+        "exchange": "CME",
+        "currency": "USD",
+        "local_symbol": "ESU9",
+        "primary_exchange": "",
+        "last_trade_date": "20290921",
+        "multiplier": "50",
+        "trading_class": "ES"
+      },
+      "market_name": "ES",
+      "min_tick": 0.25,
+      "long_name": "E-mini S&P 500",
+      "contract_month": "202909",
+      "time_zone_id": "US/Central",
+      "trading_hours": "20260108:1700-20260109:1600;20260110:CLOSED;20260111:1700-20260112:1600;20260112:1700-20260113:1600;20260113:1700-20260114:1600;20260114:1700-20260115:1600",
+      "liquid_hours": "20260109:0830-20260109:1600;20260110:CLOSED;20260111:CLOSED;20260112:0830-20260112:1600;20260113:0830-20260113:1600;20260114:0830-20260114:1600;20260114:1700-20260115:1600"
+    },
+    {
+      "contract": {
+        "con_id": 672387437,
+        "symbol": "ES",
+        "sec_type": "FUT",
+        "exchange": "CME",
+        "currency": "USD",
+        "local_symbol": "ESH9",
+        "primary_exchange": "",
+        "last_trade_date": "20290316",
+        "multiplier": "50",
+        "trading_class": "ES"
+      },
+      "market_name": "ES",
+      "min_tick": 0.25,
+      "long_name": "E-mini S&P 500",
+      "contract_month": "202903",
+      "time_zone_id": "US/Central",
+      "trading_hours": "20260108:1700-20260109:1600;20260110:CLOSED;20260111:1700-20260112:1600;20260112:1700-20260113:1600;20260113:1700-20260114:1600;20260114:1700-20260115:1600",
+      "liquid_hours": "20260109:0830-20260109:1600;20260110:CLOSED;20260111:CLOSED;20260112:0830-20260112:1600;20260113:0830-20260113:1600;20260114:0830-20260114:1600;20260114:1700-20260115:1600"
+    },
+    {
+      "contract": {
+        "con_id": 649180675,
+        "symbol": "ES",
+        "sec_type": "FUT",
+        "exchange": "CME",
+        "currency": "USD",
+        "local_symbol": "ESU8",
+        "primary_exchange": "",
+        "last_trade_date": "20280915",
+        "multiplier": "50",
+        "trading_class": "ES"
+      },
+      "market_name": "ES",
+      "min_tick": 0.25,
+      "long_name": "E-mini S&P 500",
+      "contract_month": "202809",
+      "time_zone_id": "US/Central",
+      "trading_hours": "20260108:1700-20260109:1600;20260110:CLOSED;20260111:1700-20260112:1600;20260112:1700-20260113:1600;20260113:1700-20260114:1600;20260114:1700-20260115:1600",
+      "liquid_hours": "20260109:0830-20260109:1600;20260110:CLOSED;20260111:CLOSED;20260112:0830-20260112:1600;20260113:0830-20260113:1600;20260114:0830-20260114:1600;20260114:1700-20260115:1600"
+    },
+    {
+      "contract": {
+        "con_id": 649180666,
+        "symbol": "ES",
+        "sec_type": "FUT",
+        "exchange": "CME",
+        "currency": "USD",
+        "local_symbol": "ESH8",
+        "primary_exchange": "",
+        "last_trade_date": "20280317",
+        "multiplier": "50",
+        "trading_class": "ES"
+      },
+      "market_name": "ES",
+      "min_tick": 0.25,
+      "long_name": "E-mini S&P 500",
+      "contract_month": "202803",
+      "time_zone_id": "US/Central",
+      "trading_hours": "20260108:1700-20260109:1600;20260110:CLOSED;20260111:1700-20260112:1600;20260112:1700-20260113:1600;20260113:1700-20260114:1600;20260114:1700-20260115:1600",
+      "liquid_hours": "20260109:0830-20260109:1600;20260110:CLOSED;20260111:CLOSED;20260112:0830-20260112:1600;20260113:0830-20260113:1600;20260114:0830-20260114:1600;20260114:1700-20260115:1600"
+    },
+    {
+      "contract": {
+        "con_id": 649180681,
+        "symbol": "ES",
+        "sec_type": "FUT",
+        "exchange": "CME",
+        "currency": "USD",
+        "local_symbol": "ESU7",
+        "primary_exchange": "",
+        "last_trade_date": "20270917",
+        "multiplier": "50",
+        "trading_class": "ES"
+      },
+      "market_name": "ES",
+      "min_tick": 0.25,
+      "long_name": "E-mini S&P 500",
+      "contract_month": "202709",
+      "time_zone_id": "US/Central",
+      "trading_hours": "20260108:1700-20260109:1600;20260110:CLOSED;20260111:1700-20260112:1600;20260112:1700-20260113:1600;20260113:1700-20260114:1600;20260114:1700-20260115:1600",
+      "liquid_hours": "20260109:0830-20260109:1600;20260110:CLOSED;20260111:CLOSED;20260112:0830-20260112:1600;20260113:0830-20260113:1600;20260114:0830-20260114:1600;20260114:1700-20260115:1600"
+    }
+  ]
+}

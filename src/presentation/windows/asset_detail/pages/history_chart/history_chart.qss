@@ -1,0 +1,23 @@
+QWidget#page {
+    background-color: #ffffff;
+}
+
+/* Loading Progress Bar - Animated Striped Style */
+QProgressBar#loadingProgressBar {
+    border: none;
+    border-radius: 4px;
+    background-color: #e0e0e0;
+    text-align: center;
+}
+
+QProgressBar#loadingProgressBar::chunk {
+    border-radius: 4px;
+    background: qlineargradient(
+        x1: 0, y1: 0, x2: 1, y2: 1,
+        stop: 0 #2196F3,
+        stop: 0.25 #64B5F6,
+        stop: 0.5 #2196F3,
+        stop: 0.75 #64B5F6,
+        stop: 1 #2196F3
+    );
+}
