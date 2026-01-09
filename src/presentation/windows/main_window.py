@@ -26,6 +26,7 @@ from src.application.bootstrap import get_app
 from src.presentation.core.base_view import BaseView
 from src.presentation.core.base_window import BaseWindow
 from src.presentation.viewmodels import StocksWatchlistViewModel, FuturesWatchlistViewModel, ETFWatchlistViewModel
+from src.presentation.components.draggable_watchlist_table import DraggableWatchlistTable
 
 log = logging.getLogger("CellarLogger")
 
@@ -140,7 +141,7 @@ class StocksWatchlistPage(BaseView):
         super().__init__(*args, **kwargs)
         self.setObjectName("stocks_watchlist_page")
         self._vm = None
-        self._tables = {}  # watchlist_id -> QTableWidget
+        self._tables = {}  # watchlist_id -> DraggableWatchlistTable
         self._detail_window = None  # Reference to prevent garbage collection
         self._spinner_frame = 0  # Current spinner animation frame
         self._spinner_timer = None  # Timer for spinner animation
@@ -245,9 +246,9 @@ class StocksWatchlistPage(BaseView):
         vm.asset_creation_error.connect(self._on_asset_creation_error)
         vm.asset_creation_started.connect(self._on_asset_creation_started)
 
-    def _create_table_widget(self, watchlist_id: str = "") -> QTableWidget:
-        """Create a new table widget for a watchlist."""
-        table = QTableWidget()
+    def _create_table_widget(self, watchlist_id: str = "") -> DraggableWatchlistTable:
+        """Create a new draggable table widget for a watchlist."""
+        table = DraggableWatchlistTable(symbol_column=self.COL_SYMBOL)
         if watchlist_id:
             table.setObjectName(f"watchlist_table_{watchlist_id}")
         else:
@@ -267,7 +268,6 @@ class StocksWatchlistPage(BaseView):
         header.setSectionResizeMode(self.COL_DELETE, QHeaderView.ResizeMode.Fixed)
         table.setColumnWidth(self.COL_DELETE, 30)
 
-        table.setSelectionBehavior(QTableWidget.SelectionBehavior.SelectRows)
         table.setAlternatingRowColors(True)
 
         # Connect double-click to open detail window
@@ -275,6 +275,9 @@ class StocksWatchlistPage(BaseView):
 
         # Connect single-click for delete column
         table.cellClicked.connect(self._on_watchlist_cell_clicked)
+
+        # Connect drag-drop order changed signal
+        table.order_changed.connect(self._on_order_changed)
 
         return table
 
@@ -363,6 +366,41 @@ class StocksWatchlistPage(BaseView):
         """Handle delete button click for a symbol."""
         if self._vm:
             self._vm.remove_symbol(symbol)
+
+    def _on_order_changed(self, symbols: list) -> None:
+        """Handle row order change from drag-drop."""
+        if not self._vm:
+            return
+
+        # Persist new order via viewmodel
+        self._vm.update_watchlist_order(symbols)
+
+        # Recreate view buttons for all rows (they don't transfer during drag)
+        active_id = self._vm.active_watchlist_id
+        table = self._tables.get(active_id)
+        if table:
+            self._recreate_view_buttons(table)
+
+        self.status_label.setText("Watchlist order updated")
+        log.debug(f"Stocks watchlist order changed: {symbols}")
+
+    def _recreate_view_buttons(self, table: QTableWidget) -> None:
+        """Recreate view buttons for all rows after drag-drop reorder."""
+        for row in range(table.rowCount()):
+            symbol_item = table.item(row, self.COL_SYMBOL)
+            if not symbol_item:
+                continue
+
+            symbol = symbol_item.text()
+
+            # Only recreate if button is missing
+            if table.cellWidget(row, self.COL_VIEW) is None:
+                view_btn = QPushButton("📈")
+                view_btn.setObjectName(f"watchlist_view_{symbol.lower()}_button")
+                view_btn.setToolTip(f"View chart for {symbol}")
+                view_btn.setMaximumWidth(40)
+                view_btn.clicked.connect(lambda checked, s=symbol: self._on_view_clicked(s))
+                table.setCellWidget(row, self.COL_VIEW, view_btn)
 
     def _on_watchlist_cell_clicked(self, row: int, column: int) -> None:
         """Handle single-click on watchlist cell - check for delete column."""
@@ -812,7 +850,7 @@ class FuturesWatchlistPage(BaseView):
         Returns:
             Tuple of (QTreeView, FuturesTreeModel)
         """
-        from PyQt6.QtWidgets import QTreeView
+        from PyQt6.QtWidgets import QTreeView, QAbstractItemView
         from src.presentation.models import FuturesTreeModel
 
         tree_view = QTreeView()
@@ -830,6 +868,13 @@ class FuturesWatchlistPage(BaseView):
         tree_view.setUniformRowHeights(True)
         tree_view.setAnimated(True)
         tree_view.setIndentation(20)  # Control expand arrow indentation
+
+        # Enable drag-drop for parent item reordering
+        tree_view.setDragEnabled(True)
+        tree_view.setAcceptDrops(True)
+        tree_view.setDragDropMode(QAbstractItemView.DragDropMode.InternalMove)
+        tree_view.setDropIndicatorShown(True)
+        tree_view.setDefaultDropAction(Qt.DropAction.MoveAction)
 
         # Configure header
         header = tree_view.header()
@@ -857,6 +902,9 @@ class FuturesWatchlistPage(BaseView):
         # Connect expanded/collapsed to hide/show data in parent rows
         tree_view.expanded.connect(lambda idx: model.set_item_expanded(idx, True))
         tree_view.collapsed.connect(lambda idx: model.set_item_expanded(idx, False))
+
+        # Connect order changed signal for drag-drop reordering
+        model.order_changed.connect(self._on_futures_order_changed)
 
         return (tree_view, model)
 
@@ -1143,6 +1191,16 @@ class FuturesWatchlistPage(BaseView):
             if reply == QMessageBox.StandardButton.Yes:
                 self._vm.remove_symbol(item.symbol)
 
+    def _on_futures_order_changed(self, symbols: list) -> None:
+        """Handle parent item order change from drag-drop."""
+        if not self._vm:
+            return
+
+        # Persist new order via viewmodel
+        self._vm.update_watchlist_order(symbols)
+        self.status_label.setText("Futures watchlist order updated")
+        log.debug(f"Futures watchlist order changed: {symbols}")
+
     def _on_tree_item_double_clicked(self, index) -> None:
         """Handle double-click on tree item - open detail window."""
         if not self._vm or not index.isValid():
@@ -1259,7 +1317,7 @@ class ETFWatchlistPage(BaseView):
         super().__init__(*args, **kwargs)
         self.setObjectName("etf_watchlist_page")
         self._vm = None
-        self._tables = {}  # watchlist_id -> QTableWidget
+        self._tables = {}  # watchlist_id -> DraggableWatchlistTable
         self._detail_window = None
         self._spinner_frame = 0  # Current spinner animation frame
         self._spinner_timer = None  # Timer for spinner animation
@@ -1364,9 +1422,9 @@ class ETFWatchlistPage(BaseView):
         vm.asset_creation_error.connect(self._on_asset_creation_error)
         vm.asset_creation_started.connect(self._on_asset_creation_started)
 
-    def _create_table_widget(self, watchlist_id: str = "") -> QTableWidget:
-        """Create a new table widget for a watchlist."""
-        table = QTableWidget()
+    def _create_table_widget(self, watchlist_id: str = "") -> DraggableWatchlistTable:
+        """Create a new draggable table widget for a watchlist."""
+        table = DraggableWatchlistTable(symbol_column=self.COL_SYMBOL)
         if watchlist_id:
             table.setObjectName(f"etf_watchlist_table_{watchlist_id}")
         else:
@@ -1382,10 +1440,12 @@ class ETFWatchlistPage(BaseView):
         header.setSectionResizeMode(self.COL_DELETE, QHeaderView.ResizeMode.Fixed)
         table.setColumnWidth(self.COL_DELETE, 30)
 
-        table.setSelectionBehavior(QTableWidget.SelectionBehavior.SelectRows)
         table.setAlternatingRowColors(True)
         table.cellDoubleClicked.connect(self._on_watchlist_item_double_clicked)
         table.cellClicked.connect(self._on_watchlist_cell_clicked)
+
+        # Connect drag-drop order changed signal
+        table.order_changed.connect(self._on_order_changed)
 
         return table
 
@@ -1469,6 +1529,41 @@ class ETFWatchlistPage(BaseView):
         """Handle delete button click for a symbol."""
         if self._vm:
             self._vm.remove_symbol(symbol)
+
+    def _on_order_changed(self, symbols: list) -> None:
+        """Handle row order change from drag-drop."""
+        if not self._vm:
+            return
+
+        # Persist new order via viewmodel
+        self._vm.update_watchlist_order(symbols)
+
+        # Recreate view buttons for all rows (they don't transfer during drag)
+        active_id = self._vm.active_watchlist_id
+        table = self._tables.get(active_id)
+        if table:
+            self._recreate_view_buttons(table)
+
+        self.status_label.setText("Watchlist order updated")
+        log.debug(f"ETF watchlist order changed: {symbols}")
+
+    def _recreate_view_buttons(self, table: QTableWidget) -> None:
+        """Recreate view buttons for all rows after drag-drop reorder."""
+        for row in range(table.rowCount()):
+            symbol_item = table.item(row, self.COL_SYMBOL)
+            if not symbol_item:
+                continue
+
+            symbol = symbol_item.text()
+
+            # Only recreate if button is missing
+            if table.cellWidget(row, self.COL_VIEW) is None:
+                view_btn = QPushButton("📈")
+                view_btn.setObjectName(f"etf_watchlist_view_{symbol.lower()}_button")
+                view_btn.setToolTip(f"View chart for {symbol}")
+                view_btn.setMaximumWidth(40)
+                view_btn.clicked.connect(lambda checked, s=symbol: self._on_view_clicked(s))
+                table.setCellWidget(row, self.COL_VIEW, view_btn)
 
     def _on_watchlist_cell_clicked(self, row: int, column: int) -> None:
         """Handle single-click on watchlist cell - check for delete column."""

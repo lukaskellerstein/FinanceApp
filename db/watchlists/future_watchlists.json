@@ -5,12 +5,10 @@
       "name": "Default",
       "symbols": [
         "CL",
-        "GC",
-        "HO",
-        "PL",
-        "ZB",
-        "QI",
-        "ES"
+        "ZW",
+        "ZM",
+        "ES",
+        "ZS"
       ],
       "asset_type": "future",
       "created_at": "2026-01-08T14:15:37.480001",

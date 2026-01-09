@@ -12,13 +12,14 @@ Usage:
     control_server = run_control_server(command_handler, host="localhost", port=9999)
 """
 
+import base64
 import json
 import logging
 import threading
 import socketserver
 from typing import Optional, Any, Dict, List
 
-from PyQt6.QtCore import QObject, pyqtSignal, QTimer
+from PyQt6.QtCore import QBuffer, QIODevice, QObject, pyqtSignal, QTimer
 from PyQt6.QtGui import QAction
 from PyQt6.QtWidgets import (
     QWidget,
@@ -107,6 +108,11 @@ class CommandHandler(QObject):
             return self._trigger_action(command.get("object_name"))
         elif cmd_type == "get_window_info":
             return self._get_window_info()
+        elif cmd_type == "take_screenshot":
+            return self._take_screenshot(
+                command.get("window_name"),
+                command.get("widget_name")
+            )
         elif cmd_type == "close":
             QTimer.singleShot(100, self.app.close)
             return True
@@ -530,6 +536,63 @@ class CommandHandler(QObject):
             "minimized": self.app.isMinimized(),
             "maximized": self.app.isMaximized(),
             "visible": self.app.isVisible(),
+        }
+
+    def _take_screenshot(
+        self,
+        window_name: Optional[str] = None,
+        widget_name: Optional[str] = None
+    ) -> Dict:
+        """
+        Take a screenshot of the application, a specific window, or a specific widget.
+
+        Args:
+            window_name: Optional window title to capture. If None, captures main window.
+            widget_name: Optional widget object_name to capture. Takes precedence over window_name.
+
+        Returns:
+            Dict with base64-encoded PNG image data, dimensions, and target info.
+        """
+        target_widget = None
+        target_name = "main_window"
+
+        # Priority: widget_name > window_name > main window
+        if widget_name:
+            target_widget = self._find_widget(widget_name)
+            if not target_widget:
+                raise ValueError(f"Widget not found: {widget_name}")
+            target_name = widget_name
+        elif window_name:
+            # Search for window by title
+            app = QApplication.instance()
+            if app:
+                for window in app.topLevelWidgets():
+                    if window.windowTitle() == window_name and window.isVisible():
+                        target_widget = window
+                        target_name = window_name
+                        break
+            if not target_widget:
+                raise ValueError(f"Window not found: {window_name}")
+        else:
+            target_widget = self.app
+            target_name = self.app.windowTitle()
+
+        # Grab the widget's visual representation
+        pixmap = target_widget.grab()
+
+        # Convert to base64-encoded PNG using Qt's QBuffer
+        buffer = QBuffer()
+        buffer.open(QIODevice.OpenModeFlag.WriteOnly)
+        pixmap.save(buffer, "PNG")
+        buffer.close()
+        image_data = base64.b64encode(buffer.data().data()).decode('utf-8')
+
+        return {
+            "image_base64": image_data,
+            "width": pixmap.width(),
+            "height": pixmap.height(),
+            "target": target_name,
+            "format": "png"
         }
 
 

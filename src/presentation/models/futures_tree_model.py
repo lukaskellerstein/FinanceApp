@@ -14,8 +14,13 @@ from typing import Any, Dict, List, Optional, Tuple
 
 from PyQt6.QtCore import (
     QAbstractItemModel,
+    QByteArray,
+    QDataStream,
+    QIODevice,
+    QMimeData,
     QModelIndex,
     Qt,
+    pyqtSignal,
 )
 from PyQt6.QtGui import QColor, QFont
 
@@ -30,6 +35,7 @@ class FuturesTreeModel(QAbstractItemModel):
     Tree model for futures watchlist.
 
     Displays futures as parent rows with contracts as children.
+    Supports drag-and-drop reordering of parent items (symbols).
 
     Columns:
         0: Symbol/LocalSymbol
@@ -54,7 +60,16 @@ class FuturesTreeModel(QAbstractItemModel):
 
         # Real-time updates
         model.update_tick("CL", "CLZ4", {"last": 75.50, "bid": 75.49})
+
+        # Connect to order changes for persistence
+        model.order_changed.connect(viewmodel.update_watchlist_order)
     """
+
+    # Signal emitted when parent items are reordered via drag-drop
+    order_changed = pyqtSignal(list)  # Emits [symbol1, symbol2, ...]
+
+    # Custom MIME type for internal drag-drop
+    MIME_TYPE = "application/x-futures-tree-item"
 
     COLUMNS = [
         "",          # View button
@@ -740,6 +755,9 @@ class FuturesTreeModel(QAbstractItemModel):
         """
         Get item flags.
 
+        Parent items (symbols) are draggable and can receive drops for reordering.
+        Child items (contracts) are not draggable.
+
         Args:
             index: Item index
 
@@ -747,5 +765,147 @@ class FuturesTreeModel(QAbstractItemModel):
             Item flags
         """
         if not index.isValid():
-            return Qt.ItemFlag.NoItemFlags
-        return Qt.ItemFlag.ItemIsEnabled | Qt.ItemFlag.ItemIsSelectable
+            # Invalid index (root) can receive drops
+            return Qt.ItemFlag.ItemIsDropEnabled
+
+        item = index.internalPointer()
+        base_flags = Qt.ItemFlag.ItemIsEnabled | Qt.ItemFlag.ItemIsSelectable
+
+        if item and item.is_parent:
+            # Parent items are draggable and accept drops (for reordering)
+            return base_flags | Qt.ItemFlag.ItemIsDragEnabled | Qt.ItemFlag.ItemIsDropEnabled
+
+        # Child items: not draggable, not drop targets
+        return base_flags
+
+    def supportedDropActions(self) -> Qt.DropAction:
+        """Support move action for reordering."""
+        return Qt.DropAction.MoveAction
+
+    def mimeTypes(self) -> List[str]:
+        """Return supported MIME types."""
+        return [self.MIME_TYPE]
+
+    def mimeData(self, indexes: List[QModelIndex]) -> QMimeData:
+        """Encode dragged item data into MIME data."""
+        mime_data = QMimeData()
+
+        # Get the first valid parent item index
+        for index in indexes:
+            if index.isValid():
+                item = index.internalPointer()
+                if item and item.is_parent:
+                    # Encode the row index and symbol of the parent
+                    data = QByteArray()
+                    stream = QDataStream(data, QIODevice.OpenModeFlag.WriteOnly)
+                    stream.writeInt32(index.row())
+                    stream.writeQString(item.symbol)
+                    mime_data.setData(self.MIME_TYPE, data)
+                    break
+
+        return mime_data
+
+    def dropMimeData(
+        self,
+        data: QMimeData,
+        action: Qt.DropAction,
+        row: int,
+        column: int,
+        parent: QModelIndex,
+    ) -> bool:
+        """
+        Handle dropped item - reorder parent items.
+
+        Args:
+            data: MIME data from drag
+            action: Drop action (should be Move)
+            row: Target row (-1 means on the item, otherwise insert position)
+            column: Target column (ignored)
+            parent: Parent index (should be invalid for root-level drops)
+
+        Returns:
+            True if drop was handled successfully
+        """
+        if action != Qt.DropAction.MoveAction:
+            return False
+
+        if not data.hasFormat(self.MIME_TYPE):
+            return False
+
+        # Decode source row and symbol
+        encoded = data.data(self.MIME_TYPE)
+        stream = QDataStream(encoded, QIODevice.OpenModeFlag.ReadOnly)
+        source_row = stream.readInt32()
+        source_symbol = stream.readQString()
+
+        # Determine target row
+        if parent.isValid():
+            parent_item = parent.internalPointer()
+            if parent_item:
+                if not parent_item.is_parent:
+                    # Dropped on a child item - reject
+                    return False
+                # Dropped on a parent item - insert before it
+                target_row = parent.row()
+            else:
+                return False
+        else:
+            # Dropped at root level
+            target_row = row if row >= 0 else len(self._root_items)
+
+        # Don't move to same position
+        if source_row == target_row or source_row == target_row - 1:
+            return False
+
+        # Validate source row
+        if source_row < 0 or source_row >= len(self._root_items):
+            return False
+
+        # Perform the move
+        self._move_parent_item(source_row, target_row)
+
+        # Emit signal with new symbol order
+        symbols = [item.symbol for item in self._root_items]
+        self.order_changed.emit(symbols)
+        log.debug(f"Futures tree order changed: {symbols}")
+
+        return True
+
+    def _move_parent_item(self, from_row: int, to_row: int) -> None:
+        """
+        Move a parent item from one position to another.
+
+        Args:
+            from_row: Source row index
+            to_row: Target row index (insert position)
+        """
+        if from_row < 0 or from_row >= len(self._root_items):
+            return
+
+        # Calculate actual target for beginMoveRows
+        # Qt expects the target row index where the item will be AFTER the move
+        if from_row < to_row:
+            # Moving down: Qt needs the row index AFTER the source is removed
+            actual_target = to_row
+        else:
+            # Moving up: use the target row directly
+            actual_target = to_row
+
+        # Notify views about the move
+        self.beginMoveRows(
+            QModelIndex(),
+            from_row,
+            from_row,
+            QModelIndex(),
+            actual_target,
+        )
+
+        # Perform the actual move in our data structure
+        item = self._root_items.pop(from_row)
+        if from_row < to_row:
+            self._root_items.insert(to_row - 1, item)
+        else:
+            self._root_items.insert(to_row, item)
+
+        self.endMoveRows()
+        log.debug(f"Moved {item.symbol} from row {from_row} to {to_row}")

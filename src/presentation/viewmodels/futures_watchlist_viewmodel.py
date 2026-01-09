@@ -710,6 +710,24 @@ class FuturesWatchlistViewModel(BaseViewModel):
         """Load watchlists (legacy method - now calls load_all_watchlists)."""
         self.load_all_watchlists()
 
+    def update_watchlist_order(self, symbols: List[str]) -> None:
+        """Update the watchlist symbol order."""
+        if not self.active_watchlist_id:
+            return
+
+        try:
+            # Get current watchlist and update symbols
+            watchlist = self._watchlist_service.get_watchlist_by_id(
+                "FUTURE", self.active_watchlist_id
+            )
+            if watchlist:
+                # Use the service's update for the active watchlist
+                self._watchlist_service.update_watchlist("FUTURE", symbols)
+                self.symbols = symbols
+                log.info("Futures watchlist order updated")
+        except Exception as e:
+            self.handle_error(e)
+
     # ----------------------------------------------------------------
     # Real-time data
     # ----------------------------------------------------------------

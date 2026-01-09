@@ -780,5 +780,99 @@ def get_window_info(
         return {"status": "error", "message": str(e)}
 
 
+@mcp.tool()
+def take_screenshot(
+    window_name: str = "",
+    widget_name: str = "",
+    save_path: str = "",
+    host: str = DEFAULT_HOST,
+    port: int = DEFAULT_PORT
+) -> Dict[str, Any]:
+    """
+    Take a screenshot of the application, a specific window, or a specific widget.
+
+    This tool captures a visual screenshot using PyQt6's native grab() method,
+    without requiring Playwright. Screenshots can be saved to a file or returned
+    as base64-encoded data.
+
+    Args:
+        window_name: Optional window title to capture (e.g., "Finance App - Settings").
+                     Use get_snapshot() to see available windows in the "windows" list.
+        widget_name: Optional widget object_name to capture (e.g., "stocks_table").
+                     Takes precedence over window_name if both are provided.
+        save_path: Optional path to save the PNG screenshot. If not provided,
+                   returns base64-encoded image data in the response.
+        host: Control server host
+        port: Control server port
+
+    Returns:
+        Dict with:
+        - status: "success" or "error"
+        - file_path: Path to saved file (if save_path was provided)
+        - image_base64: Base64-encoded PNG data (if save_path was not provided)
+        - width: Image width in pixels
+        - height: Image height in pixels
+        - target: Name/title of the captured widget/window
+
+    Examples:
+        # Capture main window and save to file
+        take_screenshot(save_path="/tmp/app_screenshot.png")
+
+        # Capture a dialog by window title
+        take_screenshot(window_name="Add Symbol")
+
+        # Capture a specific widget by object name
+        take_screenshot(widget_name="stocks_table", save_path="/tmp/table.png")
+
+        # Get screenshot as base64 data
+        take_screenshot()  # Returns image_base64 in response
+    """
+    import base64
+
+    try:
+        effective_port = _get_effective_port(port)
+        command = {"type": "take_screenshot"}
+
+        if widget_name:
+            command["widget_name"] = widget_name
+        elif window_name:
+            command["window_name"] = window_name
+
+        response = _send_command(command, host, effective_port)
+
+        if response.get("status") != "success":
+            return {"status": "error", "message": response.get("message")}
+
+        result = response.get("result", {})
+
+        # If save_path is provided, decode and save the image
+        if save_path:
+            image_data = base64.b64decode(result.get("image_base64", ""))
+            with open(save_path, "wb") as f:
+                f.write(image_data)
+
+            return {
+                "status": "success",
+                "message": f"Screenshot saved to {save_path}",
+                "file_path": save_path,
+                "width": result.get("width"),
+                "height": result.get("height"),
+                "target": result.get("target")
+            }
+        else:
+            # Return base64 data directly
+            return {
+                "status": "success",
+                "image_base64": result.get("image_base64"),
+                "width": result.get("width"),
+                "height": result.get("height"),
+                "target": result.get("target"),
+                "format": result.get("format", "png")
+            }
+
+    except Exception as e:
+        return {"status": "error", "message": str(e)}
+
+
 if __name__ == "__main__":
     mcp.run(transport='stdio')

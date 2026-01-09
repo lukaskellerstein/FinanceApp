@@ -15,11 +15,31 @@ mcp__finance-app-control__get_snapshot
 ```
 Returns all widgets with properties (object_name, type, visible, enabled, etc.) and available menu actions.
 
-### Get Screenshot
+### Take Screenshot (Native PyQt6)
 ```
-mcp__playwright__browser_take_screenshot
+mcp__finance-app-control__take_screenshot(window_name?, widget_name?, save_path?)
 ```
-Takes a visual screenshot of the current page/app state. Useful for visual verification and debugging UI issues.
+Takes a visual screenshot using PyQt6's native `grab()` method (no Playwright required).
+
+**Parameters:**
+- `window_name`: Optional window title to capture (e.g., "Add Symbol" dialog)
+- `widget_name`: Optional widget object_name to capture (e.g., "stocks_table")
+- `save_path`: Optional path to save the PNG file. If not provided, returns base64 data.
+
+**Examples:**
+```python
+# Capture main window
+take_screenshot(save_path="/tmp/app.png")
+
+# Capture a specific dialog by title
+take_screenshot(window_name="Add Symbol", save_path="/tmp/dialog.png")
+
+# Capture a specific widget by object name
+take_screenshot(widget_name="stocks_table", save_path="/tmp/table.png")
+
+# Get screenshot as base64 (for inline display)
+take_screenshot()  # Returns {"image_base64": "...", "width": 800, "height": 600}
+```
 
 ### Interact with the App
 - **Click**: `mcp__finance-app-control__click(object_name)`
