@@ -25,7 +25,7 @@ from PyQt6.QtWidgets import (
 from src.application.bootstrap import get_app
 from src.presentation.core.base_view import BaseView
 from src.presentation.core.base_window import BaseWindow
-from src.presentation.viewmodels import StocksWatchlistViewModel, FuturesWatchlistViewModel
+from src.presentation.viewmodels import StocksWatchlistViewModel, FuturesWatchlistViewModel, ETFWatchlistViewModel
 
 log = logging.getLogger("CellarLogger")
 
@@ -49,14 +49,19 @@ class HomePage(BaseView):
         layout.addWidget(QLabel("  - File > Exit to close the application"))
         layout.addWidget(QLabel("  - Watchlists > Stocks for stock watchlist"))
         layout.addWidget(QLabel("  - Watchlists > Futures for futures watchlist"))
+        layout.addWidget(QLabel("  - Watchlists > ETF for ETF watchlist"))
         layout.addWidget(QLabel("  - Assets > Stocks to manage stock assets"))
         layout.addWidget(QLabel("  - Assets > Futures to manage futures assets"))
+        layout.addWidget(QLabel("  - Assets > ETF to manage ETF assets"))
 
         layout.addStretch()
 
 
 class StocksWatchlistPage(BaseView):
     """Stocks Watchlist Page with multiple watchlists displayed as tabs."""
+
+    # Loading spinner frames for animation
+    SPINNER_FRAMES = ["⠋", "⠙", "⠹", "⠸", "⠼", "⠴", "⠦", "⠧", "⠇", "⠏"]
 
     # Column indices for the watchlist table
     COL_VIEW = 0
@@ -137,6 +142,9 @@ class StocksWatchlistPage(BaseView):
         self._vm = None
         self._tables = {}  # watchlist_id -> QTableWidget
         self._detail_window = None  # Reference to prevent garbage collection
+        self._spinner_frame = 0  # Current spinner animation frame
+        self._spinner_timer = None  # Timer for spinner animation
+        self._is_loading = False  # Loading state flag
 
         self._setup_ui()
 
@@ -177,6 +185,17 @@ class StocksWatchlistPage(BaseView):
         self.add_button = QPushButton("Add")
         self.add_button.setObjectName("add_button")
         header.addWidget(self.add_button)
+
+        # Loading spinner label (hidden by default)
+        self.loading_label = QLabel("")
+        self.loading_label.setObjectName("loading_label")
+        self.loading_label.setStyleSheet("color: #2196F3; font-size: 14px; margin-left: 5px;")
+        self.loading_label.setVisible(False)
+        header.addWidget(self.loading_label)
+
+        # Spinner timer for animation
+        self._spinner_timer = QTimer(self)
+        self._spinner_timer.timeout.connect(self._update_spinner)
 
         self.add_from_assets_button = QPushButton("Add from Assets")
         self.add_from_assets_button.setObjectName("add_from_assets_button")
@@ -444,31 +463,64 @@ class StocksWatchlistPage(BaseView):
         """Handle multiple contracts found - show selection dialog."""
         from src.presentation.components.contract_selection_dialog import ContractSelectionDialog
 
+        self._stop_loading()
+
         selected_cd, accepted = ContractSelectionDialog.select_contract(
             symbol, details_list, self
         )
 
         if accepted and selected_cd:
+            self._start_loading()
             self._vm.create_asset_from_selection(symbol, selected_cd)
         else:
             self.status_label.setText(f"Selection cancelled for {symbol}")
 
     def _on_asset_created(self, symbol: str) -> None:
         """Handle asset created signal."""
+        self._stop_loading()
         self.status_label.setText(f"Asset {symbol} created from IB")
 
     def _on_asset_creation_error(self, symbol: str, error: str) -> None:
         """Handle asset creation error."""
+        self._stop_loading()
         self.status_label.setText(f"Error adding {symbol}: {error}")
 
     def _on_asset_creation_started(self, symbol: str) -> None:
         """Handle asset creation started - show loading status."""
         self.status_label.setText(f"Searching IB for {symbol}...")
+        self._start_loading()
+
+    def _start_loading(self) -> None:
+        """Start the loading spinner animation."""
+        self._is_loading = True
+        self._spinner_frame = 0
+        self.loading_label.setVisible(True)
+        self.loading_label.setText(self.SPINNER_FRAMES[0] + " Searching...")
+        self.add_button.setEnabled(False)
+        self.ticker_input.setEnabled(False)
+        self._spinner_timer.start(80)  # 80ms per frame for smooth animation
+
+    def _stop_loading(self) -> None:
+        """Stop the loading spinner animation."""
+        self._is_loading = False
+        self._spinner_timer.stop()
+        self.loading_label.setVisible(False)
+        self.loading_label.setText("")
+        self.add_button.setEnabled(True)
+        self.ticker_input.setEnabled(True)
+
+    def _update_spinner(self) -> None:
+        """Update the spinner animation frame."""
+        if not self._is_loading:
+            return
+        self._spinner_frame = (self._spinner_frame + 1) % len(self.SPINNER_FRAMES)
+        self.loading_label.setText(self.SPINNER_FRAMES[self._spinner_frame] + " Searching...")
 
     def _on_symbol_added(self, symbol: str) -> None:
         if not self._vm:
             return
 
+        self._stop_loading()
         active_id = self._vm.active_watchlist_id
         table = self._tables.get(active_id)
         if table:
@@ -642,6 +694,9 @@ class StocksWatchlistPage(BaseView):
 class FuturesWatchlistPage(BaseView):
     """Futures Watchlist Page with hierarchical tree view showing symbols and contracts."""
 
+    # Loading spinner frames for animation
+    SPINNER_FRAMES = ["⠋", "⠙", "⠹", "⠸", "⠼", "⠴", "⠦", "⠧", "⠇", "⠏"]
+
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.setObjectName("futures_watchlist_page")
@@ -649,6 +704,9 @@ class FuturesWatchlistPage(BaseView):
         # watchlist_id -> (QTreeView, FuturesTreeModel)
         self._tree_views: Dict[str, tuple] = {}
         self._detail_window = None  # Reference to prevent garbage collection
+        self._spinner_frame = 0  # Current spinner animation frame
+        self._spinner_timer = None  # Timer for spinner animation
+        self._is_loading = False  # Loading state flag
 
         self._setup_ui()
 
@@ -689,6 +747,17 @@ class FuturesWatchlistPage(BaseView):
         self.add_button = QPushButton("Add")
         self.add_button.setObjectName("futures_add_button")
         header.addWidget(self.add_button)
+
+        # Loading spinner label (hidden by default)
+        self.loading_label = QLabel("")
+        self.loading_label.setObjectName("futures_loading_label")
+        self.loading_label.setStyleSheet("color: #2196F3; font-size: 14px; margin-left: 5px;")
+        self.loading_label.setVisible(False)
+        header.addWidget(self.loading_label)
+
+        # Spinner timer for animation
+        self._spinner_timer = QTimer(self)
+        self._spinner_timer.timeout.connect(self._update_spinner)
 
         self.add_from_assets_button = QPushButton("Add from Assets")
         self.add_from_assets_button.setObjectName("futures_add_from_assets_button")
@@ -933,31 +1002,64 @@ class FuturesWatchlistPage(BaseView):
         """Handle multiple contracts found - show selection dialog."""
         from src.presentation.components.contract_selection_dialog import ContractSelectionDialog
 
+        self._stop_loading()
+
         selected_cd, accepted = ContractSelectionDialog.select_contract(
             symbol, details_list, self
         )
 
         if accepted and selected_cd:
+            self._start_loading()
             self._vm.create_asset_from_selection(symbol, selected_cd)
         else:
             self.status_label.setText(f"Selection cancelled for {symbol}")
 
     def _on_asset_created(self, symbol: str) -> None:
         """Handle asset created signal."""
+        self._stop_loading()
         self.status_label.setText(f"Asset {symbol} created from IB")
 
     def _on_asset_creation_error(self, symbol: str, error: str) -> None:
         """Handle asset creation error."""
+        self._stop_loading()
         self.status_label.setText(f"Error adding {symbol}: {error}")
 
     def _on_asset_creation_started(self, symbol: str) -> None:
         """Handle asset creation started - show loading status."""
         self.status_label.setText(f"Searching IB for {symbol}...")
+        self._start_loading()
+
+    def _start_loading(self) -> None:
+        """Start the loading spinner animation."""
+        self._is_loading = True
+        self._spinner_frame = 0
+        self.loading_label.setVisible(True)
+        self.loading_label.setText(self.SPINNER_FRAMES[0] + " Searching...")
+        self.add_button.setEnabled(False)
+        self.ticker_input.setEnabled(False)
+        self._spinner_timer.start(80)  # 80ms per frame for smooth animation
+
+    def _stop_loading(self) -> None:
+        """Stop the loading spinner animation."""
+        self._is_loading = False
+        self._spinner_timer.stop()
+        self.loading_label.setVisible(False)
+        self.loading_label.setText("")
+        self.add_button.setEnabled(True)
+        self.ticker_input.setEnabled(True)
+
+    def _update_spinner(self) -> None:
+        """Update the spinner animation frame."""
+        if not self._is_loading:
+            return
+        self._spinner_frame = (self._spinner_frame + 1) % len(self.SPINNER_FRAMES)
+        self.loading_label.setText(self.SPINNER_FRAMES[self._spinner_frame] + " Searching...")
 
     def _on_symbol_added(self, symbol: str) -> None:
         if not self._vm:
             return
 
+        self._stop_loading()
         active_id = self._vm.active_watchlist_id
         tree_data = self._tree_views.get(active_id)
         if tree_data:
@@ -1083,8 +1185,610 @@ class FuturesWatchlistPage(BaseView):
         super().onDestroy()
 
 
+class ETFWatchlistPage(BaseView):
+    """ETF Watchlist Page with multiple watchlists displayed as tabs."""
+
+    # Loading spinner frames for animation
+    SPINNER_FRAMES = ["⠋", "⠙", "⠹", "⠸", "⠼", "⠴", "⠦", "⠧", "⠇", "⠏"]
+
+    # Column indices for the watchlist table (same as stocks)
+    COL_VIEW = 0
+    COL_SYMBOL = 1
+    COL_BID_SIZE = 2
+    COL_BID = 3
+    COL_LAST = 4
+    COL_ASK = 5
+    COL_ASK_SIZE = 6
+    COL_CHANGE = 7
+    COL_OPEN = 8
+    COL_HIGH = 9
+    COL_LOW = 10
+    COL_CLOSE = 11
+    COL_VOLUME = 12
+    COL_OPT_HIST_VOL = 13
+    COL_OPT_IMPL_VOL = 14
+    COL_DELETE = 15
+    NUM_COLUMNS = 16
+
+    COLUMN_HEADERS = [
+        "", "Symbol", "Bid Size", "Bid", "Last", "Ask", "Ask Size",
+        "Change %", "Open", "High", "Low", "Close",
+        "Volume", "Hist Vol", "Impl Vol", ""
+    ]
+
+    @staticmethod
+    def get_change_color(value: float) -> str:
+        """Get background color based on percentage change value."""
+        if value <= -25:
+            return "#b71c1c"
+        elif value > -25 and value <= -10:
+            return "#d32f2f"
+        elif value > -10 and value <= -6:
+            return "#f44336"
+        elif value > -6 and value <= -3:
+            return "#e57373"
+        elif value > -3 and value < 0:
+            return "#ffcdd2"
+        elif value == 0:
+            return "white"
+        elif value > 0 and value < 3:
+            return "#c8e6c9"
+        elif value >= 3 and value < 6:
+            return "#81c784"
+        elif value >= 6 and value < 10:
+            return "#4caf50"
+        elif value >= 10 and value < 25:
+            return "#388e3c"
+        elif value >= 25:
+            return "#1b5e20"
+        return "white"
+
+    @staticmethod
+    def is_dark_color(hex_color: str) -> bool:
+        """Determine if a color is dark based on luminance."""
+        if hex_color.lower() == "white":
+            return False
+        hex_color = hex_color.lstrip("#")
+        r = int(hex_color[0:2], 16)
+        g = int(hex_color[2:4], 16)
+        b = int(hex_color[4:6], 16)
+        luminance = (0.299 * r + 0.587 * g + 0.114 * b) / 255
+        return luminance < 0.5
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.setObjectName("etf_watchlist_page")
+        self._vm = None
+        self._tables = {}  # watchlist_id -> QTableWidget
+        self._detail_window = None
+        self._spinner_frame = 0  # Current spinner animation frame
+        self._spinner_timer = None  # Timer for spinner animation
+        self._is_loading = False  # Loading state flag
+
+        self._setup_ui()
+
+        try:
+            app = get_app()
+            self._vm = ETFWatchlistViewModel(
+                watchlist_service=app.watchlist_service,
+                realtime_service=app.realtime_service,
+                asset_service=app.asset_service,
+                market_data_bridge=app.market_data_bridge,
+            )
+            self.set_view_model(self._vm)
+            self._vm.load_all_watchlists()
+        except Exception as e:
+            self.status_label.setText(f"Error: {e}")
+            log.error(f"Failed to initialize ETFWatchlistPage: {e}")
+
+    def _setup_ui(self) -> None:
+        from src.presentation.components.watchlist_tab_widget import WatchlistTabWidget
+
+        layout = QVBoxLayout(self)
+        layout.setContentsMargins(10, 10, 10, 10)
+
+        # Header
+        header = QHBoxLayout()
+        title = QLabel("ETF Watchlist")
+        title.setStyleSheet("font-size: 18px; font-weight: bold;")
+        header.addWidget(title)
+        header.addStretch()
+
+        self.ticker_input = QLineEdit()
+        self.ticker_input.setObjectName("etf_ticker_input")
+        self.ticker_input.setPlaceholderText("Enter ticker...")
+        self.ticker_input.setMaximumWidth(120)
+        self.ticker_input.returnPressed.connect(self._on_add_clicked)
+        header.addWidget(self.ticker_input)
+
+        self.add_button = QPushButton("Add")
+        self.add_button.setObjectName("etf_add_button")
+        header.addWidget(self.add_button)
+
+        # Loading spinner label (hidden by default)
+        self.loading_label = QLabel("")
+        self.loading_label.setObjectName("etf_loading_label")
+        self.loading_label.setStyleSheet("color: #2196F3; font-size: 14px; margin-left: 5px;")
+        self.loading_label.setVisible(False)
+        header.addWidget(self.loading_label)
+
+        # Spinner timer for animation
+        self._spinner_timer = QTimer(self)
+        self._spinner_timer.timeout.connect(self._update_spinner)
+
+        self.add_from_assets_button = QPushButton("Add from Assets")
+        self.add_from_assets_button.setObjectName("etf_add_from_assets_button")
+        self.add_from_assets_button.clicked.connect(self._on_add_from_assets)
+        header.addWidget(self.add_from_assets_button)
+
+        self.refresh_button = QPushButton("Refresh")
+        self.refresh_button.setObjectName("etf_refresh_button")
+        header.addWidget(self.refresh_button)
+
+        layout.addLayout(header)
+
+        # Status
+        self.status_label = QLabel("")
+        self.status_label.setObjectName("etf_status_label")
+        layout.addWidget(self.status_label)
+
+        # Tab widget for multiple watchlists
+        self.tab_widget = WatchlistTabWidget()
+        self.tab_widget.setObjectName("etf_watchlist_tabs")
+        self.tab_widget.watchlist_create_requested.connect(self._on_create_watchlist)
+        self.tab_widget.watchlist_delete_requested.connect(self._on_delete_watchlist)
+        self.tab_widget.watchlist_rename_requested.connect(self._on_rename_watchlist)
+        self.tab_widget.watchlist_changed.connect(self._on_watchlist_tab_changed)
+        layout.addWidget(self.tab_widget)
+
+    def bind_view_model(self, vm: ETFWatchlistViewModel) -> None:
+        self.add_button.clicked.connect(self._on_add_clicked)
+        self.refresh_button.clicked.connect(lambda: vm.load_all_watchlists())
+
+        # Multi-watchlist signals
+        vm.watchlists_loaded.connect(self._on_watchlists_loaded)
+        vm.watchlist_created.connect(self._on_watchlist_created)
+        vm.watchlist_deleted.connect(self._on_watchlist_deleted)
+        vm.active_watchlist_loaded.connect(self._on_active_watchlist_loaded)
+
+        # Symbol signals
+        vm.symbol_added.connect(self._on_symbol_added)
+        vm.symbol_removed.connect(self._on_symbol_removed)
+        vm.symbols_added.connect(self._on_symbols_added)
+        vm.error_occurred.connect(self._on_error)
+        vm.tick_updated.connect(self._on_tick_updated)
+
+        # Asset creation signals
+        vm.contracts_received.connect(self._on_contracts_received)
+        vm.asset_created.connect(self._on_asset_created)
+        vm.asset_creation_error.connect(self._on_asset_creation_error)
+        vm.asset_creation_started.connect(self._on_asset_creation_started)
+
+    def _create_table_widget(self, watchlist_id: str = "") -> QTableWidget:
+        """Create a new table widget for a watchlist."""
+        table = QTableWidget()
+        if watchlist_id:
+            table.setObjectName(f"etf_watchlist_table_{watchlist_id}")
+        else:
+            table.setObjectName("etf_watchlist_table")
+        table.setColumnCount(self.NUM_COLUMNS)
+        table.setHorizontalHeaderLabels(self.COLUMN_HEADERS)
+
+        header = table.horizontalHeader()
+        header.setSectionResizeMode(QHeaderView.ResizeMode.ResizeToContents)
+        header.setSectionResizeMode(self.COL_VIEW, QHeaderView.ResizeMode.Fixed)
+        table.setColumnWidth(self.COL_VIEW, 50)
+        header.setSectionResizeMode(self.COL_SYMBOL, QHeaderView.ResizeMode.Stretch)
+        header.setSectionResizeMode(self.COL_DELETE, QHeaderView.ResizeMode.Fixed)
+        table.setColumnWidth(self.COL_DELETE, 30)
+
+        table.setSelectionBehavior(QTableWidget.SelectionBehavior.SelectRows)
+        table.setAlternatingRowColors(True)
+        table.cellDoubleClicked.connect(self._on_watchlist_item_double_clicked)
+        table.cellClicked.connect(self._on_watchlist_cell_clicked)
+
+        return table
+
+    def _on_watchlists_loaded(self, watchlists: list) -> None:
+        """Handle watchlists loaded - create tabs for each."""
+        self.tab_widget.clear_tabs()
+        self._tables.clear()
+
+        for wl in watchlists:
+            wl_id = wl["id"]
+            wl_name = wl.get("name", "Watchlist")
+
+            table = self._create_table_widget(wl_id)
+            self._tables[wl_id] = table
+            self.tab_widget.add_watchlist_tab(wl_id, wl_name, table)
+
+        if self._vm and self._vm.active_watchlist_id:
+            self.tab_widget.set_active_watchlist(self._vm.active_watchlist_id)
+
+        self.status_label.setText(f"Loaded {len(watchlists)} watchlists")
+
+    def _on_watchlist_created(self, watchlist: dict) -> None:
+        """Handle new watchlist created."""
+        wl_id = watchlist["id"]
+        wl_name = watchlist.get("name", "Watchlist")
+
+        table = self._create_table_widget(wl_id)
+        self._tables[wl_id] = table
+        new_index = self.tab_widget.add_watchlist_tab(wl_id, wl_name, table)
+
+        self.tab_widget.setCurrentIndex(new_index)
+        if self._vm:
+            self._vm.switch_watchlist(wl_id)
+
+        self.status_label.setText(f"Created watchlist '{wl_name}'")
+
+    def _on_watchlist_deleted(self, watchlist_id: str) -> None:
+        """Handle watchlist deleted."""
+        self.tab_widget.remove_watchlist_tab(watchlist_id)
+        self._tables.pop(watchlist_id, None)
+        self.status_label.setText("Watchlist deleted")
+
+    def _on_watchlist_tab_changed(self, watchlist_id: str) -> None:
+        """Handle tab selection change."""
+        if self._vm:
+            self._vm.switch_watchlist(watchlist_id)
+
+    def _init_row(self, table: QTableWidget, row: int, symbol: str) -> None:
+        """Initialize a row with default values, view button and delete button."""
+        view_btn = QPushButton("📈")
+        view_btn.setObjectName(f"etf_watchlist_view_{symbol.lower()}_button")
+        view_btn.setToolTip(f"View chart for {symbol}")
+        view_btn.setMaximumWidth(40)
+        view_btn.clicked.connect(lambda checked, s=symbol: self._on_view_clicked(s))
+        table.setCellWidget(row, self.COL_VIEW, view_btn)
+
+        table.setItem(row, self.COL_SYMBOL, QTableWidgetItem(symbol))
+        table.setItem(row, self.COL_BID_SIZE, QTableWidgetItem("-"))
+        table.setItem(row, self.COL_BID, QTableWidgetItem("-"))
+        table.setItem(row, self.COL_LAST, QTableWidgetItem("-"))
+        table.setItem(row, self.COL_ASK, QTableWidgetItem("-"))
+        table.setItem(row, self.COL_ASK_SIZE, QTableWidgetItem("-"))
+        table.setItem(row, self.COL_CHANGE, QTableWidgetItem("-"))
+        table.setItem(row, self.COL_OPEN, QTableWidgetItem("-"))
+        table.setItem(row, self.COL_HIGH, QTableWidgetItem("-"))
+        table.setItem(row, self.COL_LOW, QTableWidgetItem("-"))
+        table.setItem(row, self.COL_CLOSE, QTableWidgetItem("-"))
+        table.setItem(row, self.COL_VOLUME, QTableWidgetItem("-"))
+        table.setItem(row, self.COL_OPT_HIST_VOL, QTableWidgetItem("-"))
+        table.setItem(row, self.COL_OPT_IMPL_VOL, QTableWidgetItem("-"))
+
+        delete_item = QTableWidgetItem("X")
+        delete_item.setForeground(QColor("red"))
+        font = delete_item.font()
+        font.setBold(True)
+        delete_item.setFont(font)
+        delete_item.setTextAlignment(Qt.AlignmentFlag.AlignCenter)
+        table.setItem(row, self.COL_DELETE, delete_item)
+
+    def _on_delete_symbol(self, symbol: str) -> None:
+        """Handle delete button click for a symbol."""
+        if self._vm:
+            self._vm.remove_symbol(symbol)
+
+    def _on_watchlist_cell_clicked(self, row: int, column: int) -> None:
+        """Handle single-click on watchlist cell - check for delete column."""
+        if column != self.COL_DELETE or not self._vm:
+            return
+
+        active_id = self._vm.active_watchlist_id
+        table = self._tables.get(active_id)
+        if not table:
+            return
+
+        symbol_item = table.item(row, self.COL_SYMBOL)
+        if symbol_item:
+            self._on_delete_symbol(symbol_item.text())
+
+    def _on_active_watchlist_loaded(self, symbols: list) -> None:
+        """Handle symbols loaded for active watchlist."""
+        if not self._vm:
+            return
+
+        active_id = self._vm.active_watchlist_id
+        table = self._tables.get(active_id)
+        if not table:
+            return
+
+        table.setRowCount(len(symbols))
+        for i, symbol in enumerate(symbols):
+            self._init_row(table, i, symbol)
+
+        self.status_label.setText(f"Loaded {len(symbols)} symbols")
+
+    def _on_create_watchlist(self) -> None:
+        """Handle create watchlist button click."""
+        from src.presentation.components.create_watchlist_dialog import CreateWatchlistDialog
+
+        existing_names = self._vm.get_existing_watchlist_names() if self._vm else []
+        name, accepted = CreateWatchlistDialog.get_watchlist_name(self, existing_names)
+
+        if accepted and name and self._vm:
+            self._vm.create_watchlist(name)
+
+    def _on_delete_watchlist(self, watchlist_id: str) -> None:
+        """Handle delete watchlist request."""
+        reply = QMessageBox.question(
+            self,
+            "Delete Watchlist",
+            "Are you sure you want to delete this watchlist?",
+            QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No,
+        )
+        if reply == QMessageBox.StandardButton.Yes and self._vm:
+            self._vm.delete_watchlist(watchlist_id)
+
+    def _on_rename_watchlist(self, watchlist_id: str, new_name: str) -> None:
+        """Handle rename watchlist request."""
+        if self._vm:
+            self._vm.rename_watchlist(watchlist_id, new_name)
+            self.status_label.setText(f"Renamed watchlist to '{new_name}'")
+
+    def _on_add_clicked(self) -> None:
+        symbol = self.ticker_input.text().strip().upper()
+        if not symbol or not self._vm:
+            return
+
+        self.ticker_input.clear()
+
+        if symbol in self._vm.symbols:
+            self.status_label.setText(f"{symbol} is already in the watchlist")
+            return
+
+        if self._vm.asset_exists(symbol):
+            self._vm.add_symbol(symbol)
+        else:
+            self._vm.fetch_and_create_asset(symbol)
+
+    def _on_add_from_assets(self) -> None:
+        """Open dialog to add assets from saved assets."""
+        from src.presentation.components.asset_selection_dialog import AssetSelectionDialog
+
+        if not self._vm:
+            return
+
+        assets = self._vm.get_all_saved_assets()
+        current_symbols = list(self._vm.symbols)
+
+        selected, accepted = AssetSelectionDialog.select_assets(
+            assets, current_symbols, self
+        )
+
+        if accepted and selected:
+            count = self._vm.add_symbols(selected)
+            self.status_label.setText(f"Added {count} symbols from assets")
+
+    def _on_contracts_received(self, symbol: str, details_list: list) -> None:
+        """Handle multiple contracts found - show selection dialog."""
+        from src.presentation.components.contract_selection_dialog import ContractSelectionDialog
+
+        self._stop_loading()
+
+        selected_cd, accepted = ContractSelectionDialog.select_contract(
+            symbol, details_list, self
+        )
+
+        if accepted and selected_cd:
+            self._start_loading()
+            self._vm.create_asset_from_selection(symbol, selected_cd)
+        else:
+            self.status_label.setText(f"Selection cancelled for {symbol}")
+
+    def _on_asset_created(self, symbol: str) -> None:
+        """Handle asset created signal."""
+        self._stop_loading()
+        self.status_label.setText(f"Asset {symbol} created from IB")
+
+    def _on_asset_creation_error(self, symbol: str, error: str) -> None:
+        """Handle asset creation error."""
+        self._stop_loading()
+        self.status_label.setText(f"Error adding {symbol}: {error}")
+
+    def _on_asset_creation_started(self, symbol: str) -> None:
+        """Handle asset creation started - show loading status."""
+        self.status_label.setText(f"Searching IB for {symbol}...")
+        self._start_loading()
+
+    def _start_loading(self) -> None:
+        """Start the loading spinner animation."""
+        self._is_loading = True
+        self._spinner_frame = 0
+        self.loading_label.setVisible(True)
+        self.loading_label.setText(self.SPINNER_FRAMES[0] + " Searching...")
+        self.add_button.setEnabled(False)
+        self.ticker_input.setEnabled(False)
+        self._spinner_timer.start(80)  # 80ms per frame for smooth animation
+
+    def _stop_loading(self) -> None:
+        """Stop the loading spinner animation."""
+        self._is_loading = False
+        self._spinner_timer.stop()
+        self.loading_label.setVisible(False)
+        self.loading_label.setText("")
+        self.add_button.setEnabled(True)
+        self.ticker_input.setEnabled(True)
+
+    def _update_spinner(self) -> None:
+        """Update the spinner animation frame."""
+        if not self._is_loading:
+            return
+        self._spinner_frame = (self._spinner_frame + 1) % len(self.SPINNER_FRAMES)
+        self.loading_label.setText(self.SPINNER_FRAMES[self._spinner_frame] + " Searching...")
+
+    def _on_symbol_added(self, symbol: str) -> None:
+        if not self._vm:
+            return
+
+        self._stop_loading()
+        active_id = self._vm.active_watchlist_id
+        table = self._tables.get(active_id)
+        if table:
+            row = table.rowCount()
+            table.insertRow(row)
+            self._init_row(table, row, symbol)
+        self.status_label.setText(f"Added {symbol}")
+
+    def _on_symbols_added(self, symbols: list) -> None:
+        self.status_label.setText(f"Added {len(symbols)} symbols")
+
+    def _on_symbol_removed(self, symbol: str) -> None:
+        if not self._vm:
+            return
+
+        active_id = self._vm.active_watchlist_id
+        table = self._tables.get(active_id)
+        if table:
+            for row in range(table.rowCount()):
+                item = table.item(row, self.COL_SYMBOL)
+                if item and item.text() == symbol:
+                    table.removeRow(row)
+                    break
+        self.status_label.setText(f"Removed {symbol}")
+
+    def _on_error(self, message: str) -> None:
+        self.status_label.setText(f"Error: {message}")
+
+    def _format_number(self, value: float, decimals: int = 2) -> str:
+        """Format a number for display, handling zero/None values."""
+        if value is None or value == 0:
+            return "-"
+        return f"{value:,.{decimals}f}"
+
+    def _format_volume(self, value: int) -> str:
+        """Format volume with K/M suffix."""
+        if value is None or value == 0:
+            return "-"
+        if value >= 1_000_000:
+            return f"{value / 1_000_000:.1f}M"
+        elif value >= 1_000:
+            return f"{value / 1_000:.1f}K"
+        return str(value)
+
+    def _format_percent(self, value: float) -> str:
+        """Format percentage value."""
+        if value is None or value == 0:
+            return "-"
+        return f"{value:+.2f}%"
+
+    def _on_tick_updated(self, symbol: str, tick_data: dict) -> None:
+        if not self._vm:
+            return
+
+        active_id = self._vm.active_watchlist_id
+        table = self._tables.get(active_id)
+        if not table:
+            return
+
+        for row in range(table.rowCount()):
+            item = table.item(row, self.COL_SYMBOL)
+            if item and item.text() == symbol:
+                if "bid_size" in tick_data and tick_data["bid_size"]:
+                    table.setItem(row, self.COL_BID_SIZE, QTableWidgetItem(str(tick_data["bid_size"])))
+                if "bid" in tick_data and tick_data["bid"]:
+                    table.setItem(row, self.COL_BID, QTableWidgetItem(self._format_number(tick_data["bid"])))
+                if "last" in tick_data and tick_data["last"]:
+                    last_item = QTableWidgetItem(self._format_number(tick_data["last"]))
+                    font = last_item.font()
+                    font.setBold(True)
+                    last_item.setFont(font)
+                    last_item.setBackground(QColor("#e3f2fd"))
+                    last_item.setForeground(QColor("black"))
+                    table.setItem(row, self.COL_LAST, last_item)
+                if "ask" in tick_data and tick_data["ask"]:
+                    table.setItem(row, self.COL_ASK, QTableWidgetItem(self._format_number(tick_data["ask"])))
+                if "ask_size" in tick_data and tick_data["ask_size"]:
+                    table.setItem(row, self.COL_ASK_SIZE, QTableWidgetItem(str(tick_data["ask_size"])))
+
+                if "open" in tick_data and tick_data["open"]:
+                    table.setItem(row, self.COL_OPEN, QTableWidgetItem(self._format_number(tick_data["open"])))
+                if "high" in tick_data and tick_data["high"]:
+                    table.setItem(row, self.COL_HIGH, QTableWidgetItem(self._format_number(tick_data["high"])))
+                if "low" in tick_data and tick_data["low"]:
+                    table.setItem(row, self.COL_LOW, QTableWidgetItem(self._format_number(tick_data["low"])))
+                if "close" in tick_data and tick_data["close"]:
+                    table.setItem(row, self.COL_CLOSE, QTableWidgetItem(self._format_number(tick_data["close"])))
+
+                last_price = tick_data.get("last", 0)
+                close_price = tick_data.get("close", 0)
+                if last_price and close_price:
+                    change_pct = ((last_price - close_price) / close_price) * 100
+                    change_item = QTableWidgetItem(self._format_percent(change_pct))
+                    bg_color = self.get_change_color(change_pct)
+                    change_item.setBackground(QColor(bg_color))
+                    text_color = "white" if self.is_dark_color(bg_color) else "black"
+                    change_item.setForeground(QColor(text_color))
+                    table.setItem(row, self.COL_CHANGE, change_item)
+
+                if "volume" in tick_data and tick_data["volume"]:
+                    table.setItem(row, self.COL_VOLUME, QTableWidgetItem(self._format_volume(tick_data["volume"])))
+
+                if "option_historical_vol" in tick_data and tick_data["option_historical_vol"]:
+                    hv = tick_data["option_historical_vol"]
+                    hv_pct = hv * 100 if hv < 1 else hv
+                    table.setItem(row, self.COL_OPT_HIST_VOL, QTableWidgetItem(f"{hv_pct:.1f}%"))
+                if "option_implied_vol" in tick_data and tick_data["option_implied_vol"]:
+                    iv = tick_data["option_implied_vol"]
+                    iv_pct = iv * 100 if iv < 1 else iv
+                    table.setItem(row, self.COL_OPT_IMPL_VOL, QTableWidgetItem(f"{iv_pct:.1f}%"))
+
+                break
+
+    def _on_watchlist_item_double_clicked(self, row: int, column: int) -> None:
+        """Handle double-click on watchlist row - open detail window."""
+        if not self._vm:
+            return
+
+        active_id = self._vm.active_watchlist_id
+        table = self._tables.get(active_id)
+        if not table:
+            return
+
+        symbol_item = table.item(row, self.COL_SYMBOL)
+        if not symbol_item:
+            return
+
+        symbol = symbol_item.text()
+        self._open_detail_window(symbol)
+
+    def _on_view_clicked(self, symbol: str) -> None:
+        """Handle view button click - open detail window."""
+        self._open_detail_window(symbol)
+
+    def _open_detail_window(self, symbol: str) -> None:
+        """Open the asset detail window for the given symbol."""
+        try:
+            app = get_app()
+            asset = app.asset_service.get_asset("ETF", symbol)
+            if asset:
+                from src.presentation.windows.asset_detail import AssetDetailWindow
+                self._detail_window = AssetDetailWindow(asset, parent=self.window())
+                self._detail_window.show()
+                self.status_label.setText(f"Opened detail for {symbol}")
+            else:
+                self.status_label.setText(f"Asset {symbol} not found in saved assets")
+        except Exception as e:
+            self.status_label.setText(f"Error opening detail: {e}")
+            log.error(f"Error opening asset detail: {e}")
+            import traceback
+            traceback.print_exc()
+
+    def onDestroy(self) -> None:
+        if self._vm:
+            self._vm.dispose()
+        if self._detail_window:
+            self._detail_window.close()
+            self._detail_window = None
+        super().onDestroy()
+
+
 class AssetsPage(BaseView):
     """Asset Management Page."""
+
+    # Loading spinner frames for animation
+    SPINNER_FRAMES = ["⠋", "⠙", "⠹", "⠸", "⠼", "⠴", "⠦", "⠧", "⠇", "⠏"]
 
     # Signals for thread-safe UI updates
     asset_added = pyqtSignal(str)  # Emitted with symbol when asset is added
@@ -1095,6 +1799,9 @@ class AssetsPage(BaseView):
         super().__init__(*args, **kwargs)
         self.asset_type = asset_type
         self.setObjectName(f"{asset_type.lower()}_assets_page")
+        self._spinner_frame = 0  # Current spinner animation frame
+        self._spinner_timer = None  # Timer for spinner animation
+        self._is_loading = False  # Loading state flag
 
         # Connect signals to slots
         self.asset_added.connect(self._on_asset_added)
@@ -1125,6 +1832,17 @@ class AssetsPage(BaseView):
         self.add_button.setObjectName(f"{self.asset_type.lower()}_add_asset_button")
         self.add_button.clicked.connect(self._on_add_clicked)
         header.addWidget(self.add_button)
+
+        # Loading spinner label (hidden by default)
+        self.loading_label = QLabel("")
+        self.loading_label.setObjectName(f"{self.asset_type.lower()}_loading_label")
+        self.loading_label.setStyleSheet("color: #2196F3; font-size: 14px; margin-left: 5px;")
+        self.loading_label.setVisible(False)
+        header.addWidget(self.loading_label)
+
+        # Spinner timer for animation
+        self._spinner_timer = QTimer(self)
+        self._spinner_timer.timeout.connect(self._update_spinner)
 
         self.refresh_button = QPushButton("Refresh")
         self.refresh_button.setObjectName(f"{self.asset_type.lower()}_refresh_button")
@@ -1226,17 +1944,22 @@ class AssetsPage(BaseView):
                 self.status_label.setText(f"Asset {symbol} already exists")
                 return
 
-            self.status_label.setText(f"Adding {symbol}...")
+            self.status_label.setText(f"Searching IB for {symbol}...")
             self.symbol_input.clear()
+            self._start_loading()
 
             # Create contract based on asset type
             # Don't specify exchange for initial search to get all matching contracts
-            from src.domain.entities.contract import StockContract, FutureContract
+            from src.domain.entities.contract import StockContract, FutureContract, ETFContract
             from src.domain.entities.asset import Asset, AssetType
 
-            if self.asset_type == "STOCK":
+            if self.asset_type in ("STOCK", "ETF"):
                 # Use empty exchange and primary_exchange to search for all matching contracts
-                contract = StockContract.create(symbol=symbol, exchange="", primary_exchange="")
+                # ETFs use STK security type like stocks
+                if self.asset_type == "STOCK":
+                    contract = StockContract.create(symbol=symbol, exchange="", primary_exchange="")
+                else:
+                    contract = ETFContract.create(symbol=symbol, exchange="", primary_exchange="")
 
                 # Fetch contract details from IB
                 # Store reference to self for use in callback
@@ -1449,20 +2172,49 @@ class AssetsPage(BaseView):
             import traceback
             traceback.print_exc()
 
+    def _start_loading(self) -> None:
+        """Start the loading spinner animation."""
+        self._is_loading = True
+        self._spinner_frame = 0
+        self.loading_label.setVisible(True)
+        self.loading_label.setText(self.SPINNER_FRAMES[0] + " Searching...")
+        self.add_button.setEnabled(False)
+        self.symbol_input.setEnabled(False)
+        self._spinner_timer.start(80)  # 80ms per frame for smooth animation
+
+    def _stop_loading(self) -> None:
+        """Stop the loading spinner animation."""
+        self._is_loading = False
+        self._spinner_timer.stop()
+        self.loading_label.setVisible(False)
+        self.loading_label.setText("")
+        self.add_button.setEnabled(True)
+        self.symbol_input.setEnabled(True)
+
+    def _update_spinner(self) -> None:
+        """Update the spinner animation frame."""
+        if not self._is_loading:
+            return
+        self._spinner_frame = (self._spinner_frame + 1) % len(self.SPINNER_FRAMES)
+        self.loading_label.setText(self.SPINNER_FRAMES[self._spinner_frame] + " Searching...")
+
     @pyqtSlot(str)
     def _on_asset_added(self, symbol: str) -> None:
         """Handle asset added signal - refresh table on main thread."""
+        self._stop_loading()
         self._load_assets()
         self.status_label.setText(f"Added {symbol} successfully")
 
     @pyqtSlot(str)
     def _on_asset_error(self, error: str) -> None:
         """Handle asset error signal - show error on main thread."""
+        self._stop_loading()
         self.status_label.setText(error)
 
     @pyqtSlot(str, list)
     def _on_contracts_received(self, symbol: str, details_list: list) -> None:
         """Handle multiple contracts found - show selection dialog on main thread."""
+        self._stop_loading()
         self.status_label.setText(f"Multiple contracts found for {symbol} - please select one")
 
         # Create selection dialog
@@ -1512,6 +2264,11 @@ class AssetsPage(BaseView):
         button_box = QDialogButtonBox(
             QDialogButtonBox.StandardButton.Ok | QDialogButtonBox.StandardButton.Cancel
         )
+        button_box.setObjectName("contract_selection_buttons")
+        ok_button = button_box.button(QDialogButtonBox.StandardButton.Ok)
+        ok_button.setObjectName("contract_selection_ok_button")
+        cancel_button = button_box.button(QDialogButtonBox.StandardButton.Cancel)
+        cancel_button.setObjectName("contract_selection_cancel_button")
         button_box.accepted.connect(dialog.accept)
         button_box.rejected.connect(dialog.reject)
         layout.addWidget(button_box)
@@ -1851,6 +2608,21 @@ class MainWindow(BaseWindow):
         exit_action.setShortcut("Ctrl+Q")
         exit_action.triggered.connect(self._quit_application)
 
+        # Assets menu
+        assets_menu = menubar.addMenu("Assets")
+
+        stocks_assets_action = assets_menu.addAction("Stocks")
+        stocks_assets_action.setObjectName("action_stocks_assets")
+        stocks_assets_action.triggered.connect(self.setCurrentPage(AssetsPage, asset_type="STOCK"))
+
+        futures_assets_action = assets_menu.addAction("Futures")
+        futures_assets_action.setObjectName("action_futures_assets")
+        futures_assets_action.triggered.connect(self.setCurrentPage(AssetsPage, asset_type="FUTURE"))
+
+        etf_assets_action = assets_menu.addAction("ETF")
+        etf_assets_action.setObjectName("action_etf_assets")
+        etf_assets_action.triggered.connect(self.setCurrentPage(AssetsPage, asset_type="ETF"))
+
         # Watchlists menu
         watchlist_menu = menubar.addMenu("Watchlists")
 
@@ -1862,16 +2634,9 @@ class MainWindow(BaseWindow):
         futures_watchlist_action.setObjectName("action_futures_watchlist")
         futures_watchlist_action.triggered.connect(self.setCurrentPage(FuturesWatchlistPage))
 
-        # Assets menu
-        assets_menu = menubar.addMenu("Assets")
-
-        stocks_assets_action = assets_menu.addAction("Stocks")
-        stocks_assets_action.setObjectName("action_stocks_assets")
-        stocks_assets_action.triggered.connect(self.setCurrentPage(AssetsPage, asset_type="STOCK"))
-
-        futures_assets_action = assets_menu.addAction("Futures")
-        futures_assets_action.setObjectName("action_futures_assets")
-        futures_assets_action.triggered.connect(self.setCurrentPage(AssetsPage, asset_type="FUTURE"))
+        etf_watchlist_action = watchlist_menu.addAction("ETF")
+        etf_watchlist_action.setObjectName("action_etf_watchlist")
+        etf_watchlist_action.triggered.connect(self.setCurrentPage(ETFWatchlistPage))
 
     def setCurrentPage(
         self, page_class: Type[BaseView], **kwargs: Any

@@ -299,7 +299,7 @@ class HistoricalDataService(IHistoricalDataService):
             if clear_existing:
                 self._clear_asset_data(asset, tf)
 
-            if asset.asset_type == AssetType.STOCK:
+            if asset.asset_type in (AssetType.STOCK, AssetType.ETF):
                 items.extend(
                     self._build_stock_items(asset, now, max_block_days)
                 )
@@ -322,7 +322,7 @@ class HistoricalDataService(IHistoricalDataService):
         tf = TimeFrame.from_str(timeframe)
 
         for asset in assets:
-            if asset.asset_type == AssetType.STOCK:
+            if asset.asset_type in (AssetType.STOCK, AssetType.ETF):
                 items.extend(
                     self._build_stock_update_items(
                         asset, tf, now, max_block_days
@@ -340,7 +340,7 @@ class HistoricalDataService(IHistoricalDataService):
     def _clear_asset_data(self, asset: Asset, timeframe: TimeFrame) -> None:
         """Clear existing data for an asset."""
         try:
-            if asset.asset_type == AssetType.STOCK:
+            if asset.asset_type in (AssetType.STOCK, AssetType.ETF):
                 self._repository.delete(asset.symbol, timeframe.value)
             elif asset.asset_type == AssetType.FUTURE:
                 for cd in asset.contract_details:

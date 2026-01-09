@@ -12,7 +12,7 @@ from src.core.interfaces.broker import IBrokerClient
 from src.core.interfaces.repositories import IAssetRepository
 from src.core.interfaces.services import IAssetService
 from src.domain.entities.asset import Asset, AssetType
-from src.domain.entities.contract import Contract, StockContract, FutureContract
+from src.domain.entities.contract import Contract, StockContract, FutureContract, ETFContract
 from src.domain.entities.contract_details import ContractDetails
 
 log = logging.getLogger("CellarLogger")

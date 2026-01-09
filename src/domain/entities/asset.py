@@ -18,6 +18,7 @@ class AssetType(Enum):
     STOCK = "stock"
     FUTURE = "future"
     OPTION = "option"
+    ETF = "etf"
 
     @staticmethod
     def from_str(value: str) -> AssetType:
@@ -81,7 +82,7 @@ class Asset:
         if not self.contract_details:
             return []
 
-        if self.asset_type == AssetType.STOCK:
+        if self.asset_type in (AssetType.STOCK, AssetType.ETF):
             sorted_details = sorted(
                 self.contract_details,
                 key=lambda x: getattr(

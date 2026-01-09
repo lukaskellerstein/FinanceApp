@@ -22,6 +22,7 @@ from PyQt6.QtCore import QObject, pyqtSignal, QTimer
 from PyQt6.QtGui import QAction
 from PyQt6.QtWidgets import (
     QWidget,
+    QDialog,
     QLineEdit,
     QPushButton,
     QLabel,
@@ -208,17 +209,19 @@ class CommandHandler(QObject):
             "is_main": True
         })
 
-        # Collect from all other top-level windows
+        # Collect from all other top-level windows (including dialogs)
         app = QApplication.instance()
         if app:
             for window in app.topLevelWidgets():
-                if window != self.app and isinstance(window, QMainWindow) and window.isVisible():
-                    collect_widgets(window)
-                    all_windows.append({
-                        "title": window.windowTitle(),
-                        "size": {"width": window.width(), "height": window.height()},
-                        "is_main": False
-                    })
+                if window != self.app and window.isVisible():
+                    # Include QMainWindow and QDialog windows
+                    if isinstance(window, (QMainWindow, QDialog)):
+                        collect_widgets(window)
+                        all_windows.append({
+                            "title": window.windowTitle(),
+                            "size": {"width": window.width(), "height": window.height()},
+                            "is_main": False
+                        })
 
         # Also collect menu actions from all windows
         menu_actions = self._collect_menu_actions()

@@ -5,8 +5,9 @@ Dialog for selecting from multiple IB contracts when a ticker symbol
 matches multiple instruments.
 """
 
+import subprocess
 from typing import List, Optional, Tuple
-from PyQt6.QtCore import Qt
+from PyQt6.QtCore import Qt, QTimer
 from PyQt6.QtWidgets import (
     QDialog,
     QVBoxLayout,
@@ -15,6 +16,59 @@ from PyQt6.QtWidgets import (
     QListWidgetItem,
     QDialogButtonBox,
 )
+
+
+def _move_window_to_parent_workspace(window_title: str, parent_title: str) -> None:
+    """Move a window to the same workspace as its parent (i3wm only).
+
+    This uses i3-msg to find the parent window's workspace and move the
+    dialog window there. This is needed because i3 doesn't always respect
+    X11 transient-for hints for workspace placement.
+    """
+    try:
+        import json
+        # Get i3 tree
+        result = subprocess.run(
+            ["i3-msg", "-t", "get_tree"],
+            capture_output=True,
+            text=True,
+            timeout=2
+        )
+        if result.returncode != 0:
+            return
+
+        tree = json.loads(result.stdout)
+
+        # Find both windows
+        parent_ws = None
+        dialog_con_id = None
+
+        def search_all(node, workspace=None):
+            nonlocal parent_ws, dialog_con_id
+            if node.get('type') == 'workspace':
+                workspace = node.get('num', node.get('name'))
+
+            title = node.get('window_properties', {}).get('title', '') or ''
+            if title == parent_title:
+                parent_ws = workspace
+            if title == window_title:
+                dialog_con_id = node.get('id')
+
+            for child in node.get('nodes', []) + node.get('floating_nodes', []):
+                search_all(child, workspace)
+
+        search_all(tree)
+
+        # Move dialog to parent's workspace if found
+        if parent_ws is not None and dialog_con_id is not None:
+            subprocess.run(
+                ["i3-msg", f"[con_id={dialog_con_id}] move container to workspace number {parent_ws}"],
+                capture_output=True,
+                timeout=2
+            )
+    except (subprocess.TimeoutExpired, FileNotFoundError, json.JSONDecodeError):
+        # i3-msg not available or failed - ignore
+        pass
 
 
 class ContractSelectionDialog(QDialog):
@@ -46,7 +100,13 @@ class ContractSelectionDialog(QDialog):
             contract_details_list: List of ContractDetails from IB
             parent: Parent widget
         """
-        super().__init__(parent)
+        # Use top-level window as parent to ensure proper transient relationship on X11/i3
+        if parent is not None:
+            parent = parent.window()
+        super().__init__(
+            parent,
+            Qt.WindowType.Dialog | Qt.WindowType.WindowCloseButtonHint
+        )
         self._symbol = symbol
         self._details_list = contract_details_list
         self._selected_index: Optional[int] = None
@@ -55,6 +115,7 @@ class ContractSelectionDialog(QDialog):
 
     def _setup_ui(self) -> None:
         """Set up the dialog UI."""
+        self.setObjectName("contract_selection_dialog")
         self.setWindowTitle(f"Select Contract for {self._symbol}")
         self.setMinimumWidth(600)
         self.setMinimumHeight(400)
@@ -145,6 +206,24 @@ class ContractSelectionDialog(QDialog):
         if selected_item:
             return selected_item.data(Qt.ItemDataRole.UserRole)
         return None
+
+    def showEvent(self, event) -> None:
+        """Handle show event to move dialog to parent's workspace on i3."""
+        super().showEvent(event)
+        # Schedule workspace move after window is mapped
+        QTimer.singleShot(50, self._move_to_parent_workspace)
+
+    def _move_to_parent_workspace(self) -> None:
+        """Move this dialog to the parent window's workspace using i3-msg."""
+        parent = self.parent()
+        if parent is None:
+            return
+
+        parent_title = parent.windowTitle()
+        dialog_title = self.windowTitle()
+
+        if parent_title and dialog_title:
+            _move_window_to_parent_workspace(dialog_title, parent_title)
 
     @staticmethod
     def select_contract(

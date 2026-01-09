@@ -1,0 +1,27 @@
+{
+  "symbol": "ZM",
+  "asset_type": "future",
+  "contract_details": [
+    {
+      "contract": {
+        "con_id": 460126170,
+        "symbol": "ZM",
+        "sec_type": "FUT",
+        "exchange": "CBOT",
+        "currency": "USD",
+        "local_symbol": "ZMN4",
+        "primary_exchange": "",
+        "last_trade_date": "20240712",
+        "multiplier": "100",
+        "trading_class": "ZM"
+      },
+      "market_name": "ZM",
+      "min_tick": 0.1,
+      "long_name": "Soybean Meal Futures",
+      "contract_month": "202407",
+      "time_zone_id": "",
+      "trading_hours": "",
+      "liquid_hours": ""
+    }
+  ]
+}

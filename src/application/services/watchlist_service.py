@@ -333,5 +333,6 @@ class WatchlistService(IWatchlistService):
             "INDEX": "index",
             "FOREX": "forex",
             "CRYPTO": "crypto",
+            "ETF": "etf",
         }
         return type_map.get(asset_type.upper(), asset_type.lower())

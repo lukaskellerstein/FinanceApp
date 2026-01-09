@@ -205,6 +205,49 @@ class FutureContract(Contract):
 
 
 @dataclass
+class ETFContract(Contract):
+    """
+    ETF contract with default values.
+
+    ETFs are treated as stocks (STK) in Interactive Brokers,
+    but we keep them separate for organizational purposes.
+    """
+
+    sec_type: str = "STK"
+    exchange: str = "SMART"
+    currency: str = "USD"
+    primary_exchange: str = "ARCA"
+
+    @classmethod
+    def create(
+        cls,
+        symbol: str,
+        exchange: str = "SMART",
+        primary_exchange: str = "ARCA",
+        currency: str = "USD",
+    ) -> ETFContract:
+        """
+        Create an ETF contract.
+
+        Args:
+            symbol: ETF symbol
+            exchange: Exchange (default: SMART)
+            primary_exchange: Primary exchange (default: ARCA)
+            currency: Currency (default: USD)
+
+        Returns:
+            New ETFContract instance
+        """
+        return cls(
+            symbol=symbol,
+            local_symbol=symbol,
+            exchange=exchange,
+            primary_exchange=primary_exchange,
+            currency=currency,
+        )
+
+
+@dataclass
 class OptionContract(Contract):
     """
     Option contract with default values.

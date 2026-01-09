@@ -40,6 +40,7 @@ class JsonAssetRepository(IAssetRepository):
         "INDEX": "indices",
         "FOREX": "forex",
         "CRYPTO": "crypto",
+        "ETF": "etfs",
     }
 
     def __init__(self, base_path: str):

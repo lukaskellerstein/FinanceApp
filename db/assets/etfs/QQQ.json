@@ -1,0 +1,27 @@
+{
+  "symbol": "QQQ",
+  "asset_type": "etf",
+  "contract_details": [
+    {
+      "contract": {
+        "con_id": 320227571,
+        "symbol": "QQQ",
+        "sec_type": "STK",
+        "exchange": "SMART",
+        "currency": "USD",
+        "local_symbol": "QQQ",
+        "primary_exchange": "NASDAQ",
+        "last_trade_date": "",
+        "multiplier": "",
+        "trading_class": "NMS"
+      },
+      "market_name": "NMS",
+      "min_tick": 0.01,
+      "long_name": "INVESCO QQQ TRUST SERIES 1",
+      "contract_month": "",
+      "time_zone_id": "US/Eastern",
+      "trading_hours": "20260109:0400-20260109:2000;20260110:CLOSED;20260111:CLOSED;20260112:0400-20260112:2000;20260113:0400-20260113:2000;20260114:0400-20260114:2000",
+      "liquid_hours": "20260109:0930-20260109:1600;20260110:CLOSED;20260111:CLOSED;20260112:0930-20260112:1600;20260113:0930-20260113:1600;20260114:0930-20260114:1600"
+    }
+  ]
+}

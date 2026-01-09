@@ -1,0 +1,27 @@
+{
+  "symbol": "ZW",
+  "asset_type": "future",
+  "contract_details": [
+    {
+      "contract": {
+        "con_id": 502252400,
+        "symbol": "ZW",
+        "sec_type": "FUT",
+        "exchange": "CBOT",
+        "currency": "USD",
+        "local_symbol": "ZW   MAR 24",
+        "primary_exchange": "",
+        "last_trade_date": "20240314",
+        "multiplier": "5000",
+        "trading_class": "ZW"
+      },
+      "market_name": "ZW",
+      "min_tick": 0.0025,
+      "long_name": "Wheat Futures",
+      "contract_month": "202403",
+      "time_zone_id": "",
+      "trading_hours": "",
+      "liquid_hours": ""
+    }
+  ]
+}
